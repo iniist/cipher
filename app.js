@@ -210,7 +210,16 @@
   var ownP1 = read(KEY.p1, {});
   var favorites = normaliseFavorites(read(KEY.favorites, []));
 
-  /** Nur Eintraege behalten, deren Bauwerk es noch gibt und deren Stufe passt. */
+  /**
+   * Nur Eintraege behalten, deren Bauwerk es noch gibt und deren Stufe passt
+   * — und je Bauwerk nur einen.
+   *
+   * Ein Favorit ist ein Bauwerk; seine Stufe ist die, auf der es gerade
+   * steht, und die wandert mit (siehe syncFavoriteLevel). Aeltere Staende
+   * konnten dasselbe Bauwerk mehrfach enthalten, weil jede Stufe ein
+   * eigener Eintrag war. Davon bleibt der vorderste, also der zuletzt
+   * benutzte.
+   */
   function normaliseFavorites(value) {
     if (!Array.isArray(value)) return [];
     var seen = {};
@@ -218,9 +227,8 @@
       if (!entry || !byId[entry.id]) return false;
       var level = Number(entry.level);
       if (!(level >= 1 && level <= byId[entry.id].maxLevel)) return false;
-      var key = entry.id + ":" + level;
-      if (seen[key]) return false;
-      seen[key] = true;
+      if (seen[entry.id]) return false;
+      seen[entry.id] = true;
       return true;
     }).slice(0, MAX_FAVORITES).map(function (entry) {
       return { id: entry.id, level: Math.floor(Number(entry.level)) };
@@ -393,6 +401,7 @@
   function pickBuilding(id) {
     if (!byId[id]) return;
     state.building = id;
+    adoptFavoriteLevel();
     clearBuildingFilter({ keepFocus: false });
     render();
   }
@@ -558,6 +567,7 @@
     if (document.activeElement !== $("playerName")) $("playerName").value = state.name;
 
     renderSlotFactors();
+    syncFavoriteLevel();
     renderFavorites();
 
     var total = Calc.totalCost(building, state.level, ownTotals);
@@ -761,14 +771,46 @@
 
   // --------------------------------------------------------------- Favoriten
 
-  function favoriteIndex(id, level) {
+  function favoriteIndex(id) {
     for (var i = 0; i < favorites.length; i++) {
-      if (favorites[i].id === id && favorites[i].level === level) return i;
+      if (favorites[i].id === id) return i;
     }
     return -1;
   }
 
   /**
+   * Die Stufe eines gemerkten Bauwerks mitfuehren.
+   *
+   * Wer sein gemerktes Bauwerk eine Stufe weiterzieht, musste es vorher neu
+   * merken — und hatte es dann zweimal in der Liste. Jetzt ist die Stufe im
+   * Favoriten schlicht die, auf der das Bauwerk zuletzt stand.
+   */
+  function syncFavoriteLevel() {
+    var index = favoriteIndex(state.building);
+    if (index < 0 || favorites[index].level === state.level) return;
+    favorites[index].level = state.level;
+    write(KEY.favorites, favorites);
+  }
+
+  /**
+   * Beim Wechsel auf ein gemerktes Bauwerk dessen Stufe uebernehmen.
+   *
+   * Ohne das wuerde syncFavoriteLevel gleich darauf die mitgebrachte Stufe
+   * des vorigen Bauwerks in den Favoriten schreiben: von der Arche auf 81
+   * per Auswahlfeld zu Notre Dame gewechselt, und Notre Dames gemerkte 42
+   * waeren ueberschrieben. So ist der Wechsel per Auswahlfeld oder Suche
+   * dasselbe wie der Tipp auf den Chip.
+   */
+  function adoptFavoriteLevel() {
+    var index = favoriteIndex(state.building);
+    if (index >= 0) state.level = favorites[index].level;
+  }
+
+  /**
+   * Ein Favorit ist ein Bauwerk — jedes hoechstens einmal —, und seine
+   * Stufe ist die, auf der es zuletzt stand. Sie wandert beim Leveln mit,
+   * ohne dass man neu merken muss.
+   *
    * Die Liste ist "zuletzt benutzt zuerst": Merken und Antippen stellen
    * einen Eintrag nach vorn. Der erste Chip ist damit das, womit zuletzt
    * gearbeitet wurde — im Normalfall also das Aktive.
@@ -783,7 +825,7 @@
    * an der prominentesten Stelle der Seite.
    */
   function renderFavorites() {
-    var current = favoriteIndex(state.building, state.level);
+    var current = favoriteIndex(state.building);
     var offset = levelOffset();
     var saveButton = $("favSave");
     var chosen = byId[state.building];
@@ -837,7 +879,7 @@
   }
 
   function toggleFavorite() {
-    var index = favoriteIndex(state.building, state.level);
+    var index = favoriteIndex(state.building);
     if (index >= 0) {
       favorites.splice(index, 1);
     } else {
@@ -858,6 +900,7 @@
 
     $("building").addEventListener("change", function (event) {
       state.building = event.target.value;
+      adoptFavoriteLevel();
       render();
     });
 
