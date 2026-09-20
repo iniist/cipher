@@ -295,6 +295,12 @@
   function renderRows(plan) {
     $("rows").closest("table").classList.remove("none");
 
+    // Die Tabelle wird komplett neu geschrieben. Stand der Fokus auf einer
+    // der Checkboxen, landet er dabei sonst auf <body> — wer zwei Plaetze
+    // mit der Tastatur abwaehlen will, muesste sich nach jedem Haekchen neu
+    // durch die Seite tabben. Also merken und danach zurueckgeben.
+    var focusedSlot = focusedSlotInRows();
+
     var previous = previousContributions;
     previousContributions = plan.rows.map(function (row) { return row.contribution; });
 
@@ -319,6 +325,22 @@
         '<td class="pre">' + secureCell + "</td>" +
       "</tr>";
     }).join("");
+
+    restoreFocusToSlot(focusedSlot);
+  }
+
+  /** Den Platz nennen, dessen Checkbox gerade den Fokus hat — sonst null. */
+  function focusedSlotInRows() {
+    var active = document.activeElement;
+    if (!active || !active.dataset || active.dataset.slot == null) return null;
+    return $("rows").contains(active) ? active.dataset.slot : null;
+  }
+
+  function restoreFocusToSlot(slot) {
+    if (slot == null) return;
+    var checkbox = $("rows").querySelector('input[data-slot="' + slot + '"]');
+    // Die Zeile steht an derselben Stelle, darum kein Springen der Ansicht.
+    if (checkbox && !checkbox.disabled) checkbox.focus({ preventScroll: true });
   }
 
   function renderBar(plan) {

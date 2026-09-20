@@ -93,6 +93,32 @@ test.describe("Content-Security-Policy im Betrieb", () => {
   });
 });
 
+test.describe("Werkzeuge nicht öffentlich", () => {
+  // Der Datenimporter liegt im Repo, gehört aber nicht zur Website.
+  // netlify.toml beantwortet /tools/* mit 404; der Testserver liefert die
+  // Datei lokal aus, deshalb wird hier die Regel selbst geprüft.
+  test("netlify.toml sperrt /tools/ und /test/", async ({ request }) => {
+    const toml = await (await request.get("/netlify.toml")).text();
+    for (const prefix of ["/tools/*", "/test/*"]) {
+      expect(toml).toContain(`from = "${prefix}"`);
+    }
+    expect(toml).toMatch(/status = 404/);
+  });
+
+  test("der Importer liegt lokal bereit und lädt nichts von Dritten", async ({ page, baseURL }) => {
+    const foreign = [];
+    page.on("request", (request) => {
+      const url = request.url();
+      if (!url.startsWith(baseURL) && !url.startsWith("data:")) foreign.push(url);
+    });
+
+    await page.goto("/tools/import.html", { waitUntil: "networkidle" });
+    await expect(page.locator("h1")).toHaveText("LG-Datenimport");
+    // Er darf beim Laden nichts anfragen — das Wiki erst auf Knopfdruck.
+    expect(foreign, `fremde Anfragen: ${foreign.join(", ")}`).toEqual([]);
+  });
+});
+
 test.describe("404", () => {
   test("eine unbekannte Adresse liefert die eigene 404-Seite", async ({ page }) => {
     const response = await page.goto("/gibt-es-nicht.html");

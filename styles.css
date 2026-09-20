@@ -348,6 +348,15 @@ tr.off td.pay { text-decoration: line-through }
 .lump-n span { font-size: .8rem; color: var(--dim) }
 .lump p { margin: 0; font-size: .95rem }
 
+/* ----------------------------------------------------------- Ohne Skript */
+
+/* Wird nur im <noscript> ausgeliefert, braucht also keinen eigenen Umschalter. */
+.noscript { border-color: var(--warn) }
+.noscript h2 { color: var(--warn) }
+.noscript p { margin: 0 0 10px }
+.noscript p:last-child { margin-bottom: 0 }
+.noscript a { color: var(--warn) }
+
 /* ------------------------------------------------------------- Hinweise */
 
 .note {

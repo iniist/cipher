@@ -6,21 +6,24 @@
  *
  * Aufbau:
  *   buildings[]           Ein Eintrag je Legendärem Bauwerk
- *     .id                 Stabiler Schluessel (Wiki-Seitenname)
+ *     .id                 Stabiler Schlüssel (Wiki-Seitenname)
  *     .name               Anzeigename (deutsch)
- *     .short              Kurzname fuer den Foerderchat
+ *     .short              Kurzname für den Förderchat
  *     .era                Zeitalter, dient als Gruppe im Auswahlfeld
  *     .base               Basiswert A der Kostenformel (null = unbekannt)
  *     .costs[0..9]        Gesamtkosten der Stufen 1-10 laut Wiki (null = unbekannt)
- *     .maxLevel           Hoechste im Spiel erreichbare Stufe
- *     .curve              Schluessel in `curves` fuer die P1-Belohnung (null = unbekannt)
+ *     .maxLevel           Höchste im Spiel erreichbare Stufe
+ *     .curve              Schlüssel in `curves` für die P1-Belohnung (null = unbekannt)
  *
- *   curves{era}           P1-Belohnung je Stufe, gemeinsam fuer alle Bauwerke eines Zeitalters
- *     .p1[level-1]        Belohnung fuer Platz 1 in FP
- *     .source[level-1]    Herkunft als Zeichen: "w" = Wiki, "e" = geschaetzt,
+ *   curves{era}           P1-Belohnung je Stufe, gemeinsam für alle Bauwerke eines Zeitalters
+ *     .p1[level-1]        Belohnung für Platz 1 in FP
+ *     .source[level-1]    Herkunft als Zeichen: "w" = Wiki, "e" = geschätzt,
  *                         "x" = Wiki-Angaben widersprechen sich
  *
- * Diese Datei wird generiert. Handische Aenderungen gehen beim naechsten Lauf verloren.
+ * Diese Datei wird erzeugt von tools/build-data.js aus dem JSON, das
+ * tools/import.html herunterlädt. Handische Änderungen gehen beim nächsten
+ * Lauf verloren — mit einer Ausnahme: die Kurznamen (.short) werden aus der
+ * bestehenden Datei übernommen und dürfen hier gepflegt werden.
  */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();

@@ -92,6 +92,8 @@ app.js            Oberfläche: DOM, Ereignisse, Easter Eggs
 legal.js          Kleines Skript für die beiden Rechtsseiten
 netlify.toml      Auslieferung: Header, Caching, 404
 tools/serve.js    Statischer Server für Entwicklung und Tests
+tools/import.html Holt die Daten aus dem Wiki (läuft nur lokal)
+tools/build-data.js  Macht aus dem Import wieder data.js
 test/             Einheitentests (node:test) und Browsertests (Playwright)
 ```
 
@@ -161,6 +163,41 @@ weitergegeben. Stand siehe `generated` in der Datei.
 
 Wo das Wiki sich widerspricht, ist die Stufe im Datensatz als solche markiert
 (`source: "x"`) und die Anwendung weist beim Aufruf darauf hin.
+
+### Datensatz erneuern
+
+`data.js` wird erzeugt, nicht von Hand gepflegt. Der Weg dorthin geht über zwei
+Schritte:
+
+```bash
+npm run serve
+# http://localhost:4173/tools/import.html öffnen,
+# „Alle LGs importieren", dann „Datendatei herunterladen"
+node tools/build-data.js ~/Downloads/lg-daten.json
+npm run test:unit
+```
+
+`tools/import.html` liest die Wiki-Seiten aller Bauwerke, gleicht Kosten und
+Belohnungen gegen die Formeln ab und markiert jede Stufe danach, wie sicher ihr
+Wert ist. `tools/build-data.js` überführt das Ergebnis in `data.js`.
+
+**Der Importer gehört nicht zur Website.** `netlify.toml` beantwortet
+`/tools/*` mit 404, lokal ist er über `npm run serve` erreichbar. Im
+Unterschied zur Anwendung fragt er das Wiki ab — aber erst auf Knopfdruck, beim
+Laden der Seite geht keine Anfrage hinaus.
+
+Zwei Dinge stehen nicht im Wiki und übernimmt der Konverter deshalb aus der
+bestehenden `data.js`:
+
+- die **Kurznamen** für den Förderchat (`Leuchtturm von Alexandria` →
+  `Leuchtturm`), die von Hand gepflegt sind — sie dürfen in `data.js` direkt
+  geändert werden und überleben den nächsten Lauf
+- **Bauwerke, die der Import nicht liefert**; sie bleiben mit ihren bisherigen
+  Werten stehen, statt stillschweigend zu verschwinden
+
+Beides meldet der Konverter im Lauf. `test/build-data.test.js` prüft es, indem
+es aus `data.js` ein Import-JSON baut, durch den Konverter schickt und das
+Ergebnis mit dem Original vergleicht.
 
 ## Lizenz
 
