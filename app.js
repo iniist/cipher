@@ -32,6 +32,10 @@
   /** Faktoren, die als Schnellwahl angeboten werden. */
   var FACTOR_PRESETS = [185, 190, 192, 195, 200];
 
+  /** Grenzen des Arche-Faktors, als Ganzzahl in Prozent. */
+  var FACTOR_MIN = 185;
+  var FACTOR_MAX = 200;
+
   var THEMES = ["light", "dark", "contrast"];
   var DEFAULT_BUILDING = "The_Arc";
   var MAX_FAVORITES = 12;
@@ -50,6 +54,25 @@
 
   /** Faktor als Dezimalzahl, z. B. 190 -> "1,90". */
   function formatFactor(factor) { return (factor / 100).toFixed(2).replace(".", ","); }
+
+  /** Auf den gueltigen Bereich begrenzen; 0 heisst "unbrauchbar". */
+  function clampFactor(value) {
+    if (!(value > 0)) return 0;
+    return Math.min(FACTOR_MAX, Math.max(FACTOR_MIN, Math.round(value)));
+  }
+
+  /**
+   * Eine Eingabe als Faktor lesen. Zugelassen ist, was Leute tatsaechlich
+   * tippen: "1,90", "1.90", "1,9", "190" und "190 %".
+   * @returns {number} Faktor in Prozent, oder 0 wenn nichts Brauchbares drinstand
+   */
+  function parseFactor(text) {
+    var cleaned = String(text).replace(/\s|%/g, "").replace(",", ".");
+    var value = parseFloat(cleaned);
+    if (isNaN(value)) return 0;
+    // Unter 10 ist es als Dezimalzahl gemeint (1,9), darueber als Prozent (190).
+    return clampFactor(value < 10 ? value * 100 : value);
+  }
 
   /** Text so einsetzen, dass er nie als HTML gelesen wird. */
   function escapeHtml(text) {
@@ -124,7 +147,7 @@
       : byId[DEFAULT_BUILDING] ? DEFAULT_BUILDING
       : DATA.buildings[0].id,
     level: Number(stored.level) > 0 ? Math.floor(stored.level) : 10,
-    factor: Number(stored.factor) >= 185 && Number(stored.factor) <= 200 ? Math.floor(stored.factor) : 190,
+    factor: clampFactor(Number(stored.factor)) || 190,
     name: typeof stored.name === "string" ? stored.name : "",
     enabled: normaliseEnabled(stored.enabled),
     theme: THEMES.indexOf(stored.theme) >= 0 ? stored.theme : "dark"
@@ -363,8 +386,12 @@
     $("building").value = building.id;
     $("level").value = String(state.level);
     $("level").max = String(building.maxLevel);
-    $("factor").value = String(state.factor);
-    $("factorValue").textContent = formatFactor(state.factor);
+    // Waehrend des Tippens nicht dazwischenfunken.
+    if (document.activeElement !== $("factor")) $("factor").value = formatFactor(state.factor);
+    $("factorGauge").style.width =
+      ((state.factor - FACTOR_MIN) / (FACTOR_MAX - FACTOR_MIN) * 100) + "%";
+    $("factorDown").disabled = state.factor <= FACTOR_MIN;
+    $("factorUp").disabled = state.factor >= FACTOR_MAX;
     document.querySelectorAll("#factorChips button").forEach(function (chip) {
       chip.classList.toggle("on", Number(chip.dataset.factor) === state.factor);
     });
@@ -679,10 +706,28 @@
     $("levelDown").addEventListener("click", function () { state.level -= 1; render(); });
     $("levelUp").addEventListener("click", function () { state.level += 1; render(); });
 
+    $("factorDown").addEventListener("click", function () { stepFactor(-1); });
+    $("factorUp").addEventListener("click", function () { stepFactor(1); });
+
+    // Beim Tippen mitrechnen, solange etwas Brauchbares dasteht.
     $("factor").addEventListener("input", function (event) {
-      state.factor = Number(event.target.value);
-      render();
+      var parsed = parseFactor(event.target.value);
+      if (parsed) { state.factor = parsed; render(); }
     });
+
+    // Beim Verlassen aufraeumen: der Wert steht danach sauber formatiert da,
+    // auch wenn jemand "1,9" oder Unsinn eingetippt hat.
+    $("factor").addEventListener("blur", function () {
+      $("factor").value = formatFactor(state.factor);
+    });
+
+    $("factor").addEventListener("keydown", function (event) {
+      if (event.key === "ArrowUp") { event.preventDefault(); stepFactor(1); }
+      else if (event.key === "ArrowDown") { event.preventDefault(); stepFactor(-1); }
+      else if (event.key === "Enter") { event.target.blur(); }
+    });
+
+    $("factor").addEventListener("focus", function (event) { event.target.select(); });
 
     $("factorChips").addEventListener("click", function (event) {
       var factor = event.target.dataset.factor;
@@ -757,6 +802,15 @@
     document.querySelectorAll("[data-copy]").forEach(function (button) {
       button.addEventListener("click", function () { copyToClipboard(button); });
     });
+  }
+
+  /** Den Faktor um eine Stufe verschieben und das Feld mitziehen. */
+  function stepFactor(delta) {
+    var next = clampFactor(state.factor + delta);
+    if (!next || next === state.factor) return;
+    state.factor = next;
+    $("factor").value = formatFactor(next);
+    render();
   }
 
   function copyToClipboard(button) {

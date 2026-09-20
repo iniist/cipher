@@ -42,7 +42,7 @@ test.describe("Tastatur", () => {
 
   test("der Fokus wird nur zurueckgegeben, wenn er in der Tabelle stand", async ({ page }) => {
     await page.locator("#factor").focus();
-    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowUp");
     expect(await activeDescriptor(page)).toEqual({ tag: "INPUT", slot: null });
     await expect(page.locator("#factor")).toBeFocused();
   });

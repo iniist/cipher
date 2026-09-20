@@ -80,7 +80,7 @@ test("Daten des Vorgaengers werden einmalig uebernommen", async ({ page }) => {
   await expect(page.locator("#building")).toHaveValue("Notre_Dame");
   await expect(page.locator("#level")).toHaveValue("55");
   await expect(page.locator("#playerName")).toHaveValue("Altbestand");
-  await expect(page.locator("#factorValue")).toHaveText("1,95");
+  await expect(page.locator("#factor")).toHaveValue("1,95");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await expect(page.locator('#rows input[data-slot="2"]')).not.toBeChecked();
   await expect(page.locator(".note.man")).toContainText("Gesamt");
