@@ -150,8 +150,19 @@
     factor: clampFactor(Number(stored.factor)) || 190,
     name: typeof stored.name === "string" ? stored.name : "",
     enabled: normaliseEnabled(stored.enabled),
-    theme: THEMES.indexOf(stored.theme) >= 0 ? stored.theme : "dark"
+    theme: THEMES.indexOf(stored.theme) >= 0 ? stored.theme : "dark",
+    // Wie die Zahl im Stufenfeld zu lesen ist. "next" ist die Vorgabe und
+    // das, was cipher vorher ohne Wahl getan hat.
+    levelMode: stored.levelMode === "current" ? "current" : "next"
   };
+
+  /**
+   * Gerechnet wird immer mit der Stufe, die gefoerdert wird — state.level
+   * ist also unabhaengig von der Anzeige. Dieser Versatz uebersetzt zwischen
+   * beidem: 1, wenn im Feld die aktuelle Stufe steht, sonst 0.
+   * @returns {number}
+   */
+  function levelOffset() { return state.levelMode === "current" ? 1 : 0; }
 
   /** Immer genau fuenf Wahrheitswerte, egal was im Speicher lag. */
   function normaliseEnabled(value) {
@@ -377,6 +388,36 @@
 
   // ----------------------------------------------------------------- Rendern
 
+  /**
+   * Stufenfeld, seine Beschriftung und der Umschalter darueber.
+   *
+   * Dieselbe Zahl heisst fuer die einen "das Bauwerk steht auf 80", fuer die
+   * anderen "es wird gerade auf 81 gezogen". Beides ist verbreitet, und wer
+   * die falsche Lesart annimmt, rechnet eine Stufe daneben. Der Umschalter
+   * stellt die Lesart ein, die Zeile unter dem Feld nennt jeweils die andere
+   * Zahl — damit steht die Antwort da, egal wie herum jemand denkt.
+   *
+   * @param {object} building Das gewaehlte Bauwerk
+   */
+  function renderLevelField(building) {
+    var offset = levelOffset();
+
+    $("level").value = String(state.level - offset);
+    $("level").min = String(1 - offset);
+    $("level").max = String(building.maxLevel - offset);
+
+    $("levelLabel").textContent = offset ? "Aktuelle Stufe" : "Nächste Stufe";
+    $("levelHint").textContent = offset
+      ? "Gefördert wird Stufe " + state.level + "."
+      : state.level <= 1
+        ? "Noch nicht gebaut."
+        : "Steht aktuell auf Stufe " + (state.level - 1) + ".";
+
+    document.querySelectorAll("#levelMode button").forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.dataset.levelMode === state.levelMode));
+    });
+  }
+
   var previousContributions = [];
 
   function render() {
@@ -384,8 +425,7 @@
     state.level = Math.min(Math.max(1, Math.floor(state.level) || 1), building.maxLevel);
 
     $("building").value = building.id;
-    $("level").value = String(state.level);
-    $("level").max = String(building.maxLevel);
+    renderLevelField(building);
     // Waehrend des Tippens nicht dazwischenfunken.
     if (document.activeElement !== $("factor")) $("factor").value = formatFactor(state.factor);
     $("factorGauge").style.width =
@@ -606,27 +646,43 @@
     return -1;
   }
 
+  /**
+   * Der Knopf beschriftet sich mit dem, was er merkt, und die Liste steht
+   * oben im Panel statt ganz unten dahinter. Vorher war beides unauffaellig:
+   * ein graues Label und ein kleiner Stern hinter Suche, Stufe, Name und
+   * Faktor, auf dem Telefon also ausserhalb des ersten Bildschirms.
+   *
+   * Solange nichts gemerkt ist, faellt der Streifen ganz weg. Der Knopf
+   * erklaert die Funktion dann allein — besser als ein leerer Platzhalter
+   * an der prominentesten Stelle der Seite.
+   */
   function renderFavorites() {
     var current = favoriteIndex(state.building, state.level);
+    var offset = levelOffset();
     var saveButton = $("favSave");
+    var chosen = byId[state.building];
+
     saveButton.setAttribute("aria-pressed", String(current >= 0));
-    $("favSaveText").textContent = current >= 0 ? "Gemerkt" : "Merken";
+    $("favSaveText").textContent = chosen.short + " · Stufe " + (state.level - offset) +
+      (current >= 0 ? " gemerkt" : " merken");
     saveButton.title = current >= 0
       ? "Diese Kombination aus den Favoriten entfernen"
       : "Bauwerk und Stufe als Favorit merken";
 
     $("favList").innerHTML = favorites.map(function (entry, index) {
       var building = byId[entry.id];
+      var shown = entry.level - offset;
       return '<li' + (index === current ? ' aria-current="true"' : "") + ">" +
-        '<button type="button" class="fav-go" data-load="' + index + '">' +
-          escapeHtml(building.short) + " <b>" + entry.level + "</b>" +
+        '<button type="button" class="fav-go" data-load="' + index + '" title="' +
+          escapeHtml(building.name + ", Stufe " + shown) + '">' +
+          escapeHtml(building.short) + " <b>" + shown + "</b>" +
         "</button>" +
         '<button type="button" class="fav-del" data-delete="' + index + '" aria-label="' +
-          escapeHtml(building.short + " Stufe " + entry.level) + ' aus den Favoriten entfernen">×</button>' +
+          escapeHtml(building.short + " Stufe " + shown) + ' aus den Favoriten entfernen">×</button>' +
       "</li>";
     }).join("");
 
-    $("favEmpty").hidden = favorites.length > 0;
+    $("favs").hidden = favorites.length === 0;
     revealCurrentFavorite(current);
   }
 
@@ -673,7 +729,16 @@
     });
 
     $("level").addEventListener("change", function (event) {
-      state.level = Number(event.target.value);
+      state.level = Number(event.target.value) + levelOffset();
+      render();
+    });
+
+    $("levelMode").addEventListener("click", function (event) {
+      var button = event.target.closest("button");
+      if (!button) return;
+      // Nur die Anzeige wechselt, nicht die gerechnete Stufe: wer von
+      // "naechste 81" auf "aktuell" umstellt, sieht 80 und denselben Plan.
+      state.levelMode = button.dataset.levelMode === "current" ? "current" : "next";
       render();
     });
 
