@@ -119,6 +119,52 @@ test.describe("Werkzeuge nicht öffentlich", () => {
   });
 });
 
+test.describe("Teilen-Vorschau", () => {
+  test("die Startseite bringt Titel und Beschreibung für die Vorschau mit", async ({ page }) => {
+    await page.goto("/index.html");
+
+    const meta = (selector) => page.locator(selector).getAttribute("content");
+
+    expect(await meta('meta[property="og:type"]')).toBe("website");
+    expect(await meta('meta[property="og:site_name"]')).toBe("cipher");
+    expect(await meta('meta[property="og:locale"]')).toBe("de_DE");
+    expect(await meta('meta[property="og:title"]')).toMatch(/^cipher —/);
+    expect((await meta('meta[property="og:description"]')).length).toBeGreaterThan(60);
+    expect(await meta('meta[name="twitter:card"]')).toBe("summary");
+  });
+
+  test("ohne Bilddatei wird auch kein Bild versprochen", async ({ page }) => {
+    await page.goto("/index.html");
+    // Ein og:image, das ins Leere zeigt, erzeugt eine kaputte Karte.
+    // Solange keine Datei da ist, darf die Angabe nicht existieren.
+    await expect(page.locator('meta[property="og:image"]')).toHaveCount(0);
+    await expect(page.locator('meta[name="twitter:image"]')).toHaveCount(0);
+    expect(await page.locator('meta[name="twitter:card"]').getAttribute("content")).not.toBe("summary_large_image");
+  });
+
+  test("keine Adresse wird behauptet, solange die Domain offen ist", async ({ page }) => {
+    await page.goto("/index.html");
+    // Ein falsches canonical schadet mehr als ein fehlendes.
+    await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+    await expect(page.locator('meta[property="og:url"]')).toHaveCount(0);
+  });
+
+  test("robots.txt hält die Werkzeuge aus dem Index", async ({ request }) => {
+    const response = await request.get("/robots.txt");
+    expect(response.status()).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("Disallow: /tools/");
+    expect(body).toContain("Disallow: /test/");
+  });
+
+  test("die Rechtsseiten bleiben auf noindex", async ({ page }) => {
+    for (const path of ["/impressum.html", "/datenschutz.html"]) {
+      await page.goto(path);
+      expect(await page.locator('meta[name="robots"]').getAttribute("content")).toBe("noindex");
+    }
+  });
+});
+
 test.describe("404", () => {
   test("eine unbekannte Adresse liefert die eigene 404-Seite", async ({ page }) => {
     const response = await page.goto("/gibt-es-nicht.html");

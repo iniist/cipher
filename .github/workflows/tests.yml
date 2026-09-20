@@ -1,0 +1,67 @@
+name: Tests
+
+# Die Einheitentests laufen bei jedem Push — sie brauchen keinen Browser und
+# sind in Sekunden durch. Die Browsertests kosten einen Chromium-Download und
+# laufen darum nur dort, wo es zaehlt: bei Pull Requests und auf main.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+# Ein neuer Push auf denselben Zweig macht den laufenden Durchgang
+# ueberfluessig. Das spart Minuten, die auf einem privaten Repo zaehlen.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  einheiten:
+    name: Rechenkern und Datensatz
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Einheitentests
+        run: npm run test:unit
+
+  browser:
+    name: Browsertests
+    # Nur bei Pull Requests und auf main — nicht bei jedem Zwischenstand.
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Nur Chromium: die Suite laeuft in den Projekten "desktop" und
+      # "mobile", beide auf derselben Engine.
+      - name: Chromium bereitstellen
+        run: npx playwright install --with-deps chromium
+
+      - name: Browsertests
+        run: npm run test:e2e
+
+      - name: Bericht bei Fehlschlag sichern
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

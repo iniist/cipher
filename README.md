@@ -100,6 +100,7 @@ calc.js           Rechenkern, reine Funktionen
 app.js            Oberfläche: DOM, Ereignisse, Easter Eggs
 legal.js          Kleines Skript für die beiden Rechtsseiten
 netlify.toml      Auslieferung: Header, Caching, 404
+robots.txt        Hält /tools/ und /test/ aus dem Suchindex
 tools/serve.js    Statischer Server für Entwicklung und Tests
 tools/import.html Holt die Daten aus dem Wiki (läuft nur lokal)
 tools/build-data.js  Macht aus dem Import wieder data.js
@@ -116,6 +117,19 @@ Auf Netlify genügt es, das Repository zu verbinden — `netlify.toml` setzt
 Publish-Verzeichnis, Header und Weiterleitungen selbst. Auf jedem anderen
 Webspace reicht Hochladen; die Header aus `netlify.toml` sollten dann in der
 Server-Konfiguration nachgebildet werden.
+
+### Vorschau beim Teilen
+
+Die Startseite bringt Open-Graph- und Twitter-Card-Angaben mit, damit der Link
+in Chats und Foren als Karte mit Titel und Beschreibung erscheint statt als
+nackte URL.
+
+Bewusst **ohne Bild**: ein `og:image`, das auf eine fehlende Datei zeigt,
+erzeugt eine kaputte Karte — eine reine Textkarte ist dagegen vollständig.
+Ebenso ohne `og:url` und `canonical`, solange die endgültige Adresse nicht
+feststeht; die Dienste nehmen dann die aufgerufene URL, und eine falsche
+Angabe wäre schlechter als keine. Sobald die Domain steht, gehören beide
+nachgetragen — und ein Bild, falls eines dazukommt.
 
 ### Header
 
@@ -134,12 +148,23 @@ der CSP die Seite bricht.
 ## Entwicklung
 
 ```bash
-npm install          # nur für die Tests nötig
-npm run serve        # http://localhost:4173
-npm run test:unit    # Rechenkern und Datensatz (node:test)
-npm run test:e2e     # Browsertests (Playwright, Desktop + Mobil)
-npm test             # beides
+npm install                        # nur für die Tests nötig
+npx playwright install chromium    # einmalig, für die Browsertests
+npm run serve                      # http://localhost:4173
+npm run test:unit                  # Rechenkern und Datensatz (node:test)
+npm run test:e2e                   # Browsertests (Playwright, Desktop + Mobil)
+npm test                           # beides
 ```
+
+### Automatisch
+
+`.github/workflows/tests.yml` lässt die **Einheitentests bei jedem Push**
+laufen — sie brauchen keinen Browser und sind in Sekunden durch. Die
+**Browsertests** kosten einen Chromium-Download und laufen darum nur bei Pull
+Requests und auf `main`. Ein neuer Push auf denselben Zweig bricht den
+laufenden Durchgang ab, damit auf einem privaten Repo keine Minuten
+verpuffen. Schlägt ein Browsertest fehl, hängt der Playwright-Bericht sieben
+Tage als Artefakt am Lauf.
 
 Die Browsertests decken Berechnung, Favoriten, Speicherung, Migration aus dem
 Vorgänger, die Rechtstexte, Barrierefreiheit, die Easter Eggs, die
