@@ -88,6 +88,13 @@
 
 *, *::before, *::after { box-sizing: inherit }
 
+/* Fuer Beschriftungen, die Screenreader brauchen, das Auge aber nicht. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+
 html { background: var(--bg) }
 
 body {
@@ -192,11 +199,14 @@ select {
   padding-right: 32px;
 }
 
-.row { display: flex; gap: 10px; margin-top: 12px }
-.row > div { flex: 1; min-width: 0 }
+/* Unter rund 390px Geraetebreite blieben fuer die Stufenzahl nur noch
+   wenige Pixel zwischen den Steppertasten. Darum bricht die Reihe dort um,
+   statt beide Felder starr nebeneinander zu quetschen. */
+.row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px }
+.row > div { flex: 1 1 150px; min-width: 0 }
 
 .step { display: flex }
-.step input { text-align: center; font-weight: 700; font-size: 1.2rem }
+.step input { text-align: center; font-weight: 700; font-size: 1.2rem; min-width: 0 }
 .step button {
   flex: 0 0 46px;
   font: inherit; font-size: 1.4rem; font-weight: 700;
@@ -219,6 +229,26 @@ input[type=range] { padding: 0; border: 0; background: transparent; accent-color
 :root[data-theme="contrast"] .chips button { border-width: 2px }
 .chips button.on { background: var(--gold); color: var(--on-accent); border-color: var(--gold) }
 
+/* --------------------------------------------------------- Bauwerksfilter */
+
+.filter { display: flex; margin-top: 6px }
+.filter input { flex: 1 1 auto; min-width: 0; font-size: .95rem; padding: 7px 10px }
+.filter input::-webkit-search-cancel-button { display: none }
+
+.filter button {
+  flex: 0 0 38px;
+  font: inherit; font-size: 1.2rem; line-height: 1;
+  background: transparent; color: var(--dim);
+  border: 1.5px solid var(--field-border); border-left: 0;
+  cursor: pointer;
+}
+:root[data-theme="contrast"] .filter button { border-width: 2px; border-left: 0; color: #000 }
+.filter button:hover { color: var(--ink) }
+.filter button[hidden] { display: none }
+
+.filter-count { margin: 4px 0 0; font-size: .82rem; color: var(--dim); min-height: 1.2em }
+.filter-count:empty { display: none }
+
 /* ------------------------------------------------------------ Favoriten */
 
 .favs { margin-top: 14px; padding-top: 12px; border-top: 1.5px solid var(--field-border) }
@@ -235,10 +265,27 @@ input[type=range] { padding: 0; border: 0; background: transparent; accent-color
 }
 :root[data-theme="contrast"] .fav-save { border-width: 2px }
 .fav-save svg { width: 14px; height: 14px }
-.fav-save[aria-pressed="true"] { background: var(--gold); color: var(--on-accent); border-color: var(--gold) }
+/* Nicht volle Goldflaeche: der aktive Faktor-Chip ist eine Einstellung und
+   darf leuchten, dieser Knopf ist nur eine Aktion. Der gefuellte Stern
+   zeigt den Zustand, ohne mit dem Chip zu konkurrieren. */
+.fav-save[aria-pressed="true"] { color: var(--gold); border-color: var(--gold) }
+.fav-save[aria-pressed="true"] svg { fill: currentColor }
+:root[data-theme="contrast"] .fav-save[aria-pressed="true"] { color: #000; border-color: #000 }
 
-.fav-list { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0 }
+/* Bei voller Liste wuchs das Panel um rund 400px und schob den Foerderplan
+   aus dem Bild. Drei Reihen bleiben sichtbar, der Rest ist scrollbar — die
+   Hoehe ist damit unabhaengig von der Anzahl. */
+.fav-list {
+  list-style: none;
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: 8px 0 0; padding: 0;
+  max-height: calc(3 * 2rem + 2 * 6px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 .fav-list:empty { display: none }
+/* Platz fuer den Rollbalken, damit er die Chips nicht ueberdeckt. */
+.fav-list { scrollbar-width: thin; padding-right: 2px }
 
 .fav-list li { display: flex; border: 1.5px solid var(--field-border) }
 :root[data-theme="contrast"] .fav-list li { border-width: 2px }
@@ -269,6 +316,9 @@ input[type=range] { padding: 0; border: 0; background: transparent; accent-color
 .bar i { display: block; height: 100%; transition: width .4s cubic-bezier(.2, .8, .2, 1) }
 
 .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--dim); margin-bottom: 10px }
+/* Ohne diese Regel schlaegt das display:flex oben das display:none, das der
+   Browser fuer [hidden] vorsieht — die Legende blieb im Leerzustand stehen. */
+.legend[hidden] { display: none }
 .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: 0; background: var(--c) }
 /* Im Kontrastmodus sind alle Farben schwarz — die Legende bekommt darum
    dieselbe Schraffur wie der Balken, damit sie unterscheidbar bleibt. */
@@ -394,6 +444,7 @@ tr.off td.pay { text-decoration: line-through }
   border: 0; padding: 11px;
 }
 .copy button.done { background: var(--ok); color: var(--on-accent) }
+.copy button:disabled { opacity: .45; cursor: default }
 
 /* ----------------------------------------------------------------- Fuss */
 

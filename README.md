@@ -32,11 +32,20 @@ einzahlen solltest, und zwei fertige Zeilen zum Kopieren in den Förderchat.
 
 Häkchen weg = der Platz wird nicht angeboten und fällt in deinen Eigenanteil.
 
+### Bauwerk finden
+
+49 Bauwerke in 24 Zeitaltern sind viel zum Scrollen. Das Suchfeld unter der
+Auswahl filtert nach Name, Kurzname und Zeitalter — Groß- und Kleinschreibung
+sowie Umlaute spielen keine Rolle. Das gerade gewählte Bauwerk bleibt dabei
+immer wählbar, auch wenn die Suche es nicht trifft.
+
 ### Favoriten
 
 Bauwerk **und** Stufe lassen sich zusammen merken (bis zu zwölf Kombinationen).
 Ein Tipp auf einen Favoriten springt zurück — praktisch, wenn du mehrere
-Bauwerke parallel hochziehst. Die Liste liegt im Browser, nicht auf einem Server.
+Bauwerke parallel hochziehst. Die Liste zeigt drei Reihen und scrollt darüber
+hinaus, damit sie den Förderplan nicht aus dem Bild schiebt. Sie liegt im
+Browser, nicht auf einem Server.
 
 ### Wenn Daten fehlen
 
@@ -144,6 +153,9 @@ Sicherheits-Header samt CSP und die Zusicherung „keine externen Anfragen“ ab
   deutlich sichtbarem Fokusring.
 - `prefers-reduced-motion` schaltet sämtliche Animationen ab — auch die
   Easter Eggs, die dann nur noch einen kurzen Texthinweis zeigen.
+- Ab etwa 390 Pixel Breite stehen Stufe und Name nebeneinander, darunter
+  untereinander — auf schmalen Telefonen bliebe die Stufenzahl sonst
+  abgeschnitten. Browsertests messen das bei 320, 360 und 390 Pixeln nach.
 
 ## Easter Eggs
 

@@ -55,6 +55,14 @@
     <label class="l" for="building">Legendäres Bauwerk</label>
     <select id="building"></select>
 
+    <div class="filter">
+      <label class="sr-only" for="buildingFilter">Bauwerke durchsuchen</label>
+      <input id="buildingFilter" type="search" inputmode="search" autocomplete="off"
+             placeholder="Suchen … z. B. Arche, Zukunft" aria-describedby="filterCount">
+      <button type="button" id="filterClear" aria-label="Suche zurücksetzen" hidden>×</button>
+    </div>
+    <p class="filter-count" id="filterCount" role="status"></p>
+
     <div class="row">
       <div>
         <label class="l" for="level">Nächste Stufe</label>

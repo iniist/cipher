@@ -51,6 +51,15 @@
   /** Faktor als Dezimalzahl, z. B. 190 -> "1,90". */
   function formatFactor(factor) { return (factor / 100).toFixed(2).replace(".", ","); }
 
+  /**
+   * Einen Wert fuer einen Attributselektor absichern. Bauwerks-IDs sind
+   * Wiki-Seitennamen und enthalten Apostrophe ("Saint_Basil's_Cathedral").
+   */
+  function cssEscape(value) {
+    if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(value);
+    return String(value).replace(/["'\\]/g, "\\$&");
+  }
+
   /** Text so einsetzen, dass er nie als HTML gelesen wird. */
   function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, function (char) {
@@ -174,10 +183,42 @@
 
   // ----------------------------------------------------------- Aufbau statisch
 
-  function buildBuildingSelect() {
+  /**
+   * Text fuer den Vergleich vereinheitlichen: Kleinschreibung, Umlaute und
+   * Akzente weg. So findet "arche" auch "Die Arche" und "futur" nichts,
+   * "zukunft" aber alle Bauwerke des Zeitalters.
+   */
+  function normalise(text) {
+    return String(text).toLowerCase()
+      .replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ß/g, "ss")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  /**
+   * Das Auswahlfeld aufbauen, optional auf einen Suchbegriff eingeschraenkt.
+   * Das gerade gewaehlte Bauwerk bleibt immer in der Liste — sonst zeigte
+   * das Feld etwas anderes an, als der Plan darunter berechnet.
+   * @param {string} [query] Suchbegriff; leer heisst: alle
+   * @returns {number} Wie viele Bauwerke auf die Suche passen
+   */
+  function buildBuildingSelect(query) {
+    var needle = normalise(query || "").trim();
+    var matches = DATA.buildings.filter(function (building) {
+      if (!needle) return true;
+      return normalise(building.name).indexOf(needle) >= 0 ||
+        normalise(building.short).indexOf(needle) >= 0 ||
+        normalise(building.era).indexOf(needle) >= 0;
+    });
+
+    var shown = matches.slice();
+    if (!shown.some(function (building) { return building.id === state.building; })) {
+      var current = byId[state.building];
+      if (current) shown.unshift(current);
+    }
+
     var groups = [];
     var byEra = {};
-    DATA.buildings.forEach(function (building) {
+    shown.forEach(function (building) {
       if (!byEra[building.era]) { byEra[building.era] = []; groups.push(building.era); }
       byEra[building.era].push(building);
     });
@@ -187,6 +228,25 @@
       }).join("");
       return '<optgroup label="' + escapeHtml(era) + '">' + options + "</optgroup>";
     }).join("");
+
+    return matches.length;
+  }
+
+  /** Das Auswahlfeld auf den aktuellen Suchbegriff bringen und darueber berichten. */
+  function applyBuildingFilter() {
+    var query = $("buildingFilter").value;
+    var count = buildBuildingSelect(query);
+
+    $("filterClear").hidden = !query;
+    $("filterCount").textContent = !query.trim()
+      ? ""
+      : count === 0
+        ? "Kein Bauwerk gefunden."
+        : count === 1
+          ? "1 Bauwerk gefunden."
+          : count + " Bauwerke gefunden.";
+
+    $("building").value = state.building;
   }
 
   function buildFactorChips() {
@@ -229,6 +289,12 @@
     var building = byId[state.building];
     state.level = Math.min(Math.max(1, Math.floor(state.level) || 1), building.maxLevel);
 
+    // Ein Sprung ueber die Favoriten kann bei aktiver Suche auf ein Bauwerk
+    // fuehren, das gerade ausgefiltert ist. Dann fehlt die Option und das
+    // Feld zeigte etwas anderes an als der Plan darunter — also neu aufbauen.
+    if (!$("building").querySelector('option[value="' + cssEscape(building.id) + '"]')) {
+      applyBuildingFilter();
+    }
     $("building").value = building.id;
     $("level").value = String(state.level);
     $("level").max = String(building.maxLevel);
@@ -287,8 +353,8 @@
     $("legend").hidden = true;
     $("lump").hidden = true;
     delete $("lumpValue").dataset.value;
-    $("chatPlain").textContent = "";
-    $("chatPoints").textContent = "";
+    setChatLine("chatPlain", "");
+    setChatLine("chatPoints", "");
     previousContributions = [];
   }
 
@@ -388,8 +454,19 @@
 
   function renderChat(plan, building) {
     var heading = [state.name.trim(), building.short].filter(Boolean).join(" ");
-    $("chatPlain").textContent = Calc.chatLine(plan, heading, false);
-    $("chatPoints").textContent = Calc.chatLine(plan, heading, true);
+    setChatLine("chatPlain", Calc.chatLine(plan, heading, false));
+    setChatLine("chatPoints", Calc.chatLine(plan, heading, true));
+  }
+
+  /**
+   * Eine Chat-Zeile setzen und den zugehoerigen Knopf mitschalten. Ein
+   * aktiver Knopf ueber einem leeren Kasten sieht bedienbar aus, tut aber
+   * nichts — das ist keine gute Rueckmeldung.
+   */
+  function setChatLine(id, text) {
+    $(id).textContent = text;
+    var button = document.querySelector('[data-copy="' + id + '"]');
+    if (button) button.disabled = !text;
   }
 
   /** Hinweise zu unsicheren Werten und das Eingabefeld fuer eigene Zahlen. */
@@ -458,6 +535,24 @@
     }).join("");
 
     $("favEmpty").hidden = favorites.length > 0;
+    revealCurrentFavorite(current);
+  }
+
+  /**
+   * Die Favoritenliste zeigt nur drei Reihen. Steht der aktive Eintrag
+   * darunter, wird er hereingeholt — ohne die Seite selbst zu scrollen,
+   * darum von Hand statt ueber scrollIntoView.
+   */
+  function revealCurrentFavorite(index) {
+    if (index < 0) return;
+    var list = $("favList");
+    var entry = list.children[index];
+    if (!entry) return;
+
+    var top = entry.offsetTop - list.offsetTop;
+    var bottom = top + entry.offsetHeight;
+    if (top < list.scrollTop) list.scrollTop = top;
+    else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
   }
 
   function toggleFavorite() {
@@ -489,6 +584,19 @@
       state.level = Number(event.target.value);
       render();
     });
+
+    // Von Stufe 10 auf 80 hiesse sonst: siebzig Mal tippen oder erst leeren.
+    // Markiert ersetzt die erste Ziffer den alten Wert.
+    $("level").addEventListener("focus", function (event) { event.target.select(); });
+
+    $("buildingFilter").addEventListener("input", applyBuildingFilter);
+    $("buildingFilter").addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && event.target.value) {
+        event.preventDefault();
+        clearBuildingFilter();
+      }
+    });
+    $("filterClear").addEventListener("click", clearBuildingFilter);
 
     $("levelDown").addEventListener("click", function () { state.level -= 1; render(); });
     $("levelUp").addEventListener("click", function () { state.level += 1; render(); });
@@ -571,6 +679,12 @@
     document.querySelectorAll("[data-copy]").forEach(function (button) {
       button.addEventListener("click", function () { copyToClipboard(button); });
     });
+  }
+
+  function clearBuildingFilter() {
+    $("buildingFilter").value = "";
+    applyBuildingFilter();
+    $("buildingFilter").focus();
   }
 
   function copyToClipboard(button) {
@@ -727,7 +841,7 @@
 
   // ------------------------------------------------------------------- Start
 
-  buildBuildingSelect();
+  buildBuildingSelect("");
   buildFactorChips();
   setTheme(state.theme);
   $("dataDate").textContent = new Date(DATA.generated).toLocaleDateString("de-DE");
