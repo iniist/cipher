@@ -1,0 +1,528 @@
+/*!
+ * cipher — Darstellung
+ *
+ * Drei Themes ueber das Attribut data-theme am <html>: dark (Blaupause),
+ * light (Weisspause) und contrast (Schwarz auf Weiss, maximaler Kontrast).
+ * Alle Farben laufen ueber Custom Properties, damit ein Theme nur die
+ * Variablen neu belegen muss.
+ */
+
+/* ---------------------------------------------------------------- Themes */
+
+:root {
+  /* Blaupause (dunkel) */
+  --bg: #1f4a7a;
+  --panel: rgba(22, 57, 89, .82);
+  --field: #163959;
+  --ink: #f2f6fb;
+  --dim: #b9cce3;
+  --grid: rgba(242, 246, 251, .22);
+  --grid-fine: rgba(242, 246, 251, .07);
+  --frame: #f2f6fb;
+  --btn: #f2f6fb;
+  --btn-ink: #163959;
+  --on-accent: #163959;
+  --gold: #f0c24f;
+  --silver: #cfd8e1;
+  --bronze: #e59a66;
+  --iron: #9fb0c2;
+  --own: #ff8f7e;
+  --ok: #7fe0ad;
+  --warn: #ffd36e;
+  --field-border: var(--grid);
+
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  /* Weisspause (hell) */
+  --bg: #eef3f9;
+  --panel: #ffffff;
+  --field: #f3f7fc;
+  --ink: #133356;
+  --dim: #4f6a88;
+  --grid: rgba(31, 74, 122, .14);
+  --grid-fine: rgba(31, 74, 122, .05);
+  --frame: #1f4a7a;
+  --btn: #1f4a7a;
+  --btn-ink: #ffffff;
+  --on-accent: #ffffff;
+  --gold: #b98512;
+  --silver: #74818f;
+  --bronze: #b0602f;
+  --iron: #4f5f71;
+  --own: #c9423a;
+  --ok: #1f8a55;
+  --warn: #a86a00;
+  --field-border: rgba(31, 74, 122, .3);
+  color-scheme: light;
+}
+
+:root[data-theme="contrast"] {
+  --bg: #fff;
+  --panel: #fff;
+  --field: #fff;
+  --ink: #000;
+  --dim: #000;
+  --grid: transparent;
+  --grid-fine: transparent;
+  --frame: #000;
+  --btn: #000;
+  --btn-ink: #fff;
+  --on-accent: #fff;
+  --gold: #000;
+  --silver: #000;
+  --bronze: #000;
+  --iron: #000;
+  --own: #000;
+  --ok: #000;
+  --warn: #000;
+  --field-border: #000;
+  color-scheme: light;
+}
+
+/* ------------------------------------------------------------- Grundlage */
+
+*, *::before, *::after { box-sizing: inherit }
+
+html { background: var(--bg) }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(var(--grid-fine) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px);
+  background-size: 96px 96px, 96px 96px, 16px 16px, 16px 16px;
+  font-family: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+main { max-width: 560px; margin: 0 auto; padding: 16px 14px 24px }
+
+a { color: inherit }
+
+/* ---------------------------------------------------------------- Header */
+
+header {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  margin: 6px 0 22px;
+}
+
+h1 {
+  font-size: clamp(2.1rem, 9vw, 2.7rem);
+  line-height: 1;
+  margin: 0 0 4px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+}
+
+/* Die Wortmarke ist anklickbar (Easter Egg), soll aber nicht wie ein Button
+   aussehen — nur der Fokusring verraet, dass sie bedienbar ist. */
+.wordmark {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.sub { color: var(--dim); margin: 0; max-width: 42ch; font-size: .98rem }
+
+.modes { display: flex; border: 1.5px solid var(--frame); align-self: flex-end }
+.modes button {
+  width: 36px; height: 34px;
+  display: grid; place-items: center;
+  background: transparent; color: var(--ink);
+  border: 0; cursor: pointer;
+}
+.modes button + button { border-left: 1.5px solid var(--frame) }
+.modes button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink) }
+.modes svg { width: 18px; height: 18px }
+
+/* ---------------------------------------------------------------- Panels */
+
+.panel {
+  border: 1.5px solid var(--frame);
+  background: var(--panel);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+:root[data-theme="contrast"] .panel { border-width: 2px }
+.panel h2 { font-size: 1.15rem; margin: 0 0 10px; font-weight: 600 }
+
+/* ------------------------------------------------------ Formularelemente */
+
+.l { display: block; font-size: .9rem; color: var(--dim); margin: 0 0 4px }
+
+select, input {
+  font: inherit;
+  color: var(--ink);
+  background: var(--field);
+  border: 1.5px solid var(--field-border);
+  padding: 9px 10px;
+  width: 100%;
+  border-radius: 0;
+}
+:root[data-theme="contrast"] select,
+:root[data-theme="contrast"] input { border-width: 2px }
+
+select {
+  appearance: none;
+  font-weight: 600;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 55%, calc(100% - 12px) 55%;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+}
+
+.row { display: flex; gap: 10px; margin-top: 12px }
+.row > div { flex: 1; min-width: 0 }
+
+.step { display: flex }
+.step input { text-align: center; font-weight: 700; font-size: 1.2rem }
+.step button {
+  flex: 0 0 46px;
+  font: inherit; font-size: 1.4rem; font-weight: 700;
+  background: var(--btn); color: var(--btn-ink);
+  border: 0; cursor: pointer;
+}
+
+.fac { display: flex; align-items: center; gap: 10px }
+.fac b { font-size: 1.5rem; min-width: 3.2ch; color: var(--gold) }
+input[type=range] { padding: 0; border: 0; background: transparent; accent-color: var(--gold) }
+
+.chips { display: flex; gap: 6px; margin-top: 6px }
+.chips button {
+  flex: 1;
+  font: inherit; font-weight: 600;
+  background: transparent; color: var(--ink);
+  border: 1.5px solid var(--field-border);
+  padding: 5px 0; cursor: pointer;
+}
+:root[data-theme="contrast"] .chips button { border-width: 2px }
+.chips button.on { background: var(--gold); color: var(--on-accent); border-color: var(--gold) }
+
+/* ------------------------------------------------------------ Favoriten */
+
+.favs { margin-top: 14px; padding-top: 12px; border-top: 1.5px solid var(--field-border) }
+
+.favs-head { display: flex; align-items: center; justify-content: space-between; gap: 10px }
+.favs-head .l { margin: 0 }
+
+.fav-save {
+  font: inherit; font-weight: 600; font-size: .9rem;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent; color: var(--ink);
+  border: 1.5px solid var(--field-border);
+  padding: 4px 10px; cursor: pointer;
+}
+:root[data-theme="contrast"] .fav-save { border-width: 2px }
+.fav-save svg { width: 14px; height: 14px }
+.fav-save[aria-pressed="true"] { background: var(--gold); color: var(--on-accent); border-color: var(--gold) }
+
+.fav-list { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0 }
+.fav-list:empty { display: none }
+
+.fav-list li { display: flex; border: 1.5px solid var(--field-border) }
+:root[data-theme="contrast"] .fav-list li { border-width: 2px }
+.fav-list li[aria-current="true"] { border-color: var(--gold) }
+
+.fav-go, .fav-del {
+  font: inherit;
+  background: transparent; color: var(--ink);
+  border: 0; cursor: pointer;
+}
+.fav-go { font-weight: 600; font-size: .92rem; padding: 4px 8px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.fav-go b { color: var(--gold); font-weight: 700 }
+.fav-list li[aria-current="true"] .fav-go { background: var(--gold); color: var(--on-accent) }
+.fav-list li[aria-current="true"] .fav-go b { color: inherit }
+.fav-del { padding: 4px 7px; color: var(--dim); border-left: 1.5px solid var(--field-border); line-height: 1 }
+.fav-del:hover { color: var(--own) }
+
+.fav-empty { color: var(--dim); font-size: .88rem; margin: 8px 0 0 }
+
+/* --------------------------------------------------------- Verteilbalken */
+
+.bar {
+  display: flex; height: 12px;
+  margin: 2px 0 6px;
+  border: 1.5px solid var(--frame);
+}
+.bar[hidden] { display: none }
+.bar i { display: block; height: 100%; transition: width .4s cubic-bezier(.2, .8, .2, 1) }
+
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--dim); margin-bottom: 10px }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: 0; background: var(--c) }
+/* Im Kontrastmodus sind alle Farben schwarz — die Legende bekommt darum
+   dieselbe Schraffur wie der Balken, damit sie unterscheidbar bleibt. */
+:root[data-theme="contrast"] .legend i { border: 1px solid #000; background: repeating-linear-gradient(45deg, #000 0 2px, #fff 2px 6px) }
+:root[data-theme="contrast"] .legend span:first-child i { background: #000 }
+
+.b-own { background: var(--own) }
+.b-1 { background: var(--gold) }
+.b-2 { background: var(--silver) }
+.b-3 { background: var(--bronze) }
+.b-4, .b-5 { background: var(--iron) }
+:root[data-theme="contrast"] .b-own { background: #000 }
+:root[data-theme="contrast"] .bar i:not(.b-own) { background: repeating-linear-gradient(45deg, #000 0 2px, #fff 2px 6px) }
+
+/* --------------------------------------------------------------- Tabelle */
+
+table { width: 100%; border-collapse: collapse }
+th { font-weight: 500; color: var(--dim); font-size: .85rem; text-align: right; padding: 0 4px 6px }
+th:first-child { text-align: left }
+td { padding: 9px 4px; border-top: 1px solid var(--grid); text-align: right }
+:root[data-theme="light"] td { border-top-color: rgba(31, 74, 122, .15) }
+:root[data-theme="contrast"] td { border-top: 1px solid #000 }
+td:first-child { text-align: left; white-space: nowrap }
+td.pay { font-weight: 700; font-size: 1.15rem }
+td.pre { font-weight: 600; color: var(--warn) }
+td.empty { padding: 14px 0; color: var(--dim); white-space: normal; text-align: left; border-top: 0 }
+table.none thead { display: none }
+
+tr.off td:not(:first-child) { opacity: .35 }
+tr.off td.pay { text-decoration: line-through }
+
+.safe {
+  display: inline-block;
+  background: var(--ok); color: var(--on-accent);
+  font-weight: 700; font-size: .85rem;
+  padding: 2px 8px;
+  animation: pop .3s ease-out;
+}
+
+.pl { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700 }
+.pl input { width: 20px; height: 20px; accent-color: var(--gold); margin: 0 }
+
+.tag {
+  display: inline-block;
+  padding-left: 8px;
+  border-left: 4px solid var(--c);
+  color: var(--c);
+  font-weight: 700; font-size: 1.05rem;
+}
+:root[data-theme="contrast"] .tag { color: #000; border-left-color: #000 }
+
+/* ------------------------------------------------------------ Kennzahlen */
+
+.sum {
+  display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px;
+  margin-top: 14px; padding-top: 12px;
+  border-top: 1.5px solid var(--frame);
+}
+.sum div { color: var(--dim); font-size: .9rem }
+.sum b { display: block; font-size: 1.45rem; line-height: 1.1; color: var(--ink) }
+.sum .ext b { color: var(--ok) }
+.sum .own b { color: var(--own) }
+
+/* ----------------------------------------------------------- Vorab-Block */
+
+.lump {
+  display: flex; gap: 14px; align-items: center;
+  margin-top: 12px; padding: 12px;
+  border: 1.5px solid var(--ok);
+  background: rgba(127, 224, 173, .08);
+}
+:root[data-theme="light"] .lump { background: rgba(31, 138, 85, .06) }
+:root[data-theme="contrast"] .lump { border-width: 2px; border-color: #000; background: none }
+.lump[hidden] { display: none }
+.lump-n { flex-shrink: 0; text-align: center; min-width: 6.5ch }
+.lump-n b { display: block; font-size: 1.7rem; line-height: 1.05; color: var(--ok) }
+.lump-n span { font-size: .8rem; color: var(--dim) }
+.lump p { margin: 0; font-size: .95rem }
+
+/* ------------------------------------------------------------- Hinweise */
+
+.note {
+  margin-top: 10px; padding: 10px;
+  border: 1.5px dashed var(--warn);
+  color: var(--warn);
+  font-size: .95rem;
+}
+.note.man { border-color: var(--ok); color: var(--ok) }
+.note .in { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px }
+.note .in div { flex: 1 1 40% }
+.note .in .go { flex: 1 1 100% }
+.note .in label { display: block; font-size: .8rem; margin-bottom: 2px }
+.note .go { font: inherit; font-weight: 600; cursor: pointer; background: var(--warn); color: var(--on-accent); border: 0; padding: 10px 14px }
+
+.link { font: inherit; font-weight: 600; cursor: pointer; background: none; border: 0; color: inherit; text-decoration: underline; padding: 0 }
+.warnline { color: var(--own); font-size: .95rem; margin-top: 8px }
+
+/* ------------------------------------------------------------ Kopiertext */
+
+.copy + .copy { margin-top: 14px }
+.copy .t {
+  font-size: .95rem;
+  background: var(--field);
+  border: 1px solid var(--grid);
+  padding: 8px 10px;
+  word-break: break-word;
+  min-height: 2.6em;
+}
+:root[data-theme="contrast"] .copy .t { border: 2px solid #000 }
+.copy button {
+  font: inherit; font-weight: 600; cursor: pointer;
+  width: 100%; margin-top: 6px;
+  background: var(--btn); color: var(--btn-ink);
+  border: 0; padding: 11px;
+}
+.copy button.done { background: var(--ok); color: var(--on-accent) }
+
+/* ----------------------------------------------------------------- Fuss */
+
+.foot { color: var(--dim); font-size: .85rem; margin-top: 20px }
+.foot p { margin: 0 0 10px }
+.foot a { color: inherit }
+
+.site-foot {
+  max-width: 560px; margin: 0 auto; padding: 0 14px 40px;
+  color: var(--dim); font-size: .82rem;
+}
+/* Auf den Rechtsseiten ist der Textblock breiter — der Fuss zieht mit. */
+.site-foot.wide { max-width: 720px }
+.site-foot hr { border: 0; border-top: 1.5px dashed var(--field-border); margin: 0 0 14px }
+.site-foot p { margin: 0 0 10px }
+.foot-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px }
+.foot-links a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--field-border) }
+.foot-links a:hover { border-bottom-color: var(--gold); color: var(--gold) }
+
+/* ----------------------------------------------------- Rechtliche Seiten */
+
+.legal { max-width: 720px }
+.legal h1 { white-space: normal; font-size: clamp(1.8rem, 7vw, 2.4rem); margin-bottom: 8px }
+.legal .lead { color: var(--dim); margin: 0 0 28px; font-size: .95rem }
+.legal h2 { font-size: 1.1rem; font-weight: 600; margin: 28px 0 8px }
+.legal p { margin: 0 0 10px }
+.legal ul { margin: 0 0 10px; padding-left: 20px }
+.legal li { margin-bottom: 4px }
+.legal .muted { color: var(--dim) }
+.legal a { color: var(--gold) }
+:root[data-theme="contrast"] .legal a { color: #000 }
+
+.card { border: 1.5px solid var(--field-border); background: var(--field); padding: 14px 16px; margin: 0 0 12px }
+:root[data-theme="contrast"] .card { border-width: 2px }
+.card p { margin: 0 0 2px }
+
+.highlight { border: 1.5px solid var(--ok); border-left-width: 4px; background: rgba(127, 224, 173, .08); padding: 14px 16px; margin: 0 0 24px }
+:root[data-theme="light"] .highlight { background: rgba(31, 138, 85, .06) }
+:root[data-theme="contrast"] .highlight { border-width: 2px; border-left-width: 5px; border-color: #000; background: none }
+.highlight p { margin: 0 }
+
+.back { display: inline-block; margin-bottom: 18px; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--field-border) }
+.back:hover { color: var(--gold); border-bottom-color: var(--gold) }
+
+/* ------------------------------------------------------------ Easter Eggs */
+
+/* 1) Freigabe-Stempel: erscheint, wenn ein Plan ohne Vorleistung aufgeht. */
+.stamp {
+  position: fixed;
+  right: clamp(10px, 4vw, 40px);
+  bottom: clamp(10px, 4vw, 40px);
+  z-index: 3;
+  pointer-events: none;
+  display: grid; place-items: center;
+  width: 118px; height: 118px;
+  border: 3px double var(--ok);
+  border-radius: 50%;
+  color: var(--ok);
+  font-weight: 700; font-size: .82rem; letter-spacing: .14em;
+  text-transform: uppercase; text-align: center;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  transform: rotate(-14deg);
+  animation: stamp-in 2.8s cubic-bezier(.2, 1.4, .3, 1) forwards;
+}
+.stamp span { display: block; font-size: .62rem; letter-spacing: .1em; color: var(--dim); margin-top: 3px }
+
+@keyframes stamp-in {
+  0%   { opacity: 0; transform: rotate(-30deg) scale(2.6) }
+  14%  { opacity: 1; transform: rotate(-14deg) scale(1) }
+  18%  { transform: rotate(-14deg) scale(1.07) }
+  24%  { transform: rotate(-14deg) scale(1) }
+  80%  { opacity: 1 }
+  100% { opacity: 0; transform: rotate(-14deg) scale(1) }
+}
+
+/* 2) Blaupausen-Scan: ein Lichtstrahl laeuft einmal ueber die Seite. */
+.scan {
+  position: fixed; inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 0%, transparent 42%,
+    color-mix(in srgb, var(--gold) 55%, transparent) 50%,
+    transparent 58%, transparent 100%
+  );
+  background-size: 260% 100%;
+  animation: scan-sweep 1.5s cubic-bezier(.4, 0, .3, 1) forwards;
+  mix-blend-mode: screen;
+}
+:root[data-theme="light"] .scan, :root[data-theme="contrast"] .scan { mix-blend-mode: multiply }
+
+@keyframes scan-sweep {
+  from { background-position: 160% 0 }
+  to   { background-position: -60% 0 }
+}
+
+/* 3) Plotter: die Wortmarke wird Buchstabe fuer Buchstabe neu "gezeichnet". */
+.wordmark.plotting > span {
+  display: inline-block;
+  animation: plot-in .5s cubic-bezier(.2, .9, .3, 1.2) backwards;
+  animation-delay: calc(var(--i) * 70ms);
+}
+@keyframes plot-in {
+  from { opacity: 0; transform: translateY(-.22em) scaleY(.4); filter: blur(2px) }
+  to   { opacity: 1; transform: none; filter: none }
+}
+
+/* Kurze Rueckmeldung am unteren Rand, wenn ein Easter Egg ausgeloest wurde. */
+.toast {
+  position: fixed;
+  left: 50%; bottom: 18px;
+  z-index: 5;
+  transform: translateX(-50%);
+  background: var(--btn); color: var(--btn-ink);
+  font-weight: 600; font-size: .9rem; letter-spacing: .04em;
+  padding: 8px 16px;
+  border: 1.5px solid var(--frame);
+  animation: toast-in .25s ease-out, toast-out .4s ease-in 2.1s forwards;
+}
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 12px) } }
+@keyframes toast-out { to { opacity: 0; transform: translate(-50%, 12px) } }
+
+/* ------------------------------------------------------------- Animation */
+
+@keyframes pop { from { transform: scale(.6); opacity: 0 } }
+@keyframes flash { from { background: rgba(255, 211, 110, .28) } to { background: transparent } }
+td.chg { animation: flash .7s ease-out }
+:root[data-theme="contrast"] td.chg { animation: none }
+
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 3px solid var(--warn);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar i { transition: none }
+  .safe, td.chg, .stamp, .scan, .wordmark.plotting > span, .toast { animation: none }
+  /* Der Stempel wuerde sonst dauerhaft stehen bleiben — er wird in diesem
+     Modus gar nicht erst eingeblendet (siehe app.js). */
+}

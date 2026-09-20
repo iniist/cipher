@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="cipher — Förder-Dashboard für Legendäre Bauwerke: Mäzen-Plätze sicher belegen, FP-Einsatz planen, Text für den Förderchat erzeugen. Inoffizielles Fan-Tool, läuft komplett im Browser.">
+<title>cipher — Das Förder-Dashboard für Mäzen-Plätze &amp; FP-Einsatz</title>
+
+<!-- Favicon als Daten-URI: keine zusätzliche Anfrage, kein externer Host. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231f4a7a'/%3E%3Cpath d='M22 10.5a7.5 7.5 0 1 0 0 11' fill='none' stroke='%23f0c24f' stroke-width='3.2' stroke-linecap='square'/%3E%3C/svg%3E">
+
+<!-- Theme vor dem ersten Frame setzen, damit es nicht kurz aufblitzt. -->
+<script>
+(function () {
+  try {
+    var saved = JSON.parse(localStorage.getItem("cipher:state") || "{}");
+    if (["light", "dark", "contrast"].indexOf(saved.theme) >= 0) {
+      document.documentElement.dataset.theme = saved.theme;
+    }
+  } catch (e) { /* Speicher gesperrt — das Standard-Theme bleibt stehen. */ }
+})();
+</script>
+
+<link rel="stylesheet" href="./fonts.css">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<main>
+
+  <header>
+    <div>
+      <h1><button type="button" class="wordmark" id="wordmark">cipher</button></h1>
+      <p class="sub">Das Förder-Dashboard für Mäzen-Plätze &amp; FP-Einsatz.</p>
+    </div>
+    <div class="modes" role="group" aria-label="Darstellung">
+      <button type="button" data-mode="light" aria-label="Hell" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
+      <button type="button" data-mode="dark" aria-label="Dunkel" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+      <button type="button" data-mode="contrast" aria-label="Kontrast" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button>
+    </div>
+  </header>
+
+  <section class="panel">
+    <h2>Bauwerk</h2>
+
+    <label class="l" for="building">Legendäres Bauwerk</label>
+    <select id="building"></select>
+
+    <div class="row">
+      <div>
+        <label class="l" for="level">Nächste Stufe</label>
+        <div class="step">
+          <button type="button" id="levelDown" aria-label="Stufe runter">−</button>
+          <input id="level" type="number" inputmode="numeric" min="1">
+          <button type="button" id="levelUp" aria-label="Stufe hoch">+</button>
+        </div>
+      </div>
+      <div>
+        <label class="l" for="playerName">Dein Name</label>
+        <input id="playerName" autocomplete="nickname" placeholder="Spielername">
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <label class="l" for="factor">Faktor (Arche-Bonus)</label>
+      <div class="fac">
+        <b id="factorValue">1,90</b>
+        <input id="factor" type="range" min="185" max="200" step="1" aria-describedby="factorValue">
+      </div>
+      <div class="chips" id="factorChips"></div>
+    </div>
+
+    <div class="favs">
+      <div class="favs-head">
+        <span class="l" id="favsLabel">Favoriten</span>
+        <button type="button" class="fav-save" id="favSave" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 17l-5.3 2.7 1.1-5.9L3.5 9.7l5.9-.8z"/></svg>
+          <span id="favSaveText">Merken</span>
+        </button>
+      </div>
+      <ul class="fav-list" id="favList" aria-labelledby="favsLabel"></ul>
+      <p class="fav-empty" id="favEmpty">Noch nichts gemerkt. Bauwerk und Stufe merken, um später mit einem Tipp zurückzuspringen.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Förderplan</h2>
+
+    <div class="bar" id="bar" role="img" aria-label="Verteilung der Gesamtkosten auf Eigenanteil und Mäzen-Plätze"></div>
+    <div class="legend" id="legend">
+      <span><i style="--c:var(--own)"></i>Eigenanteil</span>
+      <span><i style="--c:var(--gold)"></i>P1</span>
+      <span><i style="--c:var(--silver)"></i>P2</span>
+      <span><i style="--c:var(--bronze)"></i>P3</span>
+      <span><i style="--c:var(--iron)"></i>P4–P5</span>
+    </div>
+
+    <table>
+      <thead><tr><th scope="col">Platz</th><th scope="col">Belohnung</th><th scope="col">Einzahlen</th><th scope="col">Vorher sichern</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+
+    <div class="lump" id="lump" hidden>
+      <div class="lump-n"><b id="lumpValue">0</b><span>vorab einzahlen</span></div>
+      <p id="lumpText"></p>
+    </div>
+
+    <div id="note"></div>
+    <div id="warn"></div>
+
+    <div class="sum">
+      <div><b id="sumTotal">–</b>Gesamt</div>
+      <div class="ext"><b id="sumExternal">–</b>Fremd</div>
+      <div class="own"><b id="sumOwn">–</b>Eigenanteil <span id="sumPercent"></span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Förderchat</h2>
+    <div class="copy"><div class="t" id="chatPlain"></div><button type="button" data-copy="chatPlain">Nur Plätze kopieren</button></div>
+    <div class="copy"><div class="t" id="chatPoints"></div><button type="button" data-copy="chatPoints">Mit FP kopieren</button></div>
+  </section>
+
+  <div class="foot">
+    <p>„Vorher sichern“ ist, was du selbst einzahlen musst, bevor der Platz vergeben wird, damit ihn niemand mehr überbieten kann. Häkchen weg = Platz wird nicht angeboten.</p>
+    <p>Daten: <a href="https://forgeofempires.fandom.com/de/wiki/" target="_blank" rel="noopener noreferrer">Forge of Empires Wiki</a> (Fandom, <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.de" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a>), Stand <span id="dataDate"></span>. Kosten per Formel, P2–P5 aus P1 berechnet.</p>
+  </div>
+
+</main>
+
+<footer class="site-foot">
+  <hr>
+  <p><strong>Ohne Gewähr.</strong> cipher rechnet nach bestem Wissen, kann sich aber irren — durch veraltete Daten, Spielbalance-Änderungen oder schlicht einen Fehler. Alle Angaben sind unverbindlich, eine Haftung für Richtigkeit, Vollständigkeit und Aktualität ist ausgeschlossen. Im Zweifel gilt immer das, was das Spiel anzeigt.</p>
+  <p>cipher ist ein inoffizielles Fan-Projekt und steht in keiner Verbindung zur InnoGames GmbH; es wird von ihr weder betrieben, unterstützt noch geprüft. „Forge of Empires“ sowie alle zugehörigen Bezeichnungen und Logos sind Marken der InnoGames GmbH. Ihre Nennung dient allein der Beschreibung, wofür dieses Werkzeug gedacht ist.</p>
+  <nav class="foot-links" aria-label="Rechtliches">
+    <a href="./impressum.html">Impressum</a>
+    <a href="./datenschutz.html">Datenschutz</a>
+    <a href="https://github.com/iniist/cipher" target="_blank" rel="noopener noreferrer">Quelltext</a>
+  </nav>
+</footer>
+
+<script src="./data.js"></script>
+<script src="./calc.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>

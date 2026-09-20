@@ -1,0 +1,17 @@
+{
+  "name": "cipher",
+  "version": "1.0.0",
+  "description": "Das Förder-Dashboard für Mäzen-Plätze & FP-Einsatz — ein inoffizielles Fan-Tool für Forge of Empires.",
+  "private": true,
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/iniist/cipher" },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\" && npm run test:e2e",
+    "test:unit": "node --test \"test/*.test.js\"",
+    "test:e2e": "playwright test",
+    "serve": "node tools/serve.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "~1.56.1"
+  }
+}
