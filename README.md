@@ -35,9 +35,15 @@ Häkchen weg = der Platz wird nicht angeboten und fällt in deinen Eigenanteil.
 ### Bauwerk finden
 
 49 Bauwerke in 24 Zeitaltern sind viel zum Scrollen. Das Suchfeld unter der
-Auswahl filtert nach Name, Kurzname und Zeitalter — Groß- und Kleinschreibung
-sowie Umlaute spielen keine Rolle. Das gerade gewählte Bauwerk bleibt dabei
-immer wählbar, auch wenn die Suche es nicht trifft.
+Auswahl findet sie nach Name, Kurzname und Zeitalter — Groß- und
+Kleinschreibung sowie Umlaute spielen keine Rolle. Die Treffer erscheinen als
+eigene Liste darunter, ein Tipp darauf wählt das Bauwerk aus, Enter nimmt den
+ersten.
+
+Die Suche **schränkt das Auswahlfeld nicht ein**. Es enthält immer alle
+Bauwerke und zeigt immer das wirklich gewählte; nichts wechselt die Auswahl
+ohne einen Klick. Am Telefon erspart das den Weg durch die native Liste mit
+49 Einträgen.
 
 ### Favoriten
 

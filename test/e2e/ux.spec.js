@@ -150,42 +150,85 @@ test.describe("Stufenfeld", () => {
 test.describe("Bauwerkssuche", () => {
   test.beforeEach(async ({ page }) => await page.goto("/index.html"));
 
-  const optionCount = (page) => page.locator("#building option").count();
-  const optionTexts = (page) => page.locator("#building option").allTextContents();
+  const hits = (page) => page.locator(".filter-hit b");
 
-  // Das gewählte Bauwerk bleibt immer in der Liste, auch wenn die Suche es
-  // nicht trifft — sonst zeigte das Feld etwas anderes an als der Plan.
-  // Die Zählung darunter nennt trotzdem nur die echten Treffer.
+  // Die Suche schränkt das Auswahlfeld nicht ein, sondern zeigt ihre Treffer
+  // als eigene Liste darunter. Dadurch enthält das Auswahlfeld immer alle
+  // Bauwerke und immer das wirklich gewählte, und die Trefferzahl stimmt mit
+  // dem überein, was man sieht.
 
-  test("ohne Suche stehen alle Bauwerke zur Wahl", async ({ page }) => {
-    expect(await optionCount(page)).toBe(49);
+  test("ohne Suche steht nur das vollständige Auswahlfeld da", async ({ page }) => {
+    expect(await page.locator("#building option").count()).toBe(49);
     await expect(page.locator("#filterCount")).toHaveText("");
+    await expect(page.locator("#filterResults")).toBeHidden();
     await expect(page.locator("#filterClear")).toBeHidden();
   });
 
-  test("ein Name schränkt die Liste ein", async ({ page }) => {
-    // Beim Start ist "Die Arche" gewählt und zugleich der einzige Treffer.
+  test("die Trefferzahl stimmt mit den angezeigten Treffern überein", async ({ page }) => {
+    // Genau der Fall aus dem Fehlerbericht: "Ho" trifft das Zeitalter
+    // Hochmittelalter (2) und den Horizontriss-Siphon (1).
+    await page.selectOption("#building", "Saturn_VI_Gate_PEGASUS");
+    await page.fill("#buildingFilter", "Ho");
+
+    await expect(page.locator("#filterCount")).toHaveText("3 Bauwerke gefunden.");
+    await expect(hits(page)).toHaveCount(3);
+    await expect(hits(page)).toHaveText(["Markusdom", "Notre Dame", "Horizontriss-Siphon"]);
+    // Das gewählte Bauwerk taucht nicht als vierter Treffer auf.
+    await expect(hits(page)).not.toContainText(["Saturn VI Tor PEGASUS"]);
+  });
+
+  test("das Auswahlfeld bleibt vollständig und behält seine Wahl", async ({ page }) => {
+    await page.selectOption("#building", "Colosseum");
     await page.fill("#buildingFilter", "arche");
-    await expect(page.locator("#filterCount")).toHaveText("1 Bauwerk gefunden.");
-    expect(await optionCount(page)).toBe(1);
-    await expect(page.locator("#building option")).toHaveText(["Die Arche"]);
+
+    expect(await page.locator("#building option").count()).toBe(49);
+    await expect(page.locator("#building")).toHaveValue("Colosseum");
+    await expect(page.locator("#rows tr")).toHaveCount(5);
+  });
+
+  test("ein Klick auf einen Treffer wählt das Bauwerk und schließt die Suche", async ({ page }) => {
+    await page.fill("#buildingFilter", "notre");
+    await page.locator(".filter-hit").first().click();
+
+    await expect(page.locator("#building")).toHaveValue("Notre_Dame");
+    await expect(page.locator("#buildingFilter")).toHaveValue("");
+    await expect(page.locator("#filterResults")).toBeHidden();
+    await expect(page.locator("#rows tr")).toHaveCount(5);
+  });
+
+  test("nichts wechselt das Bauwerk ohne Klick", async ({ page }) => {
+    await page.selectOption("#building", "Colosseum");
+    for (const query of ["a", "ar", "arc", "arch", "arche"]) {
+      await page.fill("#buildingFilter", query);
+      await expect(page.locator("#building")).toHaveValue("Colosseum");
+    }
+    await page.fill("#buildingFilter", "");
+    await expect(page.locator("#building")).toHaveValue("Colosseum");
+  });
+
+  test("Enter nimmt den ersten Treffer", async ({ page }) => {
+    await page.fill("#buildingFilter", "turm zu babel");
+    await page.locator("#buildingFilter").press("Enter");
+    await expect(page.locator("#building")).toHaveValue("Tower_of_Babel");
+    await expect(page.locator("#buildingFilter")).toHaveValue("");
+  });
+
+  test("jeder Treffer nennt sein Zeitalter", async ({ page }) => {
+    await page.fill("#buildingFilter", "titan");
+    await expect(page.locator(".filter-hit span")).toHaveText(["Titan", "Titan", "Titan"]);
   });
 
   test("ein Zeitalter findet alle seine Bauwerke", async ({ page }) => {
     await page.fill("#buildingFilter", "titan");
     await expect(page.locator("#filterCount")).toHaveText("3 Bauwerke gefunden.");
-
-    const texts = await optionTexts(page);
-    for (const gate of ["Saturn VI Tor PEGASUS", "Saturn VI Tor CENTAURUS", "Saturn VI Tor HYDRA"]) {
-      expect(texts).toContain(gate);
-    }
-    expect(texts).not.toContain("Kolosseum");
+    await expect(hits(page)).toHaveText([
+      "Saturn VI Tor PEGASUS", "Saturn VI Tor CENTAURUS", "Saturn VI Tor HYDRA"
+    ]);
   });
 
   test("die Suche ignoriert Groß- und Kleinschreibung sowie Umlaute", async ({ page }) => {
     await page.fill("#buildingFilter", "TURM ZU BABEL");
-    await expect(page.locator("#filterCount")).toHaveText("1 Bauwerk gefunden.");
-    expect(await optionTexts(page)).toContain("Turm zu Babel");
+    await expect(hits(page)).toHaveText(["Turm zu Babel"]);
 
     await page.fill("#buildingFilter", "arktische");
     const lower = await page.locator("#filterCount").textContent();
@@ -197,29 +240,23 @@ test.describe("Bauwerkssuche", () => {
   test("auch der Kurzname trifft", async ({ page }) => {
     // "Leuchtturm" ist der Kurzname, der volle Name lautet anders.
     await page.fill("#buildingFilter", "leuchtturm");
-    await expect(page.locator("#filterCount")).toHaveText("1 Bauwerk gefunden.");
-    expect(await optionTexts(page)).toContain("Leuchtturm von Alexandria");
+    await expect(hits(page)).toHaveText(["Leuchtturm von Alexandria"]);
   });
 
-  test("das gewählte Bauwerk bleibt wählbar, auch wenn die Suche es nicht trifft", async ({ page }) => {
-    await page.selectOption("#building", "Colosseum");
-    await page.fill("#buildingFilter", "arche");
-
-    await expect(page.locator("#filterCount")).toHaveText("1 Bauwerk gefunden.");
-    const texts = await optionTexts(page);
-    expect(texts).toContain("Die Arche");
-    expect(texts).toContain("Kolosseum");
-    await expect(page.locator("#building")).toHaveValue("Colosseum");
-  });
-
-  test("ohne Treffer sagt die Suche das", async ({ page }) => {
-    await page.selectOption("#building", "Colosseum");
+  test("ohne Treffer sagt die Suche das und zeigt nichts an", async ({ page }) => {
     await page.fill("#buildingFilter", "gibtesnicht");
     await expect(page.locator("#filterCount")).toHaveText("Kein Bauwerk gefunden.");
-    // Die aktuelle Wahl bleibt trotzdem stehen, sonst zeigte das Feld
-    // etwas anderes an als der Plan darunter.
-    await expect(page.locator("#building")).toHaveValue("Colosseum");
+    await expect(page.locator("#filterResults")).toBeHidden();
     await expect(page.locator("#rows tr")).toHaveCount(5);
+  });
+
+  test("der aktuell gewählte Treffer ist als solcher erkennbar", async ({ page }) => {
+    await page.fill("#buildingFilter", "arche");
+    await expect(page.locator(".filter-hit").first()).toHaveAttribute("aria-current", "true");
+
+    await page.selectOption("#building", "Colosseum");
+    await page.fill("#buildingFilter", "arche");
+    await expect(page.locator(".filter-hit").first()).not.toHaveAttribute("aria-current", "true");
   });
 
   test("das Kreuz und Escape setzen die Suche zurück", async ({ page }) => {
@@ -227,25 +264,18 @@ test.describe("Bauwerkssuche", () => {
     await expect(page.locator("#filterClear")).toBeVisible();
     await page.click("#filterClear");
     await expect(page.locator("#buildingFilter")).toHaveValue("");
-    expect(await optionCount(page)).toBe(49);
+    await expect(page.locator("#filterResults")).toBeHidden();
 
     await page.fill("#buildingFilter", "arche");
     await page.locator("#buildingFilter").press("Escape");
     await expect(page.locator("#buildingFilter")).toHaveValue("");
-    expect(await optionCount(page)).toBe(49);
+    await expect(page.locator("#filterResults")).toBeHidden();
   });
 
-  test("ein Favorit springt auch zu einem ausgefilterten Bauwerk", async ({ page }) => {
-    await seedFavorites(page, [{ id: "Saint_Basil's_Cathedral", level: 33 }]);
-    // Ein Apostroph in der ID — genau der Fall, der einen Attributselektor
-    // zerlegen kann.
-    await page.fill("#buildingFilter", "arche");
-    await expect(page.locator("#building")).toHaveValue("The_Arc");
-
-    await page.locator(".fav-go").first().click();
+  test("ein Bauwerk mit Apostroph im Schlüssel lässt sich wählen", async ({ page }) => {
+    await page.fill("#buildingFilter", "basilius");
+    await page.locator(".filter-hit").first().click();
     await expect(page.locator("#building")).toHaveValue("Saint_Basil's_Cathedral");
-    await expect(page.locator("#level")).toHaveValue("33");
-    await expect(page.locator("#rows tr")).toHaveCount(5);
   });
 
   test("die Suche bleibt für die Tastatur erreichbar", async ({ page }) => {
@@ -253,6 +283,25 @@ test.describe("Bauwerkssuche", () => {
     await expect(page.locator("#buildingFilter")).toBeFocused();
     const label = await page.locator('label[for="buildingFilter"]').textContent();
     expect(label.trim()).toBe("Bauwerke durchsuchen");
+  });
+
+  test("viele Treffer blähen das Panel nicht auf", async ({ page }) => {
+    await page.setViewportSize({ width: 430, height: 900 });
+    await page.goto("/index.html");
+    const before = await page.locator(".panel").first().evaluate((el) => el.offsetHeight);
+
+    await page.fill("#buildingFilter", "e"); // trifft fast alles
+    const after = await page.locator(".panel").first().evaluate((el) => el.offsetHeight);
+    const found = await hits(page).count();
+    expect(found).toBeGreaterThan(20);
+
+    // Vier Reihen sichtbar plus Trefferzeile, der Rest scrollt. Ungedeckelt
+    // wären es bei ~37px je Eintrag über 1700px.
+    expect(after - before).toBeLessThan(200);
+    expect(after - before).toBeLessThan(found * 37 / 4);
+    const scrollable = await page.locator("#filterResults")
+      .evaluate((el) => el.scrollHeight > el.clientHeight + 1);
+    expect(scrollable).toBe(true);
   });
 });
 

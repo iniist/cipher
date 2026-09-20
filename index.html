@@ -72,10 +72,12 @@
     <div class="filter">
       <label class="sr-only" for="buildingFilter">Bauwerke durchsuchen</label>
       <input id="buildingFilter" type="search" inputmode="search" autocomplete="off"
-             placeholder="Suchen … z. B. Arche, Zukunft" aria-describedby="filterCount">
+             placeholder="Suchen … z. B. Arche, Zukunft"
+             aria-describedby="filterCount" aria-controls="filterResults">
       <button type="button" id="filterClear" aria-label="Suche zurücksetzen" hidden>×</button>
     </div>
     <p class="filter-count" id="filterCount" role="status"></p>
+    <ul class="filter-results" id="filterResults" aria-label="Suchergebnisse"></ul>
 
     <div class="row">
       <div>

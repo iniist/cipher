@@ -249,6 +249,35 @@ input[type=range] { padding: 0; border: 0; background: transparent; accent-color
 .filter-count { margin: 4px 0 0; font-size: .82rem; color: var(--dim); min-height: 1.2em }
 .filter-count:empty { display: none }
 
+/* Die Treffer stehen als eigene Liste unter dem Feld, statt das Auswahlfeld
+   umzubauen. So zeigt das Auswahlfeld immer alle Bauwerke und immer das
+   wirklich gewaehlte — und die Trefferzahl stimmt mit dem ueberein, was
+   man sieht. Auf dem Telefon spart es ausserdem den Weg durch die native
+   Liste mit 49 Eintraegen. */
+.filter-results {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 4px;
+  margin: 6px 0 0; padding: 0;
+  max-height: calc(4 * 2.4rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.filter-results:empty { display: none }
+
+.filter-hit {
+  width: 100%;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  font: inherit; font-size: .95rem; text-align: left;
+  background: var(--field); color: var(--ink);
+  border: 1.5px solid var(--field-border);
+  padding: 7px 10px; cursor: pointer;
+}
+:root[data-theme="contrast"] .filter-hit { border-width: 2px }
+.filter-hit:hover, .filter-hit:focus-visible { border-color: var(--gold) }
+.filter-hit b { font-weight: 600 }
+.filter-hit span { font-size: .82rem; color: var(--dim); white-space: nowrap }
+.filter-hit[aria-current="true"] b::after { content: " ·"; color: var(--gold) }
+
 /* ------------------------------------------------------------ Favoriten */
 
 .favs { margin-top: 14px; padding-top: 12px; border-top: 1.5px solid var(--field-border) }
