@@ -30,10 +30,10 @@
   var SLOT_COLORS = ["var(--gold)", "var(--silver)", "var(--bronze)", "var(--iron)", "var(--iron)"];
 
   /** Faktoren, die als Schnellwahl angeboten werden. */
-  var FACTOR_PRESETS = [185, 190, 192, 195, 200];
+  var FACTOR_PRESETS = [180, 185, 190, 192, 195, 200];
 
   /** Grenzen des Arche-Faktors, als Ganzzahl in Prozent. */
-  var FACTOR_MIN = 185;
+  var FACTOR_MIN = 180;
   var FACTOR_MAX = 200;
 
   var THEMES = ["light", "dark", "contrast"];
@@ -153,8 +153,31 @@
     theme: THEMES.indexOf(stored.theme) >= 0 ? stored.theme : "dark",
     // Wie die Zahl im Stufenfeld zu lesen ist. "next" ist die Vorgabe und
     // das, was cipher vorher ohne Wahl getan hat.
-    levelMode: stored.levelMode === "current" ? "current" : "next"
+    levelMode: stored.levelMode === "current" ? "current" : "next",
+    // Eigener Faktor je Platz; null heisst "folgt dem Wert oben".
+    slotFactors: normaliseSlotFactors(stored.slotFactors),
+    slotsOpen: stored.slotsOpen === true
   };
+
+  /**
+   * Immer genau fuenf Eintraege: ein gueltiger Faktor oder null.
+   * clampFactor liefert 0 fuer alles Unbrauchbare, daraus wird null.
+   */
+  function normaliseSlotFactors(value) {
+    var result = [];
+    for (var i = 0; i < Calc.SLOTS; i++) {
+      var own = Array.isArray(value) ? clampFactor(Number(value[i])) : 0;
+      result.push(own || null);
+    }
+    return result;
+  }
+
+  /** Der Faktor, der fuer jeden Platz tatsaechlich gilt. */
+  function effectiveFactors() {
+    return state.slotFactors.map(function (own) {
+      return own == null ? state.factor : own;
+    });
+  }
 
   /**
    * Gerechnet wird immer mit der Stufe, die gefoerdert wird — state.level
@@ -354,6 +377,75 @@
     if (!options || options.keepFocus !== false) $("buildingFilter").focus();
   }
 
+  /**
+   * Die fuenf Faktorzeilen einmalig aufbauen.
+   *
+   * Einmalig, nicht bei jedem Zeichnen: in den Zeilen stehen Textfelder,
+   * und ein neu geschriebenes innerHTML wuerde bei jedem Tastendruck den
+   * Cursor verlieren. Gezeichnet werden spaeter nur noch die Werte.
+   */
+  function buildSlotRows() {
+    var rows = [];
+    for (var index = 0; index < Calc.SLOTS; index++) {
+      var slot = index + 1;
+      rows.push(
+        '<li data-slot="' + index + '">' +
+          '<span class="tag" style="--c:' + SLOT_COLORS[index] + '">P' + slot + "</span>" +
+          '<div class="step mini">' +
+            '<button type="button" data-slot="' + index + '" data-slot-step="-1"' +
+              ' aria-label="Faktor für P' + slot + ' verringern">−</button>' +
+            '<input type="text" inputmode="decimal" autocomplete="off"' +
+              ' data-slot="' + index + '" aria-label="Faktor für P' + slot + '">' +
+            '<button type="button" data-slot="' + index + '" data-slot-step="1"' +
+              ' aria-label="Faktor für P' + slot + ' erhöhen">+</button>' +
+          "</div>" +
+          '<span class="slot-state"></span>' +
+          '<button type="button" class="slot-reset" data-slot-reset="' + index + '" hidden' +
+            ' aria-label="P' + slot + ' wieder dem Wert oben folgen lassen">×</button>' +
+        "</li>"
+      );
+    }
+    $("slotList").innerHTML = rows.join("");
+  }
+
+  /**
+   * Die Faktorzeilen auf den Stand bringen.
+   *
+   * Ein Platz folgt dem Wert oben, bis jemand ihn hier anfasst — danach ist
+   * er eigen, traegt das Kreuz zum Zuruecknehmen und bleibt stehen, wenn
+   * der obere Wert sich bewegt. Der obere Wert zeigt damit immer etwas
+   * Wahres und muss nie ausgegraut werden.
+   */
+  function renderSlotFactors() {
+    var values = effectiveFactors();
+    var own = 0;
+
+    $("slotList").querySelectorAll("li").forEach(function (item) {
+      var index = Number(item.dataset.slot);
+      var pinned = state.slotFactors[index] != null;
+      var input = item.querySelector("input");
+      if (pinned) own++;
+
+      // Waehrend des Tippens nicht dazwischenfunken.
+      if (document.activeElement !== input) input.value = formatFactor(values[index]);
+      item.classList.toggle("own", pinned);
+      item.querySelector(".slot-reset").hidden = !pinned;
+      // Der Zustand steht als Wort da, nicht nur als Farbe: im Kontrastmodus
+      // ist Gold schwarz, dort traegt die Faerbung nichts.
+      item.querySelector(".slot-state").textContent = pinned ? "eigen" : "folgt";
+      item.querySelector('[data-slot-step="-1"]').disabled = values[index] <= FACTOR_MIN;
+      item.querySelector('[data-slot-step="1"]').disabled = values[index] >= FACTOR_MAX;
+    });
+
+    var low = Math.min.apply(null, values);
+    var high = Math.max.apply(null, values);
+    $("slotsBadge").hidden = own === 0;
+    $("slotsBadge").textContent = low === high
+      ? formatFactor(low)
+      : formatFactor(low) + "–" + formatFactor(high);
+    $("slotsReset").hidden = own === 0;
+  }
+
   function buildFactorChips() {
     $("factorChips").innerHTML = FACTOR_PRESETS.map(function (factor) {
       return '<button type="button" data-factor="' + factor + '">' + formatFactor(factor) + "</button>";
@@ -437,6 +529,7 @@
     });
     if (document.activeElement !== $("playerName")) $("playerName").value = state.name;
 
+    renderSlotFactors();
     renderFavorites();
 
     var total = Calc.totalCost(building, state.level, ownTotals);
@@ -453,6 +546,7 @@
       total: total.value,
       p1: p1.value,
       factor: state.factor,
+      factors: state.slotFactors,
       enabled: state.enabled
     });
 
@@ -799,6 +893,63 @@
       if (factor) { state.factor = Number(factor); render(); }
     });
 
+    $("slotList").addEventListener("click", function (event) {
+      var step = event.target.closest("[data-slot-step]");
+      if (step) {
+        stepSlotFactor(Number(step.dataset.slot), Number(step.dataset.slotStep));
+        return;
+      }
+      var reset = event.target.closest("[data-slot-reset]");
+      if (reset) {
+        state.slotFactors[Number(reset.dataset.slotReset)] = null;
+        render();
+      }
+    });
+
+    // Beim Tippen mitrechnen, solange etwas Brauchbares dasteht — und genau
+    // dadurch wird der Platz eigen.
+    $("slotList").addEventListener("input", function (event) {
+      if (event.target.tagName !== "INPUT") return;
+      var parsed = parseFactor(event.target.value);
+      if (parsed) {
+        state.slotFactors[Number(event.target.dataset.slot)] = parsed;
+        render();
+      }
+    });
+
+    // blur und focus steigen nicht auf, darum in der Erfassungsphase.
+    $("slotList").addEventListener("blur", function (event) {
+      if (event.target.tagName !== "INPUT") return;
+      var index = Number(event.target.dataset.slot);
+      event.target.value = formatFactor(effectiveFactors()[index]);
+    }, true);
+
+    $("slotList").addEventListener("focus", function (event) {
+      if (event.target.tagName === "INPUT") event.target.select();
+    }, true);
+
+    $("slotList").addEventListener("keydown", function (event) {
+      if (event.target.tagName !== "INPUT") return;
+      var index = Number(event.target.dataset.slot);
+      if (event.key === "ArrowUp") { event.preventDefault(); stepSlotFactor(index, 1); }
+      else if (event.key === "ArrowDown") { event.preventDefault(); stepSlotFactor(index, -1); }
+      else if (event.key === "Enter") { event.target.blur(); }
+    });
+
+    // Variante C: ein ausdruecklicher Griff, der alle fuenf wieder dem
+    // Wert oben folgen laesst. Der obere Stepper selbst tut das nicht —
+    // er bewegt nur die Folger, sonst waeren fuenf eingestellte Werte mit
+    // einem Versehen weg.
+    $("slotsReset").addEventListener("click", function () {
+      state.slotFactors = normaliseSlotFactors(null);
+      render();
+    });
+
+    $("slots").addEventListener("toggle", function (event) {
+      state.slotsOpen = event.target.open;
+      persistState();
+    });
+
     $("playerName").addEventListener("input", function (event) {
       state.name = event.target.value;
       render();
@@ -875,6 +1026,22 @@
     if (!next || next === state.factor) return;
     state.factor = next;
     $("factor").value = formatFactor(next);
+    render();
+  }
+
+  /**
+   * Den Faktor eines Platzes um eine Stufe verschieben.
+   * Das Feld wird von Hand nachgezogen: kam der Anstoss von der Tastatur,
+   * steht der Fokus darin und renderSlotFactors laesst es in Ruhe.
+   */
+  function stepSlotFactor(index, delta) {
+    var current = effectiveFactors()[index];
+    var next = clampFactor(current + delta);
+    if (!next || next === current) return;
+
+    state.slotFactors[index] = next;
+    var input = $("slotList").querySelector('input[data-slot="' + index + '"]');
+    if (input) input.value = formatFactor(next);
     render();
   }
 
@@ -1034,6 +1201,12 @@
 
   buildBuildingSelect();
   buildFactorChips();
+  buildSlotRows();
+  // Aufgeklappt, wenn es etwas zu sehen gibt: entweder war der Block zuletzt
+  // offen, oder ein Platz hat einen eigenen Wert. Danach gehoert der Zustand
+  // dem Browser, das toggle-Ereignis schreibt ihn nur mit.
+  $("slots").open = state.slotsOpen ||
+    state.slotFactors.some(function (own) { return own != null; });
   setTheme(state.theme);
   $("dataDate").textContent = new Date(DATA.generated).toLocaleDateString("de-DE");
   bindEvents();

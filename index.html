@@ -127,8 +127,21 @@
       </div>
       <!-- Anzeige, kein Bedienelement: zeigt die Lage im Bereich 1,85 bis 2,00. -->
       <div class="fac-gauge" aria-hidden="true"><i id="factorGauge"></i></div>
-      <p class="sr-only" id="factorHint">Zwischen 1,85 und 2,00. Pfeil hoch und runter ändern den Wert.</p>
+      <p class="sr-only" id="factorHint">Zwischen 1,80 und 2,00. Pfeil hoch und runter ändern den Wert.</p>
       <div class="chips" id="factorChips"></div>
+
+      <!-- Der Arche-Bonus gehört dem Förderer, nicht dem Bauwerk: wer P3
+           übernimmt, kann eine andere Arche haben als wer P1 nimmt. Bis das
+           jemand braucht, bleibt der Block zu und kostet keine Höhe. -->
+      <details class="slots" id="slots">
+        <summary>
+          <span class="slots-title">Faktor je Platz</span>
+          <span class="slots-badge" id="slotsBadge" hidden></span>
+        </summary>
+        <p class="slots-note">Ein Platz folgt dem Wert oben, bis du ihn hier änderst.</p>
+        <ul class="slot-list" id="slotList"></ul>
+        <button type="button" class="link" id="slotsReset" hidden>Alle wieder angleichen</button>
+      </details>
     </div>
   </section>
 

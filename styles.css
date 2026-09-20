@@ -276,6 +276,73 @@ select {
 :root[data-theme="contrast"] .chips button { border-width: 2px }
 .chips button.on { background: var(--gold); color: var(--on-accent); border-color: var(--gold) }
 
+/* ------------------------------------------------------- Faktor je Platz */
+
+/* Der Arche-Bonus gehoert dem Foerderer, nicht dem Bauwerk — wer P3 nimmt,
+   kann eine andere Arche haben als wer P1 nimmt. Die meisten brauchen das
+   nie, darum liegt der Block hinter einem Aufklapper und kostet zu keine
+   Hoehe. */
+.slots { margin-top: 10px; border-top: 1.5px solid var(--field-border); padding-top: 8px }
+:root[data-theme="contrast"] .slots { border-top-width: 2px }
+
+.slots summary {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .9rem; font-weight: 600; color: var(--dim);
+  cursor: pointer; list-style: none;
+}
+.slots summary::-webkit-details-marker { display: none }
+/* Eigener Pfeil, damit er in allen Browsern gleich sitzt und mitdreht. */
+.slots summary::before {
+  content: ""; flex: 0 0 auto;
+  width: 0; height: 0;
+  border: 5px solid transparent;
+  border-left-color: currentColor;
+  transition: transform .15s ease;
+}
+.slots[open] summary::before { transform: rotate(90deg) translateX(-2px) }
+@media (prefers-reduced-motion: reduce) { .slots summary::before { transition: none } }
+
+/* Zeigt die Spanne, sobald ein Platz einen eigenen Wert hat. So steht auch
+   bei zugeklapptem Block da, dass sich etwas unterscheidet. */
+.slots-badge {
+  font-weight: 700; color: var(--gold);
+  border: 1.5px solid var(--gold);
+  padding: 0 6px; font-size: .82rem;
+}
+:root[data-theme="contrast"] .slots-badge { color: #000; border-color: #000; border-width: 2px }
+
+.slots-note { color: var(--dim); font-size: .82rem; margin: 8px 0 0 }
+
+.slot-list { list-style: none; margin: 8px 0 0; padding: 0 }
+.slot-list li { display: flex; align-items: center; gap: 8px; margin-top: 6px }
+.slot-list .tag { font-size: .95rem; flex: 0 0 34px }
+
+/* Kleiner als der grosse Stepper daruber: fuenf davon in voller Groesse
+   waeren ueber 230px hoch. */
+.step.mini { flex: 0 1 148px }
+.step.mini button { flex: 0 0 34px; font-size: 1.1rem }
+.step.mini input { font-size: 1rem; padding: 4px 6px }
+/* Ein Platz mit eigenem Wert faellt auf — sonst sieht man nicht, welcher
+   dem Wert oben noch folgt. */
+.slot-list li.own .step.mini input { color: var(--gold); border-color: var(--gold) }
+:root[data-theme="contrast"] .slot-list li.own .step.mini input { border-width: 3px }
+
+/* Das Wort traegt den Zustand, die Farbe verstaerkt ihn nur. */
+.slot-state { color: var(--dim); font-size: .8rem; flex: 0 0 auto }
+.slot-list li.own .slot-state { color: var(--gold); font-weight: 600 }
+:root[data-theme="contrast"] .slot-list li.own .slot-state { color: #000; text-decoration: underline }
+
+.slot-reset {
+  font: inherit; font-size: 1rem; line-height: 1;
+  background: transparent; color: var(--dim);
+  border: 1.5px solid var(--field-border);
+  padding: 3px 7px; cursor: pointer;
+}
+:root[data-theme="contrast"] .slot-reset { border-width: 2px }
+.slot-reset:hover { color: var(--own) }
+
+#slotsReset { margin-top: 10px; font-size: .85rem; color: var(--dim) }
+
 /* --------------------------------------------------------- Bauwerksfilter */
 
 .filter { display: flex; margin-top: 6px }

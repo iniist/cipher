@@ -161,22 +161,36 @@
    * ueberbieten kann — genau das ist der Betrag unter "vorher sichern".
    * Was am Ende uebrig bleibt, zahlst du selbst ein und levelst damit.
    *
+   * Jeder Platz kann seinen eigenen Arche-Faktor haben, denn der Bonus
+   * gehoert dem Foerderer, nicht dem Bauwerk. Die Absicherung traegt das
+   * ohne Zutun: `needed` rechnet mit der Einzahlung *dieses* Platzes, ein
+   * schwaecherer Faktor bedeutet also automatisch mehr vorher sichern —
+   * was stimmt, weil ein kleinerer Beitrag leichter zu ueberbieten ist.
+   *
    * @param {object} options
    * @param {number} options.total Gesamtkosten der Stufe
    * @param {number} options.p1 Belohnung fuer Platz 1
-   * @param {number} options.factor Arche-Faktor in Prozent
+   * @param {number} options.factor Arche-Faktor in Prozent, gilt fuer jeden
+   *   Platz ohne eigenen Wert
+   * @param {Array<number|null>} [options.factors] Faktor je Platz; null oder
+   *   fehlend heisst: options.factor gilt
    * @param {boolean[]} options.enabled Welche Plaetze angeboten werden (Laenge 5)
    * @returns {{
-   *   rows: Array<{slot:number, reward:number, contribution:number, offered:boolean,
-   *                secure:number|null, tooTight:boolean}>,
+   *   rows: Array<{slot:number, reward:number, factor:number, contribution:number,
+   *                offered:boolean, secure:number|null, tooTight:boolean}>,
    *   total:number, external:number, ownShare:number,
    *   upfront:number, remainder:number, anyTooTight:boolean
    * }}
    */
   function buildPlan(options) {
     var total = options.total;
-    var factor = options.factor;
+    var factors = options.factors || [];
     var enabled = options.enabled;
+
+    /** Der Faktor, der fuer diesen Platz tatsaechlich gilt. */
+    function factorFor(index) {
+      return factors[index] != null ? factors[index] : options.factor;
+    }
 
     var remaining = total;
     var upfront = 0; // Was du zahlst, bevor alle Plaetze vergeben sind
@@ -184,10 +198,11 @@
     var anyTooTight = false;
 
     var rows = rewardChain(options.p1).map(function (reward, index) {
-      var pay = contribution(reward, factor);
+      var pay = contribution(reward, factorFor(index));
       var row = {
         slot: index + 1,
         reward: reward,
+        factor: factorFor(index),
         contribution: pay,
         offered: Boolean(enabled[index]) && reward > 0,
         secure: null,
