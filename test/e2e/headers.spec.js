@@ -142,11 +142,21 @@ test.describe("Teilen-Vorschau", () => {
     expect(await page.locator('meta[name="twitter:card"]').getAttribute("content")).not.toBe("summary_large_image");
   });
 
-  test("keine Adresse wird behauptet, solange die Domain offen ist", async ({ page }) => {
+  test("die eigene Adresse ist eingetragen und überall dieselbe", async ({ page }) => {
     await page.goto("/index.html");
-    // Ein falsches canonical schadet mehr als ein fehlendes.
-    await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
-    await expect(page.locator('meta[property="og:url"]')).toHaveCount(0);
+
+    const SITE = "https://cipher-calc.netlify.app/";
+    expect(await page.locator('link[rel="canonical"]').getAttribute("href")).toBe(SITE);
+    expect(await page.locator('meta[property="og:url"]').getAttribute("content")).toBe(SITE);
+  });
+
+  test("die Rechtsseiten bekommen kein canonical", async ({ page }) => {
+    // Sie stehen auf noindex. Ein canonical daneben wäre ein
+    // widersprüchliches Signal an Suchmaschinen.
+    for (const path of ["/impressum.html", "/datenschutz.html", "/404.html"]) {
+      await page.goto(path);
+      await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+    }
   });
 
   test("robots.txt hält die Werkzeuge aus dem Index", async ({ request }) => {

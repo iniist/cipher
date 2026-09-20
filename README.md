@@ -126,10 +126,12 @@ nackte URL.
 
 Bewusst **ohne Bild**: ein `og:image`, das auf eine fehlende Datei zeigt,
 erzeugt eine kaputte Karte — eine reine Textkarte ist dagegen vollständig.
-Ebenso ohne `og:url` und `canonical`, solange die endgültige Adresse nicht
-feststeht; die Dienste nehmen dann die aufgerufene URL, und eine falsche
-Angabe wäre schlechter als keine. Sobald die Domain steht, gehören beide
-nachgetragen — und ein Bild, falls eines dazukommt.
+
+`canonical` und `og:url` zeigen auf <https://cipher-calc.netlify.app/>. Die
+Rechtsseiten bekommen bewusst kein `canonical`: sie stehen auf `noindex`, und
+beides nebeneinander wäre ein widersprüchliches Signal. Bei einem Umzug auf
+eine eigene Domain sind beide Angaben in `index.html` anzupassen — ein Test
+hält den Wert fest, die Suite schlägt also an.
 
 ### Header
 
