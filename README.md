@@ -67,6 +67,16 @@ beim Loslassen aus, und eine Wischgeste bricht den Klick ab. Der schmale
 Balken unter dem Feld zeigt weiterhin die Lage im Bereich — als reine Anzeige,
 ohne Angriffsfläche.
 
+Die `−`- und `+`-Knöpfe sind Zeichen im Feld, keine Fächen. Zuerst waren es
+volle Flächen in `--btn`; auf einem Bildschirm mit Stufe, Faktor und fünf
+Plätzen sind das vierzehn helle Blöcke, die lauter sind als die Zahlen, um
+die es geht. Die Fläche zum Tippen ist dieselbe geblieben — leiser heißt
+nicht kleiner.
+
+An der Bereichsgrenze verblasst das Zeichen, nicht der Knopf: `opacity` hätte
+auch seine Trennlinie mitgenommen. Im Kontrastmodus verschwindet das Zeichen
+stattdessen ganz, denn ein blasses Grau wäre dort genau das Falsche.
+
 ### Faktor je Platz
 
 Der Arche-Bonus gehört dem Förderer, nicht dem Bauwerk: wer P3 übernimmt,

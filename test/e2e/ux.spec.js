@@ -392,6 +392,76 @@ test.describe("Bauwerkssuche", () => {
   });
 });
 
+test.describe("Zurückhaltung der Stepper", () => {
+  const durchsichtig = /rgba\(0, 0, 0, 0\)|transparent/;
+
+  test("die Knöpfe sind Zeichen im Feld, keine Flächen", async ({ page }) => {
+    await page.goto("/index.html");
+
+    // Vorher war jeder Knopf eine volle Fläche in --btn. Auf einem Bildschirm
+    // mit Stufe, Faktor und fünf Plätzen waren das vierzehn helle Blöcke.
+    for (const id of ["levelDown", "levelUp", "factorDown", "factorUp"]) {
+      const knopf = await page.locator(`#${id}`)
+        .evaluate((el) => getComputedStyle(el).backgroundColor);
+      expect(knopf, `#${id} soll keine Fläche sein`).toMatch(durchsichtig);
+    }
+
+    // Den Rahmen und den Feldgrund trägt jetzt der Stepper selbst.
+    const rahmen = await page.locator("#factor").locator("..")
+      .evaluate((el) => {
+        const style = getComputedStyle(el);
+        return { rand: style.borderTopWidth, grund: style.backgroundColor };
+      });
+    expect(rahmen.rand).not.toBe("0px");
+    expect(rahmen.grund).not.toMatch(durchsichtig);
+
+    // Die Tippfläche bleibt groß genug, leiser heißt nicht kleiner.
+    const box = await page.locator("#factorUp").boundingBox();
+    expect(box.width).toBeGreaterThanOrEqual(40);
+    expect(box.height).toBeGreaterThanOrEqual(40);
+  });
+
+  test("an der Grenze verblasst das Zeichen, nicht der Knopf", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.locator('#factorChips button[data-factor="200"]').click();
+    await expect(page.locator("#factorUp")).toBeDisabled();
+
+    const [aus, an] = await Promise.all([
+      page.locator("#factorUp").evaluate((el) => {
+        const style = getComputedStyle(el);
+        return { farbe: style.color, deckkraft: style.opacity, linie: style.borderLeftColor };
+      }),
+      page.locator("#factorDown").evaluate((el) => {
+        const style = getComputedStyle(el);
+        return { farbe: style.color, linie: style.borderRightColor };
+      })
+    ]);
+
+    expect(aus.farbe, "das Zeichen muss sich unterscheiden").not.toBe(an.farbe);
+    // opacity hätte die Trennlinie des Knopfs mit abblassen lassen.
+    expect(aus.deckkraft, "nicht der ganze Knopf wird gedämpft").toBe("1");
+    expect(aus.linie, "die Trennlinie bleibt wie beim Nachbarn").toBe(an.linie);
+  });
+
+  test("im Kontrastmodus senkt der Grenzfall den Kontrast nicht", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.click('.modes button[data-mode="contrast"]');
+    await page.locator('#factorChips button[data-factor="200"]').click();
+    await expect(page.locator("#factorUp")).toBeDisabled();
+
+    const aus = await page.locator("#factorUp").evaluate((el) => {
+      const style = getComputedStyle(el);
+      return { farbe: style.color, deckkraft: style.opacity, linie: style.borderLeftColor };
+    });
+
+    // Statt blass zu werden verschwindet das Zeichen — alles übrige bleibt
+    // voll deckend schwarz.
+    expect(aus.farbe).toMatch(durchsichtig);
+    expect(aus.deckkraft).toBe("1");
+    expect(aus.linie).toBe("rgb(0, 0, 0)");
+  });
+});
+
 test.describe("Farbhierarchie", () => {
   test("der Favoriten-Knopf überstrahlt den aktiven Faktor-Chip nicht", async ({ page }) => {
     await page.goto("/index.html");
