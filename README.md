@@ -196,6 +196,31 @@ Sicherheits-Header samt CSP und die Zusicherung „keine externen Anfragen“ ab
   untereinander — auf schmalen Telefonen bliebe die Stufenzahl sonst
   abgeschnitten. Browsertests messen das bei 320, 360 und 390 Pixeln nach.
 
+## Telefon im Querformat
+
+Quer ist Höhe das knappe Gut und Breite im Überfluss da. Dort stehen die
+Einstellungen links und der Förderplan rechts — einstellen und ablesen ohne
+Scrollen. Das kürzt die Seite auf einem iPhone 14 quer von **1856 auf 1141
+Pixel**, also von knapp fünf auf knapp drei Bildschirme.
+
+Die Umschaltung hängt an drei Bedingungen zusammen:
+
+```css
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 540px)
+```
+
+`orientation` allein genügt nicht — ein Desktop-Fenster ist auch „landscape".
+Die Höhe unterscheidet: Telefone quer sind 330–430 Pixel hoch, Tablets und
+Desktops deutlich mehr. Die Mindestbreite fängt ein hochkant gehaltenes
+Telefon ab, dessen Ansicht durch eine eingeblendete Tastatur flacher als breit
+werden könnte.
+
+**Das Hochformat bleibt davon unberührt** — nicht aus Sorgfalt, sondern weil
+Regeln innerhalb einer Abfrage nicht greifen können, wenn sie nicht zutrifft.
+`test/e2e/landscape.spec.js` hält es trotzdem fest: bei vier Hochformat-Größen,
+auf dem Desktop und auf dem Tablet wird geprüft, dass Aufbau, Breite und
+Polster unverändert sind.
+
 ## Easter Eggs
 
 Drei Stück, alle harmlos und alle stumm bei `prefers-reduced-motion`. Sie zu
