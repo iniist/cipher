@@ -214,9 +214,30 @@ select {
   border: 0; cursor: pointer;
 }
 
-.fac { display: flex; align-items: center; gap: 10px }
-.fac b { font-size: 1.5rem; min-width: 3.2ch; color: var(--gold) }
-input[type=range] { padding: 0; border: 0; background: transparent; accent-color: var(--gold) }
+/* Der Faktor lief frueher ueber einen Schieberegler. Auf dem Telefon sprang
+   sein Wert schon beim Aufsetzen des Fingers dorthin, wo man ihn hinsetzte —
+   beim Scrollen also staendig unbemerkt. Keine touch-action-Einstellung
+   hilft dagegen, der Wert wird vor der Gestenerkennung gesetzt. Ein Stepper
+   hat keine Schiene, die man versehentlich trifft: Knoepfe loesen erst beim
+   Loslassen aus, und eine Wischgeste bricht den Klick ab. */
+.fac input { color: var(--gold) }
+
+/* Was der Regler konnte und der Stepper nicht: die Lage im Bereich zeigen.
+   Darum ein schmaler Balken darunter — reine Anzeige, nichts zum Anfassen. */
+.fac-gauge {
+  height: 4px; margin-top: 6px;
+  background: var(--field);
+  border: 1.5px solid var(--field-border);
+  pointer-events: none;
+}
+:root[data-theme="contrast"] .fac-gauge { border-width: 2px }
+.fac-gauge i {
+  display: block; height: 100%;
+  background: var(--gold);
+  transition: width .2s cubic-bezier(.2, .8, .2, 1);
+}
+:root[data-theme="contrast"] .fac-gauge i { background: #000 }
+@media (prefers-reduced-motion: reduce) { .fac-gauge i { transition: none } }
 
 .chips { display: flex; gap: 6px; margin-top: 6px }
 .chips button {

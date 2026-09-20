@@ -53,9 +53,8 @@ test("die Stufe wird auf das Maximum des Bauwerks begrenzt", async ({ page }) =>
 
 test("der Faktor laesst sich ueber die Schnellwahl setzen", async ({ page }) => {
   await page.locator('#factorChips button[data-factor="200"]').click();
-  await expect(page.locator("#factorValue")).toHaveText("2,00");
+  await expect(page.locator("#factor")).toHaveValue("2,00");
   await expect(page.locator('#factorChips button[data-factor="200"]')).toHaveClass(/on/);
-  await expect(page.locator("#factor")).toHaveValue("200");
 });
 
 test("ein abgewaehlter Platz verschwindet aus dem Foerderchat", async ({ page }) => {

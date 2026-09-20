@@ -32,6 +32,24 @@ einzahlen solltest, und zwei fertige Zeilen zum Kopieren in den Förderchat.
 
 Häkchen weg = der Platz wird nicht angeboten und fällt in deinen Eigenanteil.
 
+### Arche-Faktor
+
+Der Faktor läuft über einen Stepper mit eintippbarem Feld: `−`, Wert, `+`,
+darunter die Schnellwahl für die gängigen Werte. Das Feld nimmt an, was man
+tatsächlich tippt — `1,93`, `1.93`, `1,9`, `193` und `193 %` führen alle zum
+selben Ergebnis. Pfeiltasten ändern den Wert um eine Stufe.
+
+Vorher war es ein Schieberegler. Auf dem Telefon sprang dessen Wert schon beim
+**Aufsetzen** des Fingers dorthin, wo man ihn hinsetzte — beim Scrollen also
+ständig unbemerkt. Keine `touch-action`-Einstellung hilft dagegen: der Wert
+wird gesetzt, bevor der Browser die Geste überhaupt einordnet. Gemessen:
+`pan-y` ändert nichts, `none` beseitigt nur das Scrollen.
+
+Ein Stepper hat keine Schiene, die man versehentlich trifft. Knöpfe lösen erst
+beim Loslassen aus, und eine Wischgeste bricht den Klick ab. Der schmale
+Balken unter dem Feld zeigt weiterhin die Lage im Bereich — als reine Anzeige,
+ohne Angriffsfläche.
+
 ### Bauwerk finden
 
 49 Bauwerke in 24 Zeitaltern sind viel zum Scrollen. Das Suchfeld unter der
