@@ -294,6 +294,8 @@ select {
 :root[data-theme="contrast"] .fac-gauge i { background: #000 }
 @media (prefers-reduced-motion: reduce) { .fac-gauge i { transition: none } }
 
+.factor-block { margin-top: 12px }
+
 .chips { display: flex; gap: 6px; margin-top: 6px }
 .chips button {
   flex: 1;
@@ -551,6 +553,14 @@ tr.off td.pay { text-decoration: line-through }
 
 .pl { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700 }
 .pl input { width: 20px; height: 20px; accent-color: var(--gold); margin: 0 }
+
+/* Die Farbe je Platz kommt aus einer Klasse, nicht aus einem style-Attribut:
+   so braucht der CSP kein 'unsafe-inline' fuer Stile. */
+.slot-own { --c: var(--own) }
+.slot-1 { --c: var(--gold) }
+.slot-2 { --c: var(--silver) }
+.slot-3 { --c: var(--bronze) }
+.slot-4, .slot-5 { --c: var(--iron) }
 
 .tag {
   display: inline-block;

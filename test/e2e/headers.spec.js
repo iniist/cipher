@@ -6,6 +6,7 @@
  * und nicht erst nach dem Deploy.
  */
 const { test, expect } = require("@playwright/test");
+const path = require("node:path");
 
 const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html"];
 
@@ -37,8 +38,19 @@ test.describe("Sicherheits-Header", () => {
       expect(csp).toContain("default-src 'self'");
       expect(csp).toContain("connect-src 'none'");
       expect(csp).toContain("frame-ancestors 'none'");
-      // Inline-Skripte laufen ueber einen Hash, nicht ueber 'unsafe-inline'.
-      expect(csp).not.toContain("script-src 'self' 'unsafe-inline'");
+      // Inline-Skripte laufen ueber einen Hash, Stile ueber Klassen und
+      // element.style — 'unsafe-inline' kommt nirgends mehr vor.
+      expect(csp).toContain("style-src 'self';");
+      expect(csp).not.toContain("'unsafe-inline'");
+
+      // Netlify erzwingt HTTPS nur per Weiterleitung; HSTS haelt den Browser
+      // ganz von http fern.
+      expect(headers["strict-transport-security"]).toMatch(/max-age=\d{7,}/);
+
+      // FLoC ist Geschichte; das unbekannte Feature liess Chrome bei jedem
+      // Aufruf einen Fehler in die Konsole schreiben.
+      expect(headers["permissions-policy"]).not.toContain("interest-cohort");
+      expect(headers["permissions-policy"]).toContain("camera=()");
     });
   }
 
@@ -86,33 +98,57 @@ test.describe("Content-Security-Policy im Betrieb", () => {
     await expect(page.locator("#rows tr")).toHaveCount(5);
     await expect(page.locator("#favList li")).toHaveCount(1);
     await expect(page.locator("#chatPlain")).toContainText("Dani");
-    // Die Balkenbreiten kommen aus style-Attributen — die braucht style-src.
+    // Die Balkenbreiten setzt JS ueber element.style. Das landet zwar als
+    // style-Attribut im DOM, zaehlt fuer den CSP aber nicht als Inline-Stil —
+    // genau deshalb kommt style-src ohne 'unsafe-inline' aus.
     await expect(page.locator("#bar i").first()).toHaveAttribute("style", /width/);
+    // Und die Platzfarben kommen aus Klassen, nicht aus Attributen.
+    await expect(page.locator("#rows .tag").first()).toHaveClass(/slot-1/);
+    expect(await page.locator("#rows .tag").first().getAttribute("style")).toBeNull();
 
     expect(violations, violations.join("\n")).toEqual([]);
   });
 });
 
 test.describe("Werkzeuge nicht öffentlich", () => {
-  // Der Datenimporter liegt im Repo, gehört aber nicht zur Website.
-  // netlify.toml beantwortet /tools/* mit 404; der Testserver liefert die
-  // Datei lokal aus, deshalb wird hier die Regel selbst geprüft.
-  test("netlify.toml sperrt /tools/ und /test/", async ({ request }) => {
+  // Der Datenimporter und die Tests liegen im Repo, gehören aber nicht zur
+  // Website. Weil `publish = "."` alles ausliefert, liegen die Dateien im
+  // Deploy — und Netlify wendet eine Weiterleitung auf einen Pfad mit
+  // existierender Datei nur an, wenn sie `force = true` trägt. Der
+  // Testserver bildet genau diese Regel nach; darum prüft der Test die
+  // Wirkung und nicht nur den Text der Regel.
+  const HIDDEN = ["/tools/import.html", "/tools/serve.js", "/test/e2e/app.spec.js", "/test/calc.test.js"];
+
+  for (const hidden of HIDDEN) {
+    test(`${hidden} liegt im Deploy, antwortet aber mit 404`, async ({ request }) => {
+      const response = await request.get(hidden);
+      expect(response.status()).toBe(404);
+      // Nicht der Dateiinhalt, sondern die eigene Fehlerseite.
+      expect(await response.text()).toContain("Nichts eingezeichnet");
+    });
+  }
+
+  test("die Regeln tragen force — ohne das würden sie von den Dateien überdeckt", async ({ request }) => {
+    // Der Text der Regel ist hier zweite Sicherung: der Testserver liest
+    // dieselbe Datei, aber falls jemand den Server ändert, bleibt das hier.
     const toml = await (await request.get("/netlify.toml")).text();
     for (const prefix of ["/tools/*", "/test/*"]) {
-      expect(toml).toContain(`from = "${prefix}"`);
+      const block = toml.slice(toml.indexOf(`from = "${prefix}"`));
+      expect(block.slice(0, 120)).toMatch(/force = true/);
     }
-    expect(toml).toMatch(/status = 404/);
   });
 
-  test("der Importer liegt lokal bereit und lädt nichts von Dritten", async ({ page, baseURL }) => {
+  test("der Importer läuft direkt als Datei und lädt nichts von Dritten", async ({ page }) => {
+    // Ueber den Server ist er absichtlich nicht mehr erreichbar; zum
+    // Arbeiten oeffnet man ihn als Datei. Das Wiki antwortet mit CORS fuer
+    // jede Herkunft, darum braucht er keinen Server.
     const foreign = [];
     page.on("request", (request) => {
       const url = request.url();
-      if (!url.startsWith(baseURL) && !url.startsWith("data:")) foreign.push(url);
+      if (!url.startsWith("file:") && !url.startsWith("data:")) foreign.push(url);
     });
 
-    await page.goto("/tools/import.html", { waitUntil: "networkidle" });
+    await page.goto("file://" + path.resolve(__dirname, "../../tools/import.html"), { waitUntil: "networkidle" });
     await expect(page.locator("h1")).toHaveText("LG-Datenimport");
     // Er darf beim Laden nichts anfragen — das Wiki erst auf Knopfdruck.
     expect(foreign, `fremde Anfragen: ${foreign.join(", ")}`).toEqual([]);

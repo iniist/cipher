@@ -7,11 +7,13 @@ module.exports = defineConfig({
   testDir: "./test/e2e",
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 1 : 0,
+  // Keine Wiederholung, auch nicht auf CI: ein flackernder Test soll rot
+  // werden und auffallen, nicht im zweiten Anlauf still durchgehen.
+  retries: 0,
   reporter: process.env.CI ? "line" : "list",
   use: {
     baseURL: `http://localhost:${PORT}`,
-    trace: "on-first-retry"
+    trace: "retain-on-failure"
   },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },

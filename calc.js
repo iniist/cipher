@@ -211,7 +211,12 @@
       if (!row.offered) return row;
 
       // Ein Platz ist sicher, sobald hoechstens noch 2x seine Einzahlung offen
-      // ist: dann reicht der Rest fuer keine hoehere Zweitbietung mehr.
+      // ist: nach der Einzahlung bleibt dann genau `pay` uebrig, ein Nachzuegler
+      // kann also hoechstens gleichziehen, nie ueberbieten.
+      //
+      // Das setzt die Spielregel voraus, dass bei gleichem Betrag der fruehere
+      // Foerderer den Platz behaelt. So ist es in Forge of Empires; wuerde das
+      // Spiel Gleichstand anders aufloesen, muesste hier `2 * pay - 1` stehen.
       var needed = Math.max(0, remaining - 2 * pay);
       if (remaining - needed < pay) {
         // Der Platz passt rechnerisch nicht mehr in die verbleibende Stufe.

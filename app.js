@@ -26,9 +26,6 @@
   /** Aeltere Schluessel aus dem Vorgaenger, werden einmalig uebernommen. */
   var LEGACY_KEY = { state: "lgr-state", totals: "lgr-t", p1: "lgr-p1" };
 
-  /** Farbe je Maezen-Platz, in der Reihenfolge P1..P5. */
-  var SLOT_COLORS = ["var(--gold)", "var(--silver)", "var(--bronze)", "var(--iron)", "var(--iron)"];
-
   /** Faktoren, die als Schnellwahl angeboten werden. */
   var FACTOR_PRESETS = [180, 185, 190, 192, 195, 200];
 
@@ -51,6 +48,17 @@
 
   /** Zahl in deutscher Schreibweise, z. B. 12.345. */
   function formatNumber(value) { return value.toLocaleString("de-DE"); }
+
+  /**
+   * "JJJJ-MM-TT" als deutsches Datum. Nicht ueber new Date(text): das laese
+   * den Text als UTC-Mitternacht, und westlich von Greenwich stuende dann
+   * der Vortag da.
+   */
+  function formatDate(iso) {
+    var parts = String(iso).split("-").map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return String(iso);
+    return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString("de-DE");
+  }
 
   /** Faktor als Dezimalzahl, z. B. 190 -> "1,90". */
   function formatFactor(factor) { return (factor / 100).toFixed(2).replace(".", ","); }
@@ -116,6 +124,8 @@
         level: legacy.lvl,
         factor: legacy.f,
         name: legacy.name,
+        // Der Vorgaenger nannte das Feld "off", meinte aber "angeboten":
+        // es stand dort als `checked` an der Checkbox. Also NICHT invertieren.
         enabled: legacy.off,
         theme: legacy.mode
       });
@@ -217,8 +227,24 @@
     });
   }
 
+  /**
+   * Was zuletzt geschrieben wurde — beim Start der Stand, wie er geladen
+   * (oder als Vorgabe gebildet) wurde.
+   *
+   * Geschrieben wird nur, wenn sich etwas geaendert hat. Vorher legte schon
+   * der blosse Aufruf der Seite `cipher:state` an, weil der Start das Theme
+   * setzte und render() am Ende immer speicherte. Die Datenschutzerklaerung
+   * stuetzt die Speicherung aber darauf, dass sie fuer das *gewuenschte*
+   * Weiterarbeiten erforderlich ist (§ 25 Abs. 2 Nr. 2 TDDDG) — eine
+   * Vorgabe zu speichern, die niemand gewaehlt hat, ist das nicht.
+   */
+  var lastPersisted = JSON.stringify(state);
+
   function persistState() {
+    var next = JSON.stringify(state);
+    if (next === lastPersisted) return;
     write(KEY.state, state);
+    lastPersisted = next;
   }
 
   // -------------------------------------------------------------------- Theme
@@ -390,7 +416,7 @@
       var slot = index + 1;
       rows.push(
         '<li data-slot="' + index + '">' +
-          '<span class="tag" style="--c:' + SLOT_COLORS[index] + '">P' + slot + "</span>" +
+          '<span class="tag slot-' + slot + '">P' + slot + "</span>" +
           '<div class="step mini">' +
             '<button type="button" data-slot="' + index + '" data-slot-step="-1"' +
               ' aria-label="Faktor für P' + slot + ' verringern">−</button>' +
@@ -497,6 +523,8 @@
     $("level").value = String(state.level - offset);
     $("level").min = String(1 - offset);
     $("level").max = String(building.maxLevel - offset);
+    $("levelDown").disabled = state.level <= 1;
+    $("levelUp").disabled = state.level >= building.maxLevel;
 
     $("levelLabel").textContent = offset ? "Aktuelle Stufe" : "Nächste Stufe";
     $("levelHint").textContent = offset
@@ -610,7 +638,7 @@
             (state.enabled[index] ? " checked" : "") +
             (row.reward > 0 ? "" : " disabled") +
             ' aria-label="Platz P' + row.slot + ' anbieten">' +
-          '<span class="tag" style="--c:' + SLOT_COLORS[index] + '">P' + row.slot + "</span>" +
+          '<span class="tag slot-' + row.slot + '">P' + row.slot + "</span>" +
         "</label></td>" +
         "<td>" + formatNumber(row.reward) + "</td>" +
         '<td class="pay' + (changed ? " chg" : "") + '">' + formatNumber(row.contribution) + "</td>" +
@@ -646,7 +674,7 @@
 
     if (bar.children.length !== segments.length) {
       bar.innerHTML = segments.map(function (segment) {
-        return '<i class="b-' + segment[0] + '" style="width:0"></i>';
+        return '<i class="b-' + segment[0] + '"></i>';
       }).join("");
     }
     segments.forEach(function (segment, index) {
@@ -1186,9 +1214,15 @@
     toast("Neu gezeichnet");
     if (prefersReducedMotion) return;
 
-    wordmark.innerHTML = label.split("").map(function (letter, index) {
-      return '<span style="--i:' + index + '">' + escapeHtml(letter) + "</span>";
-    }).join("");
+    // Ueber element.style, nicht als style-Attribut im Markup: der CSP kommt
+    // ohne 'unsafe-inline' aus, und CSSOM-Zuweisungen zaehlen nicht dazu.
+    wordmark.textContent = "";
+    label.split("").forEach(function (letter, index) {
+      var span = document.createElement("span");
+      span.textContent = letter;
+      span.style.setProperty("--i", String(index));
+      wordmark.appendChild(span);
+    });
     wordmark.classList.add("plotting");
 
     window.setTimeout(function () {
@@ -1208,7 +1242,7 @@
   $("slots").open = state.slotsOpen ||
     state.slotFactors.some(function (own) { return own != null; });
   setTheme(state.theme);
-  $("dataDate").textContent = new Date(DATA.generated).toLocaleDateString("de-DE");
+  $("dataDate").textContent = formatDate(DATA.generated);
   bindEvents();
   watchKonami();
   watchWordmark();

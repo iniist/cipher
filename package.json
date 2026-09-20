@@ -5,6 +5,7 @@
   "private": true,
   "license": "MIT",
   "repository": { "type": "git", "url": "https://github.com/iniist/cipher" },
+  "engines": { "node": ">=22" },
   "scripts": {
     "test": "node --test \"test/*.test.js\" && npm run test:e2e",
     "test:unit": "node --test \"test/*.test.js\"",

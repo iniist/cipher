@@ -243,8 +243,15 @@ test/             Einheitentests (node:test) und Browsertests (Playwright)
 ## Ausliefern
 
 Es gibt keinen Build-Schritt. Das Repo-Wurzelverzeichnis ist das, was
-ausgeliefert wird; `node_modules/`, `test/` und `tools/` braucht die Seite im
-Betrieb nicht.
+ausgeliefert wird; `test/` und `tools/` braucht die Seite im Betrieb nicht.
+
+Weil sie trotzdem im Deploy liegen, beantwortet `netlify.toml` beide Pfade mit
+404 — und zwar mit `force = true`. Das ist kein Detail: Netlify wendet eine
+Weiterleitung auf einen Pfad, unter dem eine Datei liegt, sonst gar nicht an.
+Ohne `force` waren der Importer und alle Tests live abrufbar, obwohl die
+Regel dastand. `tools/serve.js` bildet dieselbe Regel nach, und ein
+Browsertest prüft die Wirkung: `/tools/import.html` muss mit 404 antworten,
+nicht nur eine Regel im Text stehen haben.
 
 Auf Netlify genügt es, das Repository zu verbinden — `netlify.toml` setzt
 Publish-Verzeichnis, Header und Weiterleitungen selbst. Auf jedem anderen
@@ -273,7 +280,11 @@ Versprechen „lädt nichts von Dritten“ vom Browser durchsetzen lässt:
 `connect-src 'none'` verbietet jede fetch-, XHR- und Beacon-Anfrage,
 `default-src 'self'` lässt nur Dateien von dieser Domain zu. Das eine
 Inline-Skript, das vor dem ersten Frame das Theme setzt, ist über seinen
-SHA-256-Hash erlaubt — nicht über `'unsafe-inline'`.
+SHA-256-Hash erlaubt — nicht über `'unsafe-inline'`. Auch `style-src` kommt
+ohne `'unsafe-inline'` aus: Platzfarben laufen über Klassen (`.slot-1` bis
+`.slot-5`), Balkenbreiten setzt JavaScript über `element.style` — das zählt
+für den CSP nicht als Inline-Stil. Dazu `Strict-Transport-Security`, damit
+der Browser gar nicht erst über `http` anfragt.
 
 Damit ein falscher Hash nicht erst nach dem Deploy auffällt, liest
 `tools/serve.js` dieselben Header aus `netlify.toml` und liefert sie aus. Die
@@ -372,12 +383,16 @@ Wo das Wiki sich widerspricht, ist die Stufe im Datensatz als solche markiert
 Schritte:
 
 ```bash
-npm run serve
-# http://localhost:4173/tools/import.html öffnen,
+# tools/import.html direkt im Browser öffnen (Datei, kein Server nötig),
 # „Alle LGs importieren", dann „Datendatei herunterladen"
 node tools/build-data.js ~/Downloads/lg-daten.json
 npm run test:unit
 ```
+
+Der Importer läuft absichtlich nicht über `npm run serve`: der Testserver
+bildet die 404-Regel für `/tools/` nach, genau wie Netlify. Als Datei geöffnet
+funktioniert er trotzdem, weil das Wiki seine API mit CORS für jede Herkunft
+beantwortet.
 
 `tools/import.html` liest die Wiki-Seiten aller Bauwerke, gleicht Kosten und
 Belohnungen gegen die Formeln ab und markiert jede Stufe danach, wie sicher ihr
@@ -403,6 +418,9 @@ Ergebnis mit dem Original vergleicht.
 
 ## Lizenz
 
-Quellcode: [MIT](./LICENSE).
-Datensatz (`data.js`): CC BY-SA 3.0, abgeleitet aus dem Forge of Empires Wiki.
-Schrift (`fonts/`): SIL Open Font License 1.1, siehe `fonts/LICENSE-Barlow.txt`.
+Quellcode: [MIT](./LICENSE). Die Datei enthält nur den MIT-Text, damit
+GitHub die Lizenz erkennt; was anders lizenziert ist, steht in
+[NOTICE.md](./NOTICE.md):
+
+- Datensatz (`data.js`): CC BY-SA 3.0, abgeleitet aus dem Forge of Empires Wiki.
+- Schrift (`fonts/`): SIL Open Font License 1.1, siehe `fonts/LICENSE-Barlow.txt`.
