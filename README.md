@@ -83,18 +83,42 @@ Auf der Datenschutzseite gibt es einen Knopf, der alles davon löscht.
 index.html        Die Anwendung
 impressum.html    Impressum
 datenschutz.html  Datenschutzerklärung
+404.html          Fehlerseite
 styles.css        Darstellung, drei Themes über data-theme
 fonts.css         @font-face für die lokal ausgelieferte Schrift
 data.js           Datensatz der Legendären Bauwerke (generiert)
 calc.js           Rechenkern, reine Funktionen
 app.js            Oberfläche: DOM, Ereignisse, Easter Eggs
 legal.js          Kleines Skript für die beiden Rechtsseiten
+netlify.toml      Auslieferung: Header, Caching, 404
 tools/serve.js    Statischer Server für Entwicklung und Tests
 test/             Einheitentests (node:test) und Browsertests (Playwright)
 ```
 
-Zum Ausliefern reicht es, das Verzeichnis auf einen beliebigen Webspace zu
-kopieren. `node_modules/`, `test/` und `tools/` braucht die Seite im Betrieb nicht.
+## Ausliefern
+
+Es gibt keinen Build-Schritt. Das Repo-Wurzelverzeichnis ist das, was
+ausgeliefert wird; `node_modules/`, `test/` und `tools/` braucht die Seite im
+Betrieb nicht.
+
+Auf Netlify genügt es, das Repository zu verbinden — `netlify.toml` setzt
+Publish-Verzeichnis, Header und Weiterleitungen selbst. Auf jedem anderen
+Webspace reicht Hochladen; die Header aus `netlify.toml` sollten dann in der
+Server-Konfiguration nachgebildet werden.
+
+### Header
+
+`netlify.toml` setzt unter anderem einen Content-Security-Policy, der das
+Versprechen „lädt nichts von Dritten“ vom Browser durchsetzen lässt:
+`connect-src 'none'` verbietet jede fetch-, XHR- und Beacon-Anfrage,
+`default-src 'self'` lässt nur Dateien von dieser Domain zu. Das eine
+Inline-Skript, das vor dem ersten Frame das Theme setzt, ist über seinen
+SHA-256-Hash erlaubt — nicht über `'unsafe-inline'`.
+
+Damit ein falscher Hash nicht erst nach dem Deploy auffällt, liest
+`tools/serve.js` dieselben Header aus `netlify.toml` und liefert sie aus. Die
+Browsertests laufen also gegen die Produktionsvorgaben und schlagen an, sobald
+der CSP die Seite bricht.
 
 ## Entwicklung
 
@@ -107,8 +131,8 @@ npm test             # beides
 ```
 
 Die Browsertests decken Berechnung, Favoriten, Speicherung, Migration aus dem
-Vorgänger, die Rechtstexte, Barrierefreiheit, die Easter Eggs und die
-Zusicherung „keine externen Anfragen“ ab.
+Vorgänger, die Rechtstexte, Barrierefreiheit, die Easter Eggs, die
+Sicherheits-Header samt CSP und die Zusicherung „keine externen Anfragen“ ab.
 
 ## Barrierefreiheit
 
