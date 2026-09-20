@@ -231,14 +231,43 @@ select {
 /* Nennt jeweils die Zahl, die nicht im Feld steht. */
 .lvl-hint { color: var(--dim); font-size: .82rem; margin: 0 }
 
-.step { display: flex }
+/* Frueher war jeder Knopf eine volle Flaeche in --btn. Auf einem Bildschirm
+   mit Stufe, Faktor und fuenf Plaetzen sind das vierzehn helle Bloecke, die
+   lauter sind als die Zahlen, um die es geht. Jetzt ist der Stepper ein Feld
+   mit zwei ruhigen Zeichen an den Enden, getrennt durch dieselbe Linie wie
+   der Rahmen. Die Flaeche zum Tippen bleibt gleich gross. */
+.step {
+  display: flex;
+  background: var(--field);
+  border: 1.5px solid var(--field-border);
+}
+:root[data-theme="contrast"] .step { border-width: 2px }
+
 .step input { text-align: center; font-weight: 700; font-size: 1.2rem; min-width: 0 }
+/* Den Rahmen traegt der Stepper, nicht das Feld darin. */
+.step input,
+:root[data-theme="contrast"] .step input { background: transparent; border: 0 }
+/* Der Fokusring sitzt sonst genau auf dem Rahmen des Steppers. */
+.step input:focus-visible { outline-offset: -3px }
+
 .step button {
-  flex: 0 0 46px;
-  font: inherit; font-size: 1.4rem; font-weight: 700;
-  background: var(--btn); color: var(--btn-ink);
+  flex: 0 0 44px;
+  font: inherit; font-size: 1.3rem; font-weight: 600; line-height: 1;
+  background: transparent; color: var(--dim);
   border: 0; cursor: pointer;
 }
+.step button:first-child { border-right: 1.5px solid var(--field-border) }
+.step button:last-child { border-left: 1.5px solid var(--field-border) }
+:root[data-theme="contrast"] .step button:first-child { border-right-width: 2px }
+:root[data-theme="contrast"] .step button:last-child { border-left-width: 2px }
+.step button:hover:not(:disabled) { color: var(--ink) }
+/* An der Grenze war bisher nichts zu sehen, der Knopf reagierte nur nicht.
+   Gedaempft wird die Schriftfarbe, nicht der Knopf: opacity haette seine
+   Trennlinie mit abblassen lassen. */
+.step button:disabled { color: var(--field-border); cursor: default }
+/* Im Kontrastmodus ist --field-border schwarz, ein blasses Zeichen gibt es
+   dort also nicht. Statt den Kontrast zu senken verschwindet das Zeichen. */
+:root[data-theme="contrast"] .step button:disabled { color: transparent }
 
 /* Der Faktor lief frueher ueber einen Schieberegler. Auf dem Telefon sprang
    sein Wert schon beim Aufsetzen des Fingers dorthin, wo man ihn hinsetzte —
@@ -324,8 +353,9 @@ select {
 .step.mini input { font-size: 1rem; padding: 4px 6px }
 /* Ein Platz mit eigenem Wert faellt auf — sonst sieht man nicht, welcher
    dem Wert oben noch folgt. */
-.slot-list li.own .step.mini input { color: var(--gold); border-color: var(--gold) }
-:root[data-theme="contrast"] .slot-list li.own .step.mini input { border-width: 3px }
+.slot-list li.own .step.mini { border-color: var(--gold) }
+.slot-list li.own .step.mini input { color: var(--gold) }
+:root[data-theme="contrast"] .slot-list li.own .step.mini { border-width: 3px }
 
 /* Das Wort traegt den Zustand, die Farbe verstaerkt ihn nur. */
 .slot-state { color: var(--dim); font-size: .8rem; flex: 0 0 auto }
