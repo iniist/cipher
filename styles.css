@@ -249,6 +249,41 @@ input[type=range] { padding: 0; border: 0; background: transparent; accent-color
 .filter-count { margin: 4px 0 0; font-size: .82rem; color: var(--dim); min-height: 1.2em }
 .filter-count:empty { display: none }
 
+/* Die Treffer stehen als eigene Liste unter dem Feld, statt das Auswahlfeld
+   umzubauen. So zeigt das Auswahlfeld immer alle Bauwerke und immer das
+   wirklich gewaehlte — und die Trefferzahl stimmt mit dem ueberein, was
+   man sieht. Auf dem Telefon spart es ausserdem den Weg durch die native
+   Liste mit 49 Eintraegen. */
+.filter-results {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 4px;
+  margin: 6px 0 0; padding: 0;
+  max-height: calc(4 * 2.4rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.filter-results:empty { display: none }
+
+.filter-hit {
+  width: 100%;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  font: inherit; font-size: .95rem; text-align: left;
+  background: var(--field); color: var(--ink);
+  border: 1.5px solid var(--field-border);
+  padding: 7px 10px; cursor: pointer;
+}
+:root[data-theme="contrast"] .filter-hit { border-width: 2px }
+.filter-hit:hover, .filter-hit:focus-visible { border-color: var(--gold) }
+.filter-hit b { font-weight: 600 }
+.filter-hit span { font-size: .82rem; color: var(--dim); white-space: nowrap }
+.filter-hit[aria-current="true"] b::after { content: " ·"; color: var(--gold) }
+
+/* Die getroffene Stelle hervorheben, damit man sieht, warum ein Eintrag in
+   der Liste steht — ob der Name gepasst hat oder nur das Zeitalter. Die
+   Vorgabe des Browsers (gelber Kasten, schwarze Schrift) passt hier nicht. */
+.filter-hit mark { background: none; color: var(--gold); font-weight: 700 }
+:root[data-theme="contrast"] .filter-hit mark { color: #000; text-decoration: underline; text-underline-offset: 2px }
+
 /* ------------------------------------------------------------ Favoriten */
 
 .favs { margin-top: 14px; padding-top: 12px; border-top: 1.5px solid var(--field-border) }
@@ -570,6 +605,69 @@ tr.off td.pay { text-decoration: line-through }
 }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 12px) } }
 @keyframes toast-out { to { opacity: 0; transform: translate(-50%, 12px) } }
+
+/* ------------------------------------------------- Telefon im Querformat */
+
+/*
+ * Quer ist Hoehe das knappe Gut und Breite im Ueberfluss da. Ohne diese
+ * Regeln blieb main bei 560px stehen, links und rechts lag Platz brach,
+ * und die Seite war knapp fuenf Bildschirme hoch.
+ *
+ * Die drei Bedingungen zusammen treffen Telefone im Querformat und sonst
+ * nichts:
+ *   orientation      selbsterklaerend, allein aber nutzlos — ein
+ *                    Desktop-Fenster ist auch "landscape"
+ *   max-height 520   Telefone quer sind 330-430px hoch, Tablets und
+ *                    Desktops deutlich mehr; die haben Platz genug
+ *   min-width 540    schliesst ein hochkant gehaltenes Telefon aus, dessen
+ *                    Ansicht durch eine eingeblendete Tastatur flacher als
+ *                    breit wuerde
+ *
+ * Alles hier drin kann im Hochformat nicht greifen. Das ist keine Frage der
+ * Sorgfalt, sondern der Logik — und test/e2e/landscape.spec.js haelt es fest.
+ */
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 540px) {
+
+  main {
+    max-width: 1000px;
+    padding: 10px 16px 18px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 16px;
+    align-items: start;
+  }
+
+  /* Kopf und Fusstext laufen ueber beide Spalten. */
+  main > header,
+  main > noscript,
+  main > .foot { grid-column: 1 / -1 }
+
+  /* Links einstellen, rechts ablesen — ohne zu scrollen. */
+  main > .panel:nth-of-type(1) { grid-column: 1; grid-row: 2 }   /* Bauwerk */
+  main > .panel:nth-of-type(2) { grid-column: 2; grid-row: 2 / span 2 } /* Foerderplan */
+  main > .panel:nth-of-type(3) { grid-column: 1; grid-row: 3 }   /* Foerderchat */
+
+  /* Der Kopf stand hochkant untereinander; quer passt er in eine Zeile. */
+  header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin: 0 0 12px;
+  }
+  h1 { font-size: 1.9rem }
+  /* Die Zeilenbreite von 42 Zeichen ist fuer schmale Geraete gedacht; quer
+     steht daneben ohnehin nur der Themenwechsler. */
+  .sub { font-size: .9rem; max-width: none }
+
+  .panel { padding: 12px; margin-bottom: 12px }
+  .panel h2 { margin-bottom: 8px }
+
+  /* Stufe und Name passen quer wieder nebeneinander. */
+  .row > div { flex: 1 1 130px }
+
+  .foot { margin-top: 8px }
+  .site-foot { max-width: 1000px }
+}
 
 /* ------------------------------------------------------------- Animation */
 

@@ -51,15 +51,6 @@
   /** Faktor als Dezimalzahl, z. B. 190 -> "1,90". */
   function formatFactor(factor) { return (factor / 100).toFixed(2).replace(".", ","); }
 
-  /**
-   * Einen Wert fuer einen Attributselektor absichern. Bauwerks-IDs sind
-   * Wiki-Seitennamen und enthalten Apostrophe ("Saint_Basil's_Cathedral").
-   */
-  function cssEscape(value) {
-    if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(value);
-    return String(value).replace(/["'\\]/g, "\\$&");
-  }
-
   /** Text so einsetzen, dass er nie als HTML gelesen wird. */
   function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, function (char) {
@@ -127,7 +118,11 @@
 
   var stored = read(KEY.state, {});
   var state = {
-    building: byId[stored.building] ? stored.building : DEFAULT_BUILDING,
+    // Zuletzt gewaehltes Bauwerk, sonst die Voreinstellung — und falls es
+    // die im Datensatz einmal nicht geben sollte, das erste ueberhaupt.
+    building: byId[stored.building] ? stored.building
+      : byId[DEFAULT_BUILDING] ? DEFAULT_BUILDING
+      : DATA.buildings[0].id,
     level: Number(stored.level) > 0 ? Math.floor(stored.level) : 10,
     factor: Number(stored.factor) >= 185 && Number(stored.factor) <= 200 ? Math.floor(stored.factor) : 190,
     name: typeof stored.name === "string" ? stored.name : "",
@@ -194,31 +189,11 @@
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 
-  /**
-   * Das Auswahlfeld aufbauen, optional auf einen Suchbegriff eingeschraenkt.
-   * Das gerade gewaehlte Bauwerk bleibt immer in der Liste — sonst zeigte
-   * das Feld etwas anderes an, als der Plan darunter berechnet.
-   * @param {string} [query] Suchbegriff; leer heisst: alle
-   * @returns {number} Wie viele Bauwerke auf die Suche passen
-   */
-  function buildBuildingSelect(query) {
-    var needle = normalise(query || "").trim();
-    var matches = DATA.buildings.filter(function (building) {
-      if (!needle) return true;
-      return normalise(building.name).indexOf(needle) >= 0 ||
-        normalise(building.short).indexOf(needle) >= 0 ||
-        normalise(building.era).indexOf(needle) >= 0;
-    });
-
-    var shown = matches.slice();
-    if (!shown.some(function (building) { return building.id === state.building; })) {
-      var current = byId[state.building];
-      if (current) shown.unshift(current);
-    }
-
+  /** Das Auswahlfeld aufbauen. Es enthaelt immer alle Bauwerke. */
+  function buildBuildingSelect() {
     var groups = [];
     var byEra = {};
-    shown.forEach(function (building) {
+    DATA.buildings.forEach(function (building) {
       if (!byEra[building.era]) { byEra[building.era] = []; groups.push(building.era); }
       byEra[building.era].push(building);
     });
@@ -228,25 +203,121 @@
       }).join("");
       return '<optgroup label="' + escapeHtml(era) + '">' + options + "</optgroup>";
     }).join("");
-
-    return matches.length;
   }
 
-  /** Das Auswahlfeld auf den aktuellen Suchbegriff bringen und darueber berichten. */
-  function applyBuildingFilter() {
+  /**
+   * Die Suche filtert das Auswahlfeld nicht, sondern zeigt ihre Treffer als
+   * eigene Liste darunter.
+   *
+   * Der erste Entwurf hat das Auswahlfeld eingeschraenkt und das gerade
+   * gewaehlte Bauwerk zusaetzlich darin behalten, damit Feld und Plan nicht
+   * auseinanderlaufen. Das Ergebnis war irrefuehrend: bei drei Treffern
+   * standen vier Eintraege in der Liste, einer davon unter einem Zeitalter,
+   * das mit der Suche nichts zu tun hatte.
+   *
+   * So herum gibt es den Widerspruch nicht. Das Auswahlfeld zeigt immer
+   * alle Bauwerke und immer das wirklich gewaehlte, die Trefferzahl stimmt
+   * mit dem ueberein, was darunter steht, und nichts wechselt das Bauwerk
+   * ohne einen Klick. Auf dem Telefon spart es zusaetzlich den Weg durch
+   * die native Liste mit 49 Eintraegen.
+   */
+  /**
+   * Text zeichenweise falten und dabei merken, aus welchem Zeichen des
+   * Originals jedes gefaltete Zeichen stammt. Das braucht die Hervorhebung:
+   * "ß" wird zu "ss", die Stellen verschieben sich also gegeneinander.
+   */
+  function foldWithMap(text) {
+    var folded = "";
+    var origin = [];
+    for (var i = 0; i < text.length; i++) {
+      var piece = normalise(text.charAt(i));
+      for (var j = 0; j < piece.length; j++) origin.push(i);
+      folded += piece;
+    }
+    return { folded: folded, origin: origin };
+  }
+
+  /** Den Treffer im Text mit <mark> auszeichnen, alles Uebrige maskieren. */
+  function highlight(text, needle) {
+    if (!needle) return escapeHtml(text);
+    var mapped = foldWithMap(text);
+    var at = mapped.folded.indexOf(needle);
+    if (at < 0) return escapeHtml(text);
+
+    var from = mapped.origin[at];
+    var to = mapped.origin[at + needle.length - 1] + 1;
+    return escapeHtml(text.slice(0, from)) +
+      "<mark>" + escapeHtml(text.slice(from, to)) + "</mark>" +
+      escapeHtml(text.slice(to));
+  }
+
+  /**
+   * Treffer suchen und nach Fundstelle ordnen.
+   *
+   * Die Suche greift auch auf das Zeitalter — "titan" soll die drei
+   * Saturn-Tore finden. Das erzeugt aber Treffer, denen man nichts ansieht:
+   * "ho" findet den Markusdom, obwohl in "Markusdom" kein "ho" steht, weil
+   * er im Hochmittelalter liegt.
+   *
+   * Zwei Dinge machen das lesbar. Erstens stehen Namenstreffer vor
+   * Zeitalter-Treffern, sonst landet der eigentlich gemeinte Fund ganz
+   * unten. Zweitens wird in der Liste genau die Stelle hervorgehoben, die
+   * getroffen hat — man sieht also, ob der Name oder das Zeitalter gemeint
+   * war.
+   */
+  function currentMatches() {
+    var needle = normalise($("buildingFilter").value).trim();
+    if (!needle) return [];
+
+    var byName = [];
+    var byEra = [];
+    DATA.buildings.forEach(function (building) {
+      if (normalise(building.name).indexOf(needle) >= 0 ||
+          normalise(building.short).indexOf(needle) >= 0) {
+        byName.push({ building: building, where: "name" });
+      } else if (normalise(building.era).indexOf(needle) >= 0) {
+        byEra.push({ building: building, where: "era" });
+      }
+    });
+    return byName.concat(byEra);
+  }
+
+  function renderFilter() {
     var query = $("buildingFilter").value;
-    var count = buildBuildingSelect(query);
+    var matches = currentMatches();
 
     $("filterClear").hidden = !query;
     $("filterCount").textContent = !query.trim()
       ? ""
-      : count === 0
+      : matches.length === 0
         ? "Kein Bauwerk gefunden."
-        : count === 1
+        : matches.length === 1
           ? "1 Bauwerk gefunden."
-          : count + " Bauwerke gefunden.";
+          : matches.length + " Bauwerke gefunden.";
 
-    $("building").value = state.building;
+    var needle = normalise(query).trim();
+    $("filterResults").innerHTML = matches.map(function (match) {
+      var building = match.building;
+      return '<li><button type="button" class="filter-hit" data-pick="' + escapeHtml(building.id) + '"' +
+        (building.id === state.building ? ' aria-current="true"' : "") + ">" +
+        "<b>" + (match.where === "name" ? highlight(building.name, needle) : escapeHtml(building.name)) + "</b>" +
+        "<span>" + (match.where === "era" ? highlight(building.era, needle) : escapeHtml(building.era)) + "</span>" +
+      "</button></li>";
+    }).join("");
+  }
+
+  /** Ein Bauwerk aus der Trefferliste uebernehmen und die Suche schliessen. */
+  function pickBuilding(id) {
+    if (!byId[id]) return;
+    state.building = id;
+    clearBuildingFilter({ keepFocus: false });
+    render();
+  }
+
+  function clearBuildingFilter(options) {
+    $("buildingFilter").value = "";
+    renderFilter();
+    if (!options || options.keepFocus !== false) $("buildingFilter").focus();
   }
 
   function buildFactorChips() {
@@ -289,12 +360,6 @@
     var building = byId[state.building];
     state.level = Math.min(Math.max(1, Math.floor(state.level) || 1), building.maxLevel);
 
-    // Ein Sprung ueber die Favoriten kann bei aktiver Suche auf ein Bauwerk
-    // fuehren, das gerade ausgefiltert ist. Dann fehlt die Option und das
-    // Feld zeigte etwas anderes an als der Plan darunter — also neu aufbauen.
-    if (!$("building").querySelector('option[value="' + cssEscape(building.id) + '"]')) {
-      applyBuildingFilter();
-    }
     $("building").value = building.id;
     $("level").value = String(state.level);
     $("level").max = String(building.maxLevel);
@@ -589,14 +654,27 @@
     // Markiert ersetzt die erste Ziffer den alten Wert.
     $("level").addEventListener("focus", function (event) { event.target.select(); });
 
-    $("buildingFilter").addEventListener("input", applyBuildingFilter);
+    $("buildingFilter").addEventListener("input", renderFilter);
     $("buildingFilter").addEventListener("keydown", function (event) {
       if (event.key === "Escape" && event.target.value) {
         event.preventDefault();
         clearBuildingFilter();
+        return;
+      }
+      // Enter nimmt den ersten Treffer — der haeufige Fall, wenn die Suche
+      // eindeutig ist.
+      if (event.key === "Enter") {
+        var first = currentMatches()[0];
+        if (first) { event.preventDefault(); pickBuilding(first.building.id); }
       }
     });
-    $("filterClear").addEventListener("click", clearBuildingFilter);
+
+    $("filterResults").addEventListener("click", function (event) {
+      var button = event.target.closest("button[data-pick]");
+      if (button) pickBuilding(button.dataset.pick);
+    });
+
+    $("filterClear").addEventListener("click", function () { clearBuildingFilter(); });
 
     $("levelDown").addEventListener("click", function () { state.level -= 1; render(); });
     $("levelUp").addEventListener("click", function () { state.level += 1; render(); });
@@ -679,12 +757,6 @@
     document.querySelectorAll("[data-copy]").forEach(function (button) {
       button.addEventListener("click", function () { copyToClipboard(button); });
     });
-  }
-
-  function clearBuildingFilter() {
-    $("buildingFilter").value = "";
-    applyBuildingFilter();
-    $("buildingFilter").focus();
   }
 
   function copyToClipboard(button) {
@@ -841,7 +913,7 @@
 
   // ------------------------------------------------------------------- Start
 
-  buildBuildingSelect("");
+  buildBuildingSelect();
   buildFactorChips();
   setTheme(state.theme);
   $("dataDate").textContent = new Date(DATA.generated).toLocaleDateString("de-DE");

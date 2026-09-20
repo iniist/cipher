@@ -35,9 +35,21 @@ Häkchen weg = der Platz wird nicht angeboten und fällt in deinen Eigenanteil.
 ### Bauwerk finden
 
 49 Bauwerke in 24 Zeitaltern sind viel zum Scrollen. Das Suchfeld unter der
-Auswahl filtert nach Name, Kurzname und Zeitalter — Groß- und Kleinschreibung
-sowie Umlaute spielen keine Rolle. Das gerade gewählte Bauwerk bleibt dabei
-immer wählbar, auch wenn die Suche es nicht trifft.
+Auswahl findet sie nach Name, Kurzname und Zeitalter — Groß- und
+Kleinschreibung sowie Umlaute spielen keine Rolle. Die Treffer erscheinen als
+eigene Liste darunter, ein Tipp darauf wählt das Bauwerk aus, Enter nimmt den
+ersten.
+
+Die Suche **schränkt das Auswahlfeld nicht ein**. Es enthält immer alle
+Bauwerke und zeigt immer das wirklich gewählte; nichts wechselt die Auswahl
+ohne einen Klick. Am Telefon erspart das den Weg durch die native Liste mit
+49 Einträgen.
+
+Weil die Suche auch das Zeitalter durchsucht, kann ein Treffer auf den ersten
+Blick unerklärlich wirken: „ho" findet den **Markusdom**, obwohl in dessen
+Namen kein „ho" steht — er liegt im Hochmittelalter. Zwei Dinge machen das
+lesbar: Namenstreffer stehen vor Zeitalter-Treffern, und in jedem Eintrag
+wird genau die Stelle hervorgehoben, die getroffen hat.
 
 ### Favoriten
 
@@ -183,6 +195,31 @@ Sicherheits-Header samt CSP und die Zusicherung „keine externen Anfragen“ ab
 - Ab etwa 390 Pixel Breite stehen Stufe und Name nebeneinander, darunter
   untereinander — auf schmalen Telefonen bliebe die Stufenzahl sonst
   abgeschnitten. Browsertests messen das bei 320, 360 und 390 Pixeln nach.
+
+## Telefon im Querformat
+
+Quer ist Höhe das knappe Gut und Breite im Überfluss da. Dort stehen die
+Einstellungen links und der Förderplan rechts — einstellen und ablesen ohne
+Scrollen. Das kürzt die Seite auf einem iPhone 14 quer von **1856 auf 1141
+Pixel**, also von knapp fünf auf knapp drei Bildschirme.
+
+Die Umschaltung hängt an drei Bedingungen zusammen:
+
+```css
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 540px)
+```
+
+`orientation` allein genügt nicht — ein Desktop-Fenster ist auch „landscape".
+Die Höhe unterscheidet: Telefone quer sind 330–430 Pixel hoch, Tablets und
+Desktops deutlich mehr. Die Mindestbreite fängt ein hochkant gehaltenes
+Telefon ab, dessen Ansicht durch eine eingeblendete Tastatur flacher als breit
+werden könnte.
+
+**Das Hochformat bleibt davon unberührt** — nicht aus Sorgfalt, sondern weil
+Regeln innerhalb einer Abfrage nicht greifen können, wenn sie nicht zutrifft.
+`test/e2e/landscape.spec.js` hält es trotzdem fest: bei vier Hochformat-Größen,
+auf dem Desktop und auf dem Tablet wird geprüft, dass Aufbau, Breite und
+Polster unverändert sind.
 
 ## Easter Eggs
 
