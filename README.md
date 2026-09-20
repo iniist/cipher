@@ -186,12 +186,34 @@ cipher lädt **nichts** von Drittanbietern:
 
 - Die Schrift (Barlow Semi Condensed, SIL OFL 1.1) liegt als `woff2` im
   Verzeichnis `fonts/`.
-- Es gibt keine Analyse-, Statistik- oder Werbedienste, keine CDNs, keine
-  eingebetteten Inhalte, keine Cookies.
+- Es gibt keine eingebundenen Analyse-, Statistik- oder Werbedienste, keine
+  CDNs, keine eingebetteten Inhalte, keine Cookies.
 - Das Favicon steckt als Daten-URI direkt im HTML.
 
 Ein Browsertest prüft das bei jedem Lauf nach: Jede Anfrage, die nicht an den
 eigenen Host geht, lässt die Suite rot werden.
+
+### Reichweitenmessung
+
+Beim Hoster ist **Netlify Web Analytics** eingeschaltet. Das ist der Grund,
+warum oben „eingebundene“ Dienste steht: Web Analytics wertet die
+CDN-Logfiles serverseitig aus und fasst die Seite selbst nicht an — kein
+Cookie, kein Skript, nichts, was auf dem Gerät gespeichert oder von dort
+gelesen wird. Deshalb greift § 25 TDDDG nicht, und es braucht kein
+Einwilligungsbanner. Es entstehen auch keine neuen Daten: die IP-Adresse
+steht ohnehin im Logfile, sie bekommt nur einen zweiten Zweck.
+
+Bewusst **nicht** eingeschaltet ist Netlifys *Real User Metrics*. Das spritzt
+ein Skript in die Auslieferung und meldet Web-Vitals-Werte aus dem Browser
+— also genau die Art Anfrage, die dieses Projekt nicht stellt. Es würde
+ohnehin nicht funktionieren: `connect-src 'none'` verbietet jede Verbindung,
+auch zur eigenen Domain. Ein Test in `headers.spec.js` hält diese Direktive
+fest, damit sie niemand nebenbei aufweicht.
+
+Eine Einschränkung ehrlichkeitshalber: Die Zusicherung „keine externen
+Anfragen“ prüft die Suite gegen den lokalen Server. Würde an der Edge ein
+Skript eingespritzt, bliebe der Test grün. Die CSP-Zusicherung oben ist
+darum die belastbarere von beiden.
 
 Gespeichert wird ausschließlich im `localStorage`, unter Schlüsseln mit dem
 Präfix `cipher:` — und nur das, was die Anwendung zum Weiterarbeiten braucht.
