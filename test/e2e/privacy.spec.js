@@ -151,6 +151,32 @@ test.describe("Rechtstexte", () => {
     await expect(main).toContainText("Server-Logfiles");
   });
 
+  test("die Datenschutzerklaerung nennt den Hoster und den Drittlandtransfer", async ({ page }) => {
+    await page.goto("/datenschutz.html");
+    const main = page.locator("main");
+
+    await expect(main).toContainText("Netlify, Inc.");
+    await expect(main).toContainText("San Francisco");
+    await expect(main).toContainText("Art. 28 DSGVO");
+
+    // Netlify sitzt in den USA — ohne diesen Abschnitt waere die Erklaerung unvollstaendig.
+    await expect(main).toContainText("Übermittlung in die USA");
+    await expect(main).toContainText("EU-U.S. Data Privacy Framework");
+    await expect(main).toContainText("Art. 45 Abs. 1 DSGVO");
+    await expect(main).toContainText("Standardvertragsklauseln");
+
+    // Der vorherige Hoster darf nirgends mehr stehen.
+    await expect(main).not.toContainText("STRATO");
+    await expect(main).not.toContainText("Deutschland gehostet");
+  });
+
+  test("die Abschnitte der Datenschutzerklaerung sind luckenlos durchnummeriert", async ({ page }) => {
+    await page.goto("/datenschutz.html");
+    const numbers = await page.locator("main h2").evaluateAll((headings) =>
+      headings.map((heading) => Number(heading.textContent.match(/^(\d+)\./)?.[1])));
+    expect(numbers).toEqual(numbers.map((_, index) => index + 1));
+  });
+
   test("der Loeschknopf raeumt den lokalen Speicher auf", async ({ page }) => {
     await page.goto("/index.html");
     await page.fill("#playerName", "Dani");
