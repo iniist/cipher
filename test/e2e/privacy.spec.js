@@ -28,6 +28,51 @@ test.describe("keine externen Anfragen", () => {
   }
 });
 
+test.describe("nichts wird gespeichert, bevor du etwas tust", () => {
+  // Die Datenschutzerklaerung stuetzt die Speicherung auf § 25 Abs. 2 Nr. 2
+  // TDDDG: erforderlich fuer den gewuenschten Dienst. Ein Standard-Theme
+  // zurueckzuschreiben, das niemand gewaehlt hat, ist das nicht. Vorher
+  // legte jeder blosse Aufruf `cipher:state` an.
+  for (const path of PAGES) {
+    test(`${path} legt beim blossen Aufruf nichts an`, async ({ page }) => {
+      await page.goto(path, { waitUntil: "networkidle" });
+      await page.waitForTimeout(200);
+      expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
+    });
+  }
+
+  test("nach der ersten eigenen Aenderung wird gespeichert", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.click('#factorChips button[data-factor="195"]');
+    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("cipher:state")));
+    expect(stored.factor).toBe(195);
+  });
+
+  test("ein Klick auf das Theme einer Rechtsseite wird gemerkt, das Laden allein nicht", async ({ page }) => {
+    await page.goto("/impressum.html");
+    expect(await page.evaluate(() => localStorage.getItem("cipher:state"))).toBeNull();
+
+    await page.click('.modes button[data-mode="contrast"]');
+    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("cipher:state")));
+    expect(stored.theme).toBe("contrast");
+  });
+
+  test("unveraenderter Zustand wird nicht bei jedem Zeichnen neu geschrieben", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.click('#factorChips button[data-factor="195"]');
+    // Ab hier mitzaehlen: ein Neuladen und ein Tastendruck ohne Wirkung
+    // duerfen den Speicher nicht anfassen.
+    await page.evaluate(() => {
+      window.__writes = 0;
+      const original = Storage.prototype.setItem;
+      Storage.prototype.setItem = function () { window.__writes++; return original.apply(this, arguments); };
+    });
+    await page.click('#factorChips button[data-factor="195"]'); // derselbe Wert nochmal
+    await page.locator("#wordmark").click();
+    expect(await page.evaluate(() => window.__writes)).toBe(0);
+  });
+});
+
 test("es werden keine Cookies gesetzt", async ({ page, context }) => {
   await page.goto("/index.html");
   await page.fill("#playerName", "Dani");

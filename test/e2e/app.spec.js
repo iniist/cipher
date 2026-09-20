@@ -157,3 +157,41 @@ test("der Kopierknopf quittiert den Kopiervorgang", async ({ page, context, brow
 
   await expect(button).toHaveText("Nur Plätze kopieren", { timeout: 3000 });
 });
+
+test.describe("Datum der Datenquelle", () => {
+  // "2026-09-19" ueber new Date() gelesen ist UTC-Mitternacht — westlich von
+  // Greenwich stand dann der Vortag im Fuss. Der Test laeuft darum in einer
+  // Zeitzone, in der das sichtbar wird.
+  test.use({ timezoneId: "America/Los_Angeles" });
+
+  test("wird auch westlich von Greenwich nicht zum Vortag", async ({ page }) => {
+    await page.goto("/index.html");
+    await expect(page.locator("#dataDate")).toHaveText("19.9.2026");
+  });
+});
+
+test.describe("Stufen-Stepper an den Grenzen", () => {
+  test("bei Stufe 1 ist Minus aus, beim Maximum Plus", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.selectOption("#building", "Tower_of_Babel"); // maxLevel 200
+
+    await page.fill("#level", "1");
+    await page.locator("#level").blur();
+    await expect(page.locator("#levelDown")).toBeDisabled();
+    await expect(page.locator("#levelUp")).toBeEnabled();
+
+    await page.fill("#level", "200");
+    await page.locator("#level").blur();
+    await expect(page.locator("#levelUp")).toBeDisabled();
+    await expect(page.locator("#levelDown")).toBeEnabled();
+  });
+
+  test("in der Lesart „aktuell“ gilt die Grenze bei angezeigter Stufe 0", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.locator('#levelMode button[data-level-mode="current"]').click();
+    await page.fill("#level", "0");
+    await page.locator("#level").blur();
+    await expect(page.locator("#level")).toHaveValue("0");
+    await expect(page.locator("#levelDown")).toBeDisabled();
+  });
+});

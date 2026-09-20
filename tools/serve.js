@@ -4,9 +4,14 @@
  *
  *   node tools/serve.js [port]
  *
- * Die Antwort-Header werden aus netlify.toml gelesen, damit die Tests
- * gegen dieselben Vorgaben laufen wie die ausgelieferte Seite. Ein
- * kaputter Content-Security-Policy faellt so hier auf und nicht erst live.
+ * Antwort-Header und Weiterleitungen werden aus netlify.toml gelesen, damit
+ * die Tests gegen dieselben Vorgaben laufen wie die ausgelieferte Seite. Ein
+ * kaputter Content-Security-Policy oder eine wirkungslose 404-Regel faellt
+ * so hier auf und nicht erst live.
+ *
+ * Der Importer unter tools/ ist damit hier genauso unerreichbar wie auf
+ * Netlify. Zum Arbeiten oeffnet man ihn direkt als Datei im Browser — er
+ * braucht keinen Server, das Wiki antwortet mit CORS fuer jede Herkunft.
  */
 "use strict";
 
@@ -25,25 +30,27 @@ const TYPES = {
   ".svg": "image/svg+xml",
   ".txt": "text/plain; charset=utf-8",
   ".json": "application/json; charset=utf-8",
-  ".toml": "text/plain; charset=utf-8"
+  ".toml": "text/plain; charset=utf-8",
+  ".md": "text/markdown; charset=utf-8"
 };
 
 /**
- * Die [[headers]]-Bloecke aus netlify.toml einlesen.
+ * Die [[headers]]- und [[redirects]]-Bloecke aus netlify.toml einlesen.
  *
  * Bewusst ein Mini-Parser statt einer Abhaengigkeit: er versteht genau die
- * Form, die netlify.toml in diesem Projekt verwendet — je Block ein
- * `for = "<muster>"` und darunter `[headers.values]` mit einzeiligen
- * Zuweisungen. Mehr braucht es hier nicht.
+ * Form, die netlify.toml in diesem Projekt verwendet — je Block einzeilige
+ * Zuweisungen, bei Headern darunter ein `[headers.values]`. Werte sind
+ * entweder in Anfuehrungszeichen (Strings) oder nackt (Zahlen, true/false).
  *
- * @returns {Array<{pattern: string, values: Object<string, string>}>}
+ * @returns {{headers: Array<{pattern: string, values: Object<string, string>}>,
+ *            redirects: Array<{from: string, to: string, status: number, force: boolean}>}}
  */
-function readHeaderRules() {
+function readNetlifyConfig() {
   const file = path.join(ROOT, "netlify.toml");
-  if (!fs.existsSync(file)) return [];
+  const config = { headers: [], redirects: [] };
+  if (!fs.existsSync(file)) return config;
 
-  const rules = [];
-  let current = null;
+  let block = null;   // { kind: "headers"|"redirects", ... }
   let inValues = false;
 
   for (const raw of fs.readFileSync(file, "utf8").split("\n")) {
@@ -51,27 +58,46 @@ function readHeaderRules() {
     if (!line || line.startsWith("#")) continue;
 
     if (line === "[[headers]]") {
-      current = { pattern: null, values: {} };
-      rules.push(current);
+      block = { kind: "headers", pattern: null, values: {} };
+      config.headers.push(block);
+      inValues = false;
+      continue;
+    }
+    if (line === "[[redirects]]") {
+      block = { kind: "redirects", from: null, to: null, status: 301, force: false };
+      config.redirects.push(block);
       inValues = false;
       continue;
     }
     if (line.startsWith("[")) {
-      // Jeder andere Abschnitt beendet den Header-Block, ausser dessen
-      // eigener Werte-Unterabschnitt.
-      inValues = current !== null && line === "[headers.values]";
-      if (!inValues) current = null;
+      // Jeder andere Abschnitt beendet den Block, ausser der Werte-
+      // Unterabschnitt eines Header-Blocks.
+      inValues = block !== null && block.kind === "headers" && line === "[headers.values]";
+      if (!inValues) block = null;
       continue;
     }
-    if (!current) continue;
+    if (!block) continue;
 
-    const match = line.match(/^([A-Za-z0-9_-]+)\s*=\s*"(.*)"$/);
+    const match = line.match(/^([A-Za-z0-9_-]+)\s*=\s*(?:"(.*)"|(\S+))$/);
     if (!match) continue;
-    if (inValues) current.values[match[1]] = match[2];
-    else if (match[1] === "for") current.pattern = match[2];
+    const key = match[1];
+    const value = match[2] !== undefined ? match[2] : match[3];
+
+    if (block.kind === "headers") {
+      if (inValues) block.values[key] = value;
+      else if (key === "for") block.pattern = value;
+    } else if (key === "from" || key === "to") {
+      block[key] = value;
+    } else if (key === "status") {
+      block.status = Number(value);
+    } else if (key === "force") {
+      block.force = value === "true";
+    }
   }
 
-  return rules.filter((rule) => rule.pattern && Object.keys(rule.values).length);
+  config.headers = config.headers.filter((rule) => rule.pattern && Object.keys(rule.values).length);
+  config.redirects = config.redirects.filter((rule) => rule.from && rule.to);
+  return config;
 }
 
 /** Netlifys Pfadmuster: ein abschliessendes /* deckt alles darunter ab. */
@@ -80,38 +106,80 @@ function matches(pattern, pathname) {
   return pattern === pathname;
 }
 
-const HEADER_RULES = readHeaderRules();
+const CONFIG = readNetlifyConfig();
 
 function headersFor(pathname) {
   const headers = {};
-  for (const rule of HEADER_RULES) {
+  for (const rule of CONFIG.headers) {
     if (matches(rule.pattern, pathname)) Object.assign(headers, rule.values);
   }
   return headers;
 }
 
-const server = http.createServer((request, response) => {
-  const url = new URL(request.url, "http://localhost");
-  let pathname = decodeURIComponent(url.pathname);
-  if (pathname.endsWith("/")) pathname += "index.html";
+/**
+ * Die erste passende Weiterleitung — mit Netlifys Vorbehalt: ohne `force`
+ * gilt eine Regel nur, wenn unter dem Pfad keine Datei liegt. Genau dieses
+ * "Shadowing" hatte die 404-Regeln fuer /tools/ und /test/ wirkungslos
+ * gemacht, weil dort ja Dateien liegen.
+ */
+function redirectFor(pathname, fileExists) {
+  for (const rule of CONFIG.redirects) {
+    if (!matches(rule.from, pathname)) continue;
+    if (rule.force || !fileExists) return rule;
+  }
+  return null;
+}
 
+function localFile(pathname) {
   const file = path.join(ROOT, pathname);
   // Kein Ausbrechen aus dem Projektverzeichnis
-  if (!file.startsWith(ROOT + path.sep)) {
-    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" }).end("Forbidden");
-    return;
-  }
+  return file.startsWith(ROOT + path.sep) ? file : null;
+}
 
+function send(response, status, file, pathname) {
   fs.readFile(file, (error, content) => {
     if (error) {
       serveNotFound(response);
       return;
     }
-    response.writeHead(200, Object.assign({
+    response.writeHead(status, Object.assign({
       "content-type": TYPES[path.extname(file)] || "application/octet-stream",
       "cache-control": "no-store"
     }, headersFor(pathname))).end(content);
   });
+}
+
+const server = http.createServer((request, response) => {
+  const url = new URL(request.url, "http://localhost");
+  let pathname;
+  try {
+    pathname = decodeURIComponent(url.pathname);
+  } catch (error) {
+    response.writeHead(400, { "content-type": "text/plain; charset=utf-8" }).end("Bad request");
+    return;
+  }
+  if (pathname.endsWith("/")) pathname += "index.html";
+
+  const file = localFile(pathname);
+  if (!file) {
+    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" }).end("Forbidden");
+    return;
+  }
+
+  const exists = fs.existsSync(file) && fs.statSync(file).isFile();
+  const redirect = redirectFor(pathname, exists);
+  if (redirect) {
+    const target = localFile(redirect.to);
+    if (target) send(response, redirect.status, target, redirect.to);
+    else serveNotFound(response);
+    return;
+  }
+
+  if (!exists) {
+    serveNotFound(response);
+    return;
+  }
+  send(response, 200, file, pathname);
 });
 
 function serveNotFound(response) {

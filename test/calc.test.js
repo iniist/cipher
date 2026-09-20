@@ -332,3 +332,29 @@ test("der Plan nennt zu jedem Platz den Faktor, mit dem er gerechnet wurde", () 
   });
   assert.deepEqual(plan.rows.map((row) => row.factor), [200, 190, 180, 190, 190]);
 });
+
+// ------------------------------------------------------- Gleichstand-Regel
+
+test("nach dem Sichern bleibt genau eine Einzahlung offen — nicht weniger, nicht mehr", () => {
+  // Die Absicherung rechnet needed = remaining − 2·pay. Sie verlaesst sich
+  // darauf, dass bei gleichem Betrag der fruehere Foerderer den Platz
+  // behaelt (so ist es im Spiel). Ein Nachzuegler darf also gleichziehen,
+  // aber nie darueber hinaus kommen. Dieser Test haelt fest, dass die
+  // Formel genau diesen Rand trifft — wer sie "sicherer" machen will,
+  // aendert damit bewusst die Annahme.
+  const plan = Calc.buildPlan({ total: 10000, p1: 800, factor: 190, enabled: allOn });
+
+  let remaining = plan.total;
+  for (const row of plan.rows) {
+    if (!row.offered) continue;
+    remaining -= row.secure;
+    if (row.secure > 0) {
+      // Vor der Einzahlung sind genau 2·pay offen …
+      assert.equal(remaining, 2 * row.contribution, `P${row.slot}: vor der Einzahlung`);
+    }
+    remaining -= row.contribution;
+    // … und danach hoechstens noch pay: Gleichstand moeglich, Ueberbieten nicht.
+    assert.ok(remaining <= row.contribution, `P${row.slot}: nach der Einzahlung bleiben ${remaining} offen`);
+  }
+  assert.equal(remaining, plan.remainder);
+});
