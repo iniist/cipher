@@ -18,7 +18,7 @@ Konto, ohne Server, ohne Tracking.
 
 ## Was es macht
 
-Du wählst ein Bauwerk, die nächste Stufe und deinen Arche-Faktor. cipher zeigt
+Du wählst ein Bauwerk, eine Stufe und deinen Arche-Faktor. cipher zeigt
 dir dann für jeden der fünf Mäzen-Plätze:
 
 | Spalte | Bedeutung |
@@ -31,6 +31,22 @@ Dazu die Aufteilung in Eigenanteil und Fremdkapital, den Betrag, den du vorab
 einzahlen solltest, und zwei fertige Zeilen zum Kopieren in den Förderchat.
 
 Häkchen weg = der Platz wird nicht angeboten und fällt in deinen Eigenanteil.
+
+### Aktuelle oder nächste Stufe
+
+Dieselbe Zahl heißt für die einen „das Bauwerk steht auf 80“, für die anderen
+„es wird gerade auf 81 gezogen“. Beides ist verbreitet, und wer die falsche
+Lesart annimmt, rechnet eine Stufe daneben.
+
+Der Umschalter unter dem Feld stellt ein, welche gemeint ist; die Zeile
+daneben nennt jeweils die andere Zahl — steht „80“ als aktuelle Stufe da,
+liest man darunter „Gefördert wird Stufe 81“. Die Antwort steht also da,
+egal wie herum jemand denkt.
+
+Gerechnet wird intern immer mit der Stufe, die gefördert wird. Umschalten
+ändert nur die Anzeige, nie den Plan — auch die gemerkten Favoriten wandern
+mit und zeigen dieselbe Lesart. Im aktuellen Modus ist zusätzlich Stufe 0
+erlaubt: ein Bauwerk, das noch gar nicht steht.
 
 ### Arche-Faktor
 
@@ -76,6 +92,19 @@ Ein Tipp auf einen Favoriten springt zurück — praktisch, wenn du mehrere
 Bauwerke parallel hochziehst. Die Liste zeigt drei Reihen und scrollt darüber
 hinaus, damit sie den Förderplan nicht aus dem Bild schiebt. Sie liegt im
 Browser, nicht auf einem Server.
+
+Das Gemerkte steht **vor** allem anderen im Bauwerk-Panel. Vorher stand es
+ganz unten dahinter, hinter Suche, Stufe, Name und Faktor — auf dem Telefon
+also außerhalb des ersten Bildschirms, obwohl es genau das ist, wozu die
+meisten beim Wiederkommen wollen. Solange nichts gemerkt ist, fällt der
+Streifen ganz weg; ein leerer Platzhalter an der prominentesten Stelle wäre
+schlechter als gar keiner.
+
+Der Stern steht dafür unten bei dem, was er merkt, und sagt es auch:
+„Die Arche · Stufe 81 merken“. Damit erklärt der Knopf die Funktion selbst,
+und die Einträge im Streifen sind gefüllt statt umrandet — die Faktor-Chips
+daneben sind Einstellungen, diese hier Sprungmarken, und gleiche Optik hieße
+gleiche Bedeutung.
 
 ### Wenn Daten fehlen
 
@@ -198,9 +227,10 @@ laufenden Durchgang ab, damit auf einem privaten Repo keine Minuten
 verpuffen. Schlägt ein Browsertest fehl, hängt der Playwright-Bericht sieben
 Tage als Artefakt am Lauf.
 
-Die Browsertests decken Berechnung, Favoriten, Speicherung, Migration aus dem
-Vorgänger, die Rechtstexte, Barrierefreiheit, die Easter Eggs, die
-Sicherheits-Header samt CSP und die Zusicherung „keine externen Anfragen“ ab.
+Die Browsertests decken Berechnung, die Lesart der Stufenzahl, Favoriten,
+Speicherung, Migration aus dem Vorgänger, die Rechtstexte, Barrierefreiheit,
+die Easter Eggs, die Sicherheits-Header samt CSP und die Zusicherung „keine
+externen Anfragen“ ab.
 
 ## Barrierefreiheit
 
@@ -220,6 +250,10 @@ Quer ist Höhe das knappe Gut und Breite im Überfluss da. Dort stehen die
 Einstellungen links und der Förderplan rechts — einstellen und ablesen ohne
 Scrollen. Das kürzt die Seite auf einem iPhone 14 quer von **1856 auf 1141
 Pixel**, also von knapp fünf auf knapp drei Bildschirme.
+
+Aus demselben Grund zeigt der Streifen mit dem Gemerkten quer zwei Reihen
+statt drei — das gibt rund 36 Pixel an den Rest zurück, ohne dass ein
+Eintrag verloren geht.
 
 Die Umschaltung hängt an drei Bedingungen zusammen:
 

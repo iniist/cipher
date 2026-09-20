@@ -106,11 +106,42 @@ test.describe("Favoritenliste", () => {
     const fullHeight = await page.locator(".panel").first().evaluate((el) => el.offsetHeight);
 
     await expect(page.locator("#favList li")).toHaveCount(12);
-    // Drei Reihen plus Abstände, nicht sechs.
-    expect(fullHeight - emptyHeight).toBeLessThan(140);
+    // Drei Reihen plus Beschriftung und Abstände messen 146px, ohne Deckel
+    // wären es 252px. Die Schwelle trennt beides, statt nur „nicht riesig“
+    // zu prüfen.
+    expect(fullHeight - emptyHeight).toBeLessThan(160);
 
     const scrollable = await page.locator("#favList").evaluate((el) => el.scrollHeight > el.clientHeight + 1);
     expect(scrollable, "die Liste muss scrollbar sein").toBe(true);
+  });
+
+  test("drei Reihen passen in jedem Theme vollständig hinein", async ({ page }) => {
+    await page.setViewportSize({ width: 430, height: 900 });
+    await seedFavorites(page, FULL_LIST);
+
+    for (const theme of ["dark", "light", "contrast"]) {
+      await page.click(`.modes button[data-mode="${theme}"]`);
+
+      const fit = await page.locator("#favList").evaluate((list) => {
+        const rows = [...list.children].reduce((groups, entry) => {
+          (groups[entry.offsetTop] = groups[entry.offsetTop] || []).push(entry);
+          return groups;
+        }, {});
+        const tops = Object.keys(rows).map(Number).sort((a, b) => a - b);
+        const third = rows[tops[2]];
+        return {
+          rowCount: tops.length,
+          thirdRowBottom: Math.max(...third.map((e) => e.offsetTop + e.offsetHeight)) - tops[0],
+          visible: list.clientHeight
+        };
+      });
+
+      // Im Kontrastmodus sind die Rahmen dicker; mit einem glatten Deckel
+      // von 2rem je Reihe wurde die dritte hier angeschnitten.
+      expect(fit.rowCount, `${theme}: mehr als drei Reihen zum Prüfen`).toBeGreaterThan(3);
+      expect(fit.thirdRowBottom, `${theme}: dritte Reihe abgeschnitten`)
+        .toBeLessThanOrEqual(fit.visible);
+    }
   });
 
   test("der aktive Favorit wird in den sichtbaren Bereich geholt", async ({ page }) => {

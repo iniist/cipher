@@ -105,3 +105,44 @@ test.describe("die Abfrage trifft nur Telefone quer", () => {
     expect(m.display).toBe("block");
   });
 });
+
+test.describe("Gemerktes im Querformat", () => {
+  /** Neun Favoriten — hochkant drei Reihen, quer sollen es zwei sein. */
+  const NINE = ["The_Arc", "Notre_Dame", "Colosseum", "Tower_of_Babel", "Hagia_Sophia",
+    "Lighthouse_of_Alexandria", "Deal_Castle", "Cathedral_of_Aachen", "Galata_Tower"]
+    .map((id, index) => ({ id, level: 10 + index }));
+
+  /** Wie viele Chipreihen tatsächlich sichtbar sind. */
+  const visibleRows = (page) => page.locator("#favList").evaluate((list) => {
+    const tops = [...new Set([...list.children].map((e) => e.offsetTop))].sort((a, b) => a - b);
+    return tops.filter((top) => top - tops[0] + list.children[0].offsetHeight <= list.clientHeight + 1).length;
+  });
+
+  test("quer bekommt der Streifen zwei Reihen statt drei", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.evaluate((list) =>
+      localStorage.setItem("cipher:favorites", JSON.stringify(list)), NINE);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/index.html");
+    expect(await visibleRows(page), "hochkant drei Reihen").toBe(3);
+
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.goto("/index.html");
+    expect(await visibleRows(page), "quer zwei Reihen").toBe(2);
+
+    // Gekürzt, nicht verloren: der Rest ist weiterhin erreichbar.
+    const scrollable = await page.locator("#favList")
+      .evaluate((el) => el.scrollHeight > el.clientHeight + 1);
+    expect(scrollable).toBe(true);
+  });
+
+  test("quer bleibt die Seite trotz Gemerktem unter vier Bildschirmen", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.evaluate((list) =>
+      localStorage.setItem("cipher:favorites", JSON.stringify(list)), NINE);
+
+    const m = await open(page, 844, 390);
+    expect(m.pageHeight / m.viewportHeight).toBeLessThan(4);
+  });
+});

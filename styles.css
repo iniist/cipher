@@ -205,6 +205,32 @@ select {
 .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px }
 .row > div { flex: 1 1 150px; min-width: 0 }
 
+/* Dieselbe Zahl heisst fuer die einen "steht auf 80", fuer die anderen
+   "wird auf 81 gezogen". Umschalter und erklaerende Zeile stehen zusammen
+   unter dem Feld: neben der Beschriftung waere fuer beides kein Platz, und
+   die Spalte mit dem Namen daneben liefe dann versetzt. */
+.lvl-foot {
+  display: flex; flex-wrap: wrap;
+  align-items: center; gap: 4px 8px; margin-top: 6px;
+}
+
+/* Gebaut wie der Themenwechsler im Kopf: ein Rahmen, eine Trennlinie. */
+.seg { display: flex; border: 1.5px solid var(--field-border) }
+:root[data-theme="contrast"] .seg { border-width: 2px }
+.seg button {
+  font: inherit; font-size: .78rem; font-weight: 600;
+  background: transparent; color: var(--dim);
+  border: 0; padding: 1px 8px; cursor: pointer;
+}
+.seg button + button { border-left: 1.5px solid var(--field-border) }
+:root[data-theme="contrast"] .seg button + button { border-left-width: 2px }
+/* Nicht gold: das Gold gehoert den Werten (Faktor, P1, aktiver Favorit).
+   Der Umschalter stellt eine Lesart ein, keinen Wert. */
+.seg button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink) }
+
+/* Nennt jeweils die Zahl, die nicht im Feld steht. */
+.lvl-hint { color: var(--dim); font-size: .82rem; margin: 0 }
+
 .step { display: flex }
 .step input { text-align: center; font-weight: 700; font-size: 1.2rem; min-width: 0 }
 .step button {
@@ -307,23 +333,28 @@ select {
 
 /* ------------------------------------------------------------ Favoriten */
 
-.favs { margin-top: 14px; padding-top: 12px; border-top: 1.5px solid var(--field-border) }
+/* Der Streifen stand frueher ganz unten im Panel, hinter Suche, Stufe, Name
+   und Faktor — auf dem Telefon also ausserhalb des ersten Bildschirms. Wer
+   wiederkommt, will aber meistens genau dorthin zurueck, darum steht er
+   jetzt vor allem anderen. Leer wird er ausgeblendet (siehe app.js). */
+.favs { margin: 0 0 12px }
+.favs[hidden] { display: none }
+.favs .l { margin: 0 0 6px }
 
-.favs-head { display: flex; align-items: center; justify-content: space-between; gap: 10px }
-.favs-head .l { margin: 0 }
-
+/* Der Knopf traegt jetzt den Namen dessen, was er merkt, und braucht darum
+   die ganze Breite. Er bleibt umrandet statt gefuellt: der aktive Faktor-Chip
+   ist eine Einstellung und darf leuchten, dieser Knopf ist nur eine Aktion. */
 .fav-save {
-  font: inherit; font-weight: 600; font-size: .9rem;
-  display: inline-flex; align-items: center; gap: 6px;
+  font: inherit; font-weight: 600; font-size: .92rem;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; margin-top: 10px;
   background: transparent; color: var(--ink);
   border: 1.5px solid var(--field-border);
-  padding: 4px 10px; cursor: pointer;
+  padding: 8px 10px; cursor: pointer;
 }
 :root[data-theme="contrast"] .fav-save { border-width: 2px }
-.fav-save svg { width: 14px; height: 14px }
-/* Nicht volle Goldflaeche: der aktive Faktor-Chip ist eine Einstellung und
-   darf leuchten, dieser Knopf ist nur eine Aktion. Der gefuellte Stern
-   zeigt den Zustand, ohne mit dem Chip zu konkurrieren. */
+.fav-save svg { width: 15px; height: 15px; flex: 0 0 auto }
+/* Den Zustand zeigt der gefuellte Stern, ohne mit dem Chip zu konkurrieren. */
 .fav-save[aria-pressed="true"] { color: var(--gold); border-color: var(--gold) }
 .fav-save[aria-pressed="true"] svg { fill: currentColor }
 :root[data-theme="contrast"] .fav-save[aria-pressed="true"] { color: #000; border-color: #000 }
@@ -334,16 +365,22 @@ select {
 .fav-list {
   list-style: none;
   display: flex; flex-wrap: wrap; gap: 6px;
-  margin: 8px 0 0; padding: 0;
-  max-height: calc(3 * 2rem + 2 * 6px);
+  margin: 0; padding: 0;
+  max-height: calc(3 * var(--fav-row) + 2 * 6px);
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Gemessene Hoehe eines Chips. Eine glatte Zahl zu raten reichte nicht:
+     mit 2rem wurde die dritte Reihe im Kontrastmodus angeschnitten, weil
+     die Rahmen dort dicker sind. */
+  --fav-row: 30.6px;
 }
-.fav-list:empty { display: none }
+:root[data-theme="contrast"] .fav-list { --fav-row: 32.6px }
 /* Platz fuer den Rollbalken, damit er die Chips nicht ueberdeckt. */
 .fav-list { scrollbar-width: thin; padding-right: 2px }
 
-.fav-list li { display: flex; border: 1.5px solid var(--field-border) }
+/* Gefuellt statt durchsichtig: die Faktor-Chips daneben sind Einstellungen,
+   diese hier sind Sprungmarken. Gleiche Optik hiesse gleiche Bedeutung. */
+.fav-list li { display: flex; border: 1.5px solid var(--field-border); background: var(--field) }
 :root[data-theme="contrast"] .fav-list li { border-width: 2px }
 .fav-list li[aria-current="true"] { border-color: var(--gold) }
 
@@ -358,8 +395,6 @@ select {
 .fav-list li[aria-current="true"] .fav-go b { color: inherit }
 .fav-del { padding: 4px 7px; color: var(--dim); border-left: 1.5px solid var(--field-border); line-height: 1 }
 .fav-del:hover { color: var(--own) }
-
-.fav-empty { color: var(--dim); font-size: .88rem; margin: 8px 0 0 }
 
 /* --------------------------------------------------------- Verteilbalken */
 
@@ -685,6 +720,10 @@ tr.off td.pay { text-decoration: line-through }
 
   /* Stufe und Name passen quer wieder nebeneinander. */
   .row > div { flex: 1 1 130px }
+
+  /* Quer ist die Hoehe das Knappe, nicht die Breite: der Streifen bekommt
+     zwei Reihen statt drei und gibt gut 36px an den Rest zurueck. */
+  .fav-list { max-height: calc(2 * var(--fav-row) + 6px) }
 
   .foot { margin-top: 8px }
   .site-foot { max-width: 1000px }

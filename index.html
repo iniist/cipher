@@ -66,6 +66,15 @@
   <section class="panel">
     <h2>Bauwerk</h2>
 
+    <!-- Gemerktes zuerst: wer wiederkommt, will meistens genau dorthin
+         zurück. Solange nichts gemerkt ist, fällt der Streifen ganz weg —
+         ein leerer Platzhalter an der prominentesten Stelle wäre schlechter
+         als gar keiner. -->
+    <div class="favs" id="favs" hidden>
+      <span class="l" id="favsLabel">Gemerkt</span>
+      <ul class="fav-list" id="favList" aria-labelledby="favsLabel"></ul>
+    </div>
+
     <label class="l" for="building">Legendäres Bauwerk</label>
     <select id="building"></select>
 
@@ -81,11 +90,18 @@
 
     <div class="row">
       <div>
-        <label class="l" for="level">Nächste Stufe</label>
+        <label class="l" for="level" id="levelLabel">Nächste Stufe</label>
         <div class="step">
           <button type="button" id="levelDown" aria-label="Stufe runter">−</button>
-          <input id="level" type="number" inputmode="numeric" min="1">
+          <input id="level" type="number" inputmode="numeric" min="1" aria-describedby="levelHint">
           <button type="button" id="levelUp" aria-label="Stufe hoch">+</button>
+        </div>
+        <div class="lvl-foot">
+          <div class="seg" id="levelMode" role="group" aria-label="Was die Zahl bedeutet">
+            <button type="button" data-level-mode="current" aria-pressed="false">aktuell</button>
+            <button type="button" data-level-mode="next" aria-pressed="true">nächste</button>
+          </div>
+          <p class="lvl-hint" id="levelHint"></p>
         </div>
       </div>
       <div>
@@ -93,6 +109,13 @@
         <input id="playerName" autocomplete="nickname" placeholder="Spielername">
       </div>
     </div>
+
+    <!-- Der Stern steht unter dem, was er merkt, und sagt es auch: seine
+         Beschriftung nennt Bauwerk und Stufe beim Namen. -->
+    <button type="button" class="fav-save" id="favSave" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 17l-5.3 2.7 1.1-5.9L3.5 9.7l5.9-.8z"/></svg>
+      <span id="favSaveText">Merken</span>
+    </button>
 
     <div style="margin-top:12px">
       <label class="l" for="factor">Faktor (Arche-Bonus)</label>
@@ -106,18 +129,6 @@
       <div class="fac-gauge" aria-hidden="true"><i id="factorGauge"></i></div>
       <p class="sr-only" id="factorHint">Zwischen 1,85 und 2,00. Pfeil hoch und runter ändern den Wert.</p>
       <div class="chips" id="factorChips"></div>
-    </div>
-
-    <div class="favs">
-      <div class="favs-head">
-        <span class="l" id="favsLabel">Favoriten</span>
-        <button type="button" class="fav-save" id="favSave" aria-pressed="false">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 17l-5.3 2.7 1.1-5.9L3.5 9.7l5.9-.8z"/></svg>
-          <span id="favSaveText">Merken</span>
-        </button>
-      </div>
-      <ul class="fav-list" id="favList" aria-labelledby="favsLabel"></ul>
-      <p class="fav-empty" id="favEmpty">Noch nichts gemerkt. Bauwerk und Stufe merken, um später mit einem Tipp zurückzuspringen.</p>
     </div>
   </section>
 
