@@ -319,6 +319,9 @@ input[type=range] { padding: 0; border: 0; background: transparent; accent-color
 /* Ohne diese Regel schlaegt das display:flex oben das display:none, das der
    Browser fuer [hidden] vorsieht — die Legende blieb im Leerzustand stehen. */
 .legend[hidden] { display: none }
+/* Bei 320px fehlten der Legende genau drei Pixel und "P4-P5" rutschte allein
+   auf eine zweite Zeile. Eine engere Luecke reicht, die Schriftgroesse bleibt. */
+@media (max-width: 380px) { .legend { gap: 6px 10px } }
 .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: 0; background: var(--c) }
 /* Im Kontrastmodus sind alle Farben schwarz — die Legende bekommt darum
    dieselbe Schraffur wie der Balken, damit sie unterscheidbar bleibt. */

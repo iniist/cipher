@@ -42,6 +42,18 @@ test.describe("schmale Geräte", () => {
     });
   }
 
+  test("die Legende bleibt bei 320px auf einer Zeile", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 900 });
+    await page.goto("/index.html");
+
+    const rows = await page.locator("#legend").evaluate((legend) => {
+      const tops = [...legend.children].map((item) => Math.round(item.getBoundingClientRect().top));
+      return new Set(tops).size;
+    });
+    // Vorher rutschte "P4-P5" allein auf eine zweite Zeile.
+    expect(rows).toBe(1);
+  });
+
   test("bei 320px entsteht kein waagerechtes Scrollen", async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 900 });
     await page.goto("/index.html");
