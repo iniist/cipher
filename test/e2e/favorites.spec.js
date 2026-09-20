@@ -59,14 +59,28 @@ test("mehrere Favoriten stehen nebeneinander, neueste zuerst", async ({ page }) 
   await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80", "Kolosseum 12", "Notre Dame 42"]);
 });
 
-test("dasselbe Bauwerk laesst sich in mehreren Stufen merken", async ({ page }) => {
-  for (const level of ["10", "40", "80"]) {
-    await page.fill("#level", level);
-    await page.locator("#level").blur();
-    await page.click("#favSave");
-  }
-  await expect(favEntries(page)).toHaveCount(3);
-  await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80", "Die Arche 40", "Die Arche 10"]);
+test("jedes Bauwerk steht nur einmal in der Liste, seine Stufe wandert mit", async ({ page }) => {
+  // Vorher war jede Stufe ein eigener Eintrag: wer sein Bauwerk eine Stufe
+  // weiterzog, musste neu merken und hatte es danach doppelt.
+  await page.fill("#level", "10");
+  await page.locator("#level").blur();
+  await page.click("#favSave");
+  await expect(page.locator(".fav-go")).toHaveText(["Die Arche 10"]);
+
+  await page.click("#levelUp");
+  await page.click("#levelUp");
+  await expect(favEntries(page)).toHaveCount(1);
+  await expect(page.locator(".fav-go")).toHaveText(["Die Arche 12"]);
+  await expect(page.locator("#favSaveText")).toHaveText("Die Arche · Stufe 12 gemerkt");
+
+  await page.fill("#level", "80");
+  await page.locator("#level").blur();
+  await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80"]);
+  await expect(favEntries(page).first()).toHaveAttribute("aria-current", "true");
+
+  // Die mitgefuehrte Stufe ist gespeichert, nicht nur angezeigt.
+  await page.reload();
+  await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80"]);
 });
 
 test("erneutes Klicken vergisst den Favoriten wieder", async ({ page }) => {
@@ -102,15 +116,20 @@ test("Favoriten ueberleben einen Neuladen", async ({ page }) => {
 });
 
 test("die Liste wird bei zwoelf Eintraegen gedeckelt", async ({ page }) => {
-  for (let level = 1; level <= 14; level++) {
-    await page.fill("#level", String(level));
-    await page.locator("#level").blur();
+  const ids = await page.locator("#building option").evaluateAll((options) =>
+    options.slice(0, 14).map((option) => option.value));
+  for (const id of ids) {
+    await page.selectOption("#building", id);
     await page.click("#favSave");
   }
   await expect(favEntries(page)).toHaveCount(12);
-  // Der neueste steht vorne, der aelteste ist herausgefallen
-  await expect(page.locator(".fav-go").first()).toHaveText("Die Arche 14");
-  await expect(page.locator(".fav-go").last()).toHaveText("Die Arche 3");
+  // Der neueste steht vorne, die zwei aeltesten sind herausgefallen
+  const shown = await page.locator(".fav-go").evaluateAll((buttons) => buttons.map((b) => b.textContent));
+  const names = await page.locator("#building option").evaluateAll((options) =>
+    Object.fromEntries(options.map((o) => [o.value, o.textContent])));
+  expect(shown[0]).toContain(names[ids[13]].split(" ")[0].slice(0, 4));
+  await expect(page.locator(".fav-go").filter({ hasText: names[ids[0]] })).toHaveCount(0);
+  await expect(page.locator(".fav-go").filter({ hasText: names[ids[1]] })).toHaveCount(0);
 });
 
 test("kaputte Favoriten im Speicher werden verworfen", async ({ page }) => {
@@ -120,10 +139,12 @@ test("kaputte Favoriten im Speicher werden verworfen", async ({ page }) => {
       { id: "Gibt_Es_Nicht", level: 5 },   // unbekanntes Bauwerk
       { id: "Notre_Dame", level: 9999 },   // ueber dem Maximum
       { id: "Notre_Dame", level: 42 },     // Dublette
+      { id: "Notre_Dame", level: 30 },     // dasselbe Bauwerk, andere Stufe (alter Stand)
       null                                  // Schrott
     ]));
   });
   await page.reload();
+  // Ein Eintrag je Bauwerk; von mehreren bleibt der vorderste.
   await expect(favEntries(page)).toHaveCount(1);
   await expect(page.locator(".fav-go").first()).toHaveText("Notre Dame 42");
 });
@@ -230,23 +251,16 @@ test.describe("Zuletzt benutzt zuerst", () => {
     await expect(favEntries(page).first()).toHaveAttribute("aria-current", "true");
   });
 
-  test("wer per Stepper in eine gemerkte Stufe laeuft, bewegt die Liste nicht", async ({ page }) => {
-    // Dieselbe Arche auf drei Stufen; neueste zuerst.
-    for (const level of ["10", "40", "80"]) {
-      await page.fill("#level", level);
-      await page.locator("#level").blur();
-      await page.click("#favSave");
-    }
-    await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80", "Die Arche 40", "Die Arche 10"]);
+  test("die Stufe zu aendern haelt den Eintrag aktuell, bewegt die Liste aber nicht", async ({ page }) => {
+    await seed(page);
+    await page.locator(".fav-go", { hasText: "Kolosseum 12" }).click();
+    await page.selectOption("#building", "Notre_Dame"); // Notre Dame ist Eintrag 3
+    await expect(favEntries(page).nth(2)).toHaveAttribute("aria-current", "true");
 
-    // Ohne die Liste anzufassen auf Stufe 40 gehen: Eintrag wird aktiv,
-    // bleibt aber an seinem Platz — nur der Marker wandert.
-    await page.fill("#level", "40");
-    await page.locator("#level").blur();
-
-    await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80", "Die Arche 40", "Die Arche 10"]);
-    await expect(favEntries(page).nth(1)).toHaveAttribute("aria-current", "true");
-    await expect(favEntries(page).first()).not.toHaveAttribute("aria-current", "true");
+    // Stufe weiterziehen: der Eintrag wandert mit, bleibt aber wo er ist.
+    await page.click("#levelUp");
+    await expect(page.locator(".fav-go")).toHaveText(["Kolosseum 12", "Die Arche 80", "Notre Dame 43"]);
+    await expect(favEntries(page).nth(2)).toHaveAttribute("aria-current", "true");
   });
 
   test("den ersten Eintrag anzutippen aendert nichts an der Reihenfolge", async ({ page }) => {
@@ -255,5 +269,64 @@ test.describe("Zuletzt benutzt zuerst", () => {
     await page.locator(".fav-go", { hasText: "Die Arche 80" }).click();
     await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80", "Kolosseum 12", "Notre Dame 42"]);
     await expect(favEntries(page).first()).toHaveAttribute("aria-current", "true");
+  });
+});
+
+test.describe("Ein Bauwerk, eine Stufe", () => {
+  const seed = async (page) => {
+    for (const [id, level] of [["Notre_Dame", "42"], ["The_Arc", "81"]]) {
+      await page.selectOption("#building", id);
+      await page.fill("#level", level);
+      await page.locator("#level").blur();
+      await page.click("#favSave");
+    }
+    await expect(page.locator(".fav-go")).toHaveText(["Die Arche 81", "Notre Dame 42"]);
+  };
+
+  test("der Wechsel per Auswahlfeld auf ein gemerktes Bauwerk laedt dessen Stufe", async ({ page }) => {
+    await seed(page);
+    await expect(page.locator("#level")).toHaveValue("81");
+
+    await page.selectOption("#building", "Notre_Dame");
+    await expect(page.locator("#level")).toHaveValue("42");
+    // Und Notre Dames Eintrag ist unveraendert — die 81 der Arche kam nicht mit.
+    await expect(page.locator(".fav-go")).toHaveText(["Die Arche 81", "Notre Dame 42"]);
+  });
+
+  test("der Wechsel per Suche laedt die Stufe ebenso", async ({ page }) => {
+    await seed(page);
+    await page.fill("#buildingFilter", "notre");
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#building")).toHaveValue("Notre_Dame");
+    await expect(page.locator("#level")).toHaveValue("42");
+    await expect(page.locator(".fav-go")).toHaveText(["Die Arche 81", "Notre Dame 42"]);
+  });
+
+  test("ein nicht gemerktes Bauwerk behaelt die mitgebrachte Stufe", async ({ page }) => {
+    await seed(page);
+    await page.selectOption("#building", "Colosseum"); // nicht gemerkt
+    await expect(page.locator("#level")).toHaveValue("81");
+    await expect(page.locator("#favSaveText")).toHaveText("Kolosseum · Stufe 81 merken");
+  });
+
+  test("Merken auf einem gemerkten Bauwerk entfernt es, statt es doppelt anzulegen", async ({ page }) => {
+    await seed(page);
+    await page.click("#levelUp"); // Arche auf 82, Eintrag wandert mit
+    await expect(page.locator(".fav-go")).toHaveText(["Die Arche 82", "Notre Dame 42"]);
+
+    await page.click("#favSave");
+    await expect(page.locator(".fav-go")).toHaveText(["Notre Dame 42"]);
+    await expect(page.locator("#favSaveText")).toHaveText("Die Arche · Stufe 82 merken");
+  });
+
+  test("die Lesart der Stufe aendert am Mitfuehren nichts", async ({ page }) => {
+    await seed(page);
+    await page.locator('#levelMode button[data-level-mode="current"]').click();
+    await expect(page.locator("#level")).toHaveValue("80");
+    await page.click("#levelUp");
+    // Angezeigt 81, gerechnet 82 — der Chip zeigt die Lesart, gespeichert ist die gerechnete Stufe.
+    await expect(page.locator(".fav-go").first()).toHaveText("Die Arche 81");
+    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("cipher:favorites"))[0].level);
+    expect(stored).toBe(82);
   });
 });

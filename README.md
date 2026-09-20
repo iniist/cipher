@@ -139,11 +139,18 @@ wird genau die Stelle hervorgehoben, die getroffen hat.
 
 ### Favoriten
 
-Bauwerk **und** Stufe lassen sich zusammen merken (bis zu zwölf Kombinationen).
+Ein Favorit ist ein Bauwerk (bis zu zwölf), und seine Stufe ist die, auf der
+es zuletzt stand. Ziehst du ein gemerktes Bauwerk eine Stufe weiter, wandert
+der Eintrag mit — neu merken musst du nichts, und doppelt steht ein Bauwerk
+nie in der Liste. Vorher war jede Stufe ein eigener Eintrag; wer sein Bauwerk
+levelte, hatte es danach zweimal da.
+
 Ein Tipp auf einen Favoriten springt zurück — praktisch, wenn du mehrere
-Bauwerke parallel hochziehst. Die Liste zeigt drei Reihen und scrollt darüber
-hinaus, damit sie den Förderplan nicht aus dem Bild schiebt. Sie liegt im
-Browser, nicht auf einem Server.
+Bauwerke parallel hochziehst. Auch der Wechsel per Auswahlfeld oder Suche auf
+ein gemerktes Bauwerk lädt dessen Stufe; ohne das würde die mitgebrachte
+Stufe des vorigen Bauwerks den Eintrag überschreiben. Die Liste zeigt drei
+Reihen und scrollt darüber hinaus, damit sie den Förderplan nicht aus dem
+Bild schiebt. Sie liegt im Browser, nicht auf einem Server.
 
 Die Liste ist **„zuletzt benutzt zuerst“**: Merken und Antippen stellen einen
 Eintrag nach vorn. Der erste Chip ist damit das, womit du zuletzt gearbeitet
