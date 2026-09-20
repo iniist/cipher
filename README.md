@@ -51,9 +51,10 @@ erlaubt: ein Bauwerk, das noch gar nicht steht.
 ### Arche-Faktor
 
 Der Faktor läuft über einen Stepper mit eintippbarem Feld: `−`, Wert, `+`,
-darunter die Schnellwahl für die gängigen Werte. Das Feld nimmt an, was man
-tatsächlich tippt — `1,93`, `1.93`, `1,9`, `193` und `193 %` führen alle zum
-selben Ergebnis. Pfeiltasten ändern den Wert um eine Stufe.
+darunter die Schnellwahl für die gängigen Werte. Zulässig ist 1,80 bis 2,00.
+Das Feld nimmt an, was man tatsächlich tippt — `1,93`, `1.93`, `1,9`, `193`
+und `193 %` führen alle zum selben Ergebnis. Pfeiltasten ändern den Wert um
+eine Stufe.
 
 Vorher war es ein Schieberegler. Auf dem Telefon sprang dessen Wert schon beim
 **Aufsetzen** des Fingers dorthin, wo man ihn hinsetzte — beim Scrollen also
@@ -65,6 +66,47 @@ Ein Stepper hat keine Schiene, die man versehentlich trifft. Knöpfe lösen erst
 beim Loslassen aus, und eine Wischgeste bricht den Klick ab. Der schmale
 Balken unter dem Feld zeigt weiterhin die Lage im Bereich — als reine Anzeige,
 ohne Angriffsfläche.
+
+### Faktor je Platz
+
+Der Arche-Bonus gehört dem Förderer, nicht dem Bauwerk: wer P3 übernimmt,
+kann eine andere Arche haben als wer P1 nimmt. Hinter dem Aufklapper
+„Faktor je Platz“ steht darum für jeden der fünf Plätze ein eigener Wert.
+
+Das Modell in zwei Sätzen:
+
+- Ein Platz **folgt** dem Wert oben, bis du ihn anfasst. Danach ist er
+  **eigen**, trägt das Wort daneben und bleibt stehen, wenn der obere Wert
+  sich bewegt.
+- **„Alle wieder angleichen“** nimmt alle fünf zurück aufs Folgen, ein
+  einzelnes × nur einen.
+
+Dadurch muss der obere Wähler nie ausgegraut werden — er ist weiterhin die
+Vorgabe für jeden Platz ohne eigenen Wert und zeigt damit immer etwas
+Wahres. Ausgegraut würde er weiter „1,90“ anzeigen, während die Plätze
+längst etwas anderes sagen. Gibt es Unterschiede, nennt der Kopf des Blocks
+die Spanne (`1,85–1,95`), auch zugeklappt.
+
+**Die Absicherung trägt das ohne neue Regel.** `buildPlan` rechnet
+`needed = remaining − 2 × Einzahlung` — mit der Einzahlung *dieses* Platzes.
+Ein schwächerer Faktor bedeutet also automatisch mehr vorher sichern, und
+das stimmt auch inhaltlich: ein kleinerer Beitrag ist leichter zu
+überbieten. Umgekehrt wirkt jeder Platz auf die Plätze unter ihm, weil sie
+nacheinander vergeben werden.
+
+**Warum der Bereich bei 1,80 endet.** Die Belohnungen werden auf 5 gerundet,
+halbieren sich von Platz zu Platz also nicht exakt. Spreizt man die Faktoren
+weit genug, kann ein tieferer Platz dadurch mehr kosten als ein höherer —
+über alle 1240 P1-Werte des Datensatzes gemessen:
+
+| Bereich | Fälle mit vertauschter Reihenfolge |
+| --- | --- |
+| 1,80 – 2,00 | 0 |
+| 1,50 – 2,00 | 0 |
+| 1,00 – 2,00 | 623 |
+
+Solange der Bereich bei 1,80 bleibt, kann der Fall nicht eintreten und
+braucht keine Warnung.
 
 ### Bauwerk finden
 
@@ -227,10 +269,10 @@ laufenden Durchgang ab, damit auf einem privaten Repo keine Minuten
 verpuffen. Schlägt ein Browsertest fehl, hängt der Playwright-Bericht sieben
 Tage als Artefakt am Lauf.
 
-Die Browsertests decken Berechnung, die Lesart der Stufenzahl, Favoriten,
-Speicherung, Migration aus dem Vorgänger, die Rechtstexte, Barrierefreiheit,
-die Easter Eggs, die Sicherheits-Header samt CSP und die Zusicherung „keine
-externen Anfragen“ ab.
+Die Browsertests decken Berechnung, den Faktor je Platz, die Lesart der
+Stufenzahl, Favoriten, Speicherung, Migration aus dem Vorgänger, die
+Rechtstexte, Barrierefreiheit, die Easter Eggs, die Sicherheits-Header samt
+CSP und die Zusicherung „keine externen Anfragen“ ab.
 
 ## Barrierefreiheit
 

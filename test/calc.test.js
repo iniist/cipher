@@ -249,3 +249,86 @@ test("chatLine kommt ohne Namen aus und bleibt bei leerem Plan leer", () => {
   const empty = Calc.buildPlan({ total: 10000, p1: 800, factor: 190, enabled: [false, false, false, false, false] });
   assert.equal(Calc.chatLine(empty, "Arche", false), "");
 });
+
+// ---------------------------------------------------------- Faktor je Platz
+
+test("fuenf gleiche Faktoren ergeben exakt den Plan des einen Faktors", () => {
+  // Die wichtigste Zusicherung des Umbaus: wer die Plaetze nicht einzeln
+  // einstellt, bekommt bis auf das letzte Feld dasselbe wie vorher.
+  let compared = 0;
+
+  for (const building of DATA.buildings) {
+    for (const level of [1, 5, 10, 11, 20, 40, 63, 80, 120, 200]) {
+      if (level > building.maxLevel) continue;
+      const total = Calc.totalCost(building, level, {}).value;
+      const p1 = Calc.p1Reward(building, level, DATA.curves, {}).value;
+      if (total == null || p1 == null) continue;
+
+      for (const factor of [180, 185, 190, 195, 200]) {
+        const einer = Calc.buildPlan({ total, p1, factor, enabled: allOn });
+        const fuenf = Calc.buildPlan({
+          total, p1, factor,
+          factors: [factor, factor, factor, factor, factor],
+          enabled: allOn
+        });
+        assert.deepEqual(fuenf, einer,
+          `${building.id} Stufe ${level} Faktor ${factor}: Plaene weichen ab`);
+        compared++;
+      }
+    }
+  }
+
+  assert.ok(compared > 1000, `zu wenige Vergleiche: ${compared}`);
+});
+
+test("fehlende Eintraege in factors fallen auf den Standardfaktor zurueck", () => {
+  const argument = { total: 10000, p1: 800, factor: 190, enabled: allOn };
+  const voll = Calc.buildPlan(argument);
+
+  // null, undefined und ein zu kurzes Feld bedeuten alle "nimm den Standard"
+  for (const factors of [[null, null, null, null, null], [], [null], undefined]) {
+    assert.deepEqual(Calc.buildPlan({ ...argument, factors }), voll,
+      `factors=${JSON.stringify(factors)} haette den Standard nehmen muessen`);
+  }
+});
+
+test("ein eigener Faktor wirkt nur auf seinen Platz und die Plaetze darunter", () => {
+  const argument = { total: 10000, p1: 800, factor: 190, enabled: allOn };
+  const gleich = Calc.buildPlan(argument);
+  const p3Schwach = Calc.buildPlan({ ...argument, factors: [null, null, 180, null, null] });
+
+  // P1 und P2 stehen vor P3 und bleiben unberuehrt
+  assert.equal(p3Schwach.rows[0].contribution, gleich.rows[0].contribution);
+  assert.equal(p3Schwach.rows[0].secure, gleich.rows[0].secure);
+  assert.equal(p3Schwach.rows[1].contribution, gleich.rows[1].contribution);
+  assert.equal(p3Schwach.rows[1].secure, gleich.rows[1].secure);
+
+  // P3 selbst zahlt weniger
+  assert.ok(p3Schwach.rows[2].contribution < gleich.rows[2].contribution);
+
+  // Und der Eigenanteil steigt um genau das, was P3 weniger einzahlt —
+  // die Plaetze darunter verschieben sich, die Summe bleibt aufgegangen.
+  assert.equal(p3Schwach.external + p3Schwach.ownShare, p3Schwach.total);
+  assert.ok(p3Schwach.ownShare > gleich.ownShare);
+});
+
+test("ein schwaecherer Faktor verlangt mehr vorher zu sichern", () => {
+  // Kein Zufall, sondern die Formel: needed = remaining - 2 * pay. Wer
+  // weniger einzahlt, ist leichter zu ueberbieten und braucht mehr Vorlauf.
+  const argument = { total: 10000, p1: 800, factor: 200, enabled: allOn };
+  const stark = Calc.buildPlan(argument);
+  const schwach = Calc.buildPlan({ ...argument, factors: [180, null, null, null, null] });
+
+  assert.ok(schwach.rows[0].contribution < stark.rows[0].contribution);
+  assert.ok(schwach.rows[0].secure > stark.rows[0].secure,
+    "P1 mit schwaecherer Arche muss weiter vorgesichert werden");
+});
+
+test("der Plan nennt zu jedem Platz den Faktor, mit dem er gerechnet wurde", () => {
+  const plan = Calc.buildPlan({
+    total: 10000, p1: 800, factor: 190,
+    factors: [200, null, 180, null, null],
+    enabled: allOn
+  });
+  assert.deepEqual(plan.rows.map((row) => row.factor), [200, 190, 180, 190, 190]);
+});
