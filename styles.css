@@ -278,6 +278,12 @@ input[type=range] { padding: 0; border: 0; background: transparent; accent-color
 .filter-hit span { font-size: .82rem; color: var(--dim); white-space: nowrap }
 .filter-hit[aria-current="true"] b::after { content: " ·"; color: var(--gold) }
 
+/* Die getroffene Stelle hervorheben, damit man sieht, warum ein Eintrag in
+   der Liste steht — ob der Name gepasst hat oder nur das Zeitalter. Die
+   Vorgabe des Browsers (gelber Kasten, schwarze Schrift) passt hier nicht. */
+.filter-hit mark { background: none; color: var(--gold); font-weight: 700 }
+:root[data-theme="contrast"] .filter-hit mark { color: #000; text-decoration: underline; text-underline-offset: 2px }
+
 /* ------------------------------------------------------------ Favoriten */
 
 .favs { margin-top: 14px; padding-top: 12px; border-top: 1.5px solid var(--field-border) }

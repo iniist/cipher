@@ -45,6 +45,12 @@ Bauwerke und zeigt immer das wirklich gewählte; nichts wechselt die Auswahl
 ohne einen Klick. Am Telefon erspart das den Weg durch die native Liste mit
 49 Einträgen.
 
+Weil die Suche auch das Zeitalter durchsucht, kann ein Treffer auf den ersten
+Blick unerklärlich wirken: „ho" findet den **Markusdom**, obwohl in dessen
+Namen kein „ho" steht — er liegt im Hochmittelalter. Zwei Dinge machen das
+lesbar: Namenstreffer stehen vor Zeitalter-Treffern, und in jedem Eintrag
+wird genau die Stelle hervorgehoben, die getroffen hat.
+
 ### Favoriten
 
 Bauwerk **und** Stufe lassen sich zusammen merken (bis zu zwölf Kombinationen).

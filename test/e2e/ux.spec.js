@@ -164,15 +164,37 @@ test.describe("Bauwerkssuche", () => {
     await expect(page.locator("#filterClear")).toBeHidden();
   });
 
+  test("Namenstreffer stehen vor Zeitalter-Treffern", async ({ page }) => {
+    // Der gemeldete Fall: in "Markusdom" steht kein "ho", er passt nur über
+    // sein Zeitalter. Vorher stand der eigentlich gemeinte Namenstreffer
+    // deshalb ganz unten.
+    await page.fill("#buildingFilter", "Ho");
+
+    await expect(page.locator("#filterCount")).toHaveText("3 Bauwerke gefunden.");
+    await expect(hits(page)).toHaveText(["Horizontriss-Siphon", "Markusdom", "Notre Dame"]);
+  });
+
+  test("die Hervorhebung zeigt, ob Name oder Zeitalter getroffen hat", async ({ page }) => {
+    await page.fill("#buildingFilter", "Ho");
+
+    const rows = page.locator(".filter-hit");
+    // Erster Treffer: im Namen.
+    await expect(rows.nth(0).locator("b mark")).toHaveText("Ho");
+    await expect(rows.nth(0).locator("span mark")).toHaveCount(0);
+
+    // Die beiden anderen: im Zeitalter — sichtbar, warum sie dastehen.
+    for (const index of [1, 2]) {
+      await expect(rows.nth(index).locator("span mark")).toHaveText("Ho");
+      await expect(rows.nth(index).locator("b mark")).toHaveCount(0);
+    }
+  });
+
   test("die Trefferzahl stimmt mit den angezeigten Treffern überein", async ({ page }) => {
-    // Genau der Fall aus dem Fehlerbericht: "Ho" trifft das Zeitalter
-    // Hochmittelalter (2) und den Horizontriss-Siphon (1).
     await page.selectOption("#building", "Saturn_VI_Gate_PEGASUS");
     await page.fill("#buildingFilter", "Ho");
 
     await expect(page.locator("#filterCount")).toHaveText("3 Bauwerke gefunden.");
     await expect(hits(page)).toHaveCount(3);
-    await expect(hits(page)).toHaveText(["Markusdom", "Notre Dame", "Horizontriss-Siphon"]);
     // Das gewählte Bauwerk taucht nicht als vierter Treffer auf.
     await expect(hits(page)).not.toContainText(["Saturn VI Tor PEGASUS"]);
   });
@@ -216,6 +238,11 @@ test.describe("Bauwerkssuche", () => {
   test("jeder Treffer nennt sein Zeitalter", async ({ page }) => {
     await page.fill("#buildingFilter", "titan");
     await expect(page.locator(".filter-hit span")).toHaveText(["Titan", "Titan", "Titan"]);
+  });
+
+  test("ein Namenstreffer wird im Namen hervorgehoben", async ({ page }) => {
+    await page.fill("#buildingFilter", "leuchtturm");
+    await expect(page.locator(".filter-hit b mark")).toHaveText("Leuchtturm");
   });
 
   test("ein Zeitalter findet alle seine Bauwerke", async ({ page }) => {
@@ -276,6 +303,35 @@ test.describe("Bauwerkssuche", () => {
     await page.fill("#buildingFilter", "basilius");
     await page.locator(".filter-hit").first().click();
     await expect(page.locator("#building")).toHaveValue("Saint_Basil's_Cathedral");
+  });
+
+  test("die Hervorhebung sitzt auch bei Zeichen richtig, die beim Falten wachsen", async ({ page }) => {
+    // "ß" wird beim Vergleich zu "ss" — aus einem Zeichen werden zwei, die
+    // Stellen verschieben sich also gegeneinander. Im echten Datensatz gibt
+    // es kein "ß", darum hier ein eigener.
+    await page.route("**/data.js", (route) => route.fulfill({
+      contentType: "text/javascript; charset=utf-8",
+      body: `window.CIPHER_DATA = {
+        generated: "2026-09-19",
+        buildings: [
+          { id: "Grosse_Strasse", name: "Große Straße", short: "Straße", era: "Bronzezeit",
+            base: 400, maxLevel: 50, curve: "Bronzezeit", costs: [10,20,30,40,50,60,70,80,90,100] }
+        ],
+        curves: { "Bronzezeit": {
+          p1: Array.from({ length: 50 }, (_, i) => (i + 1) * 5),
+          source: "w".repeat(50)
+        } }
+      };`
+    }));
+    await page.goto("/index.html");
+
+    // Der Treffer steht hinter dem "ß" — säße die Zuordnung daneben, wäre
+    // die Markierung verschoben.
+    await page.fill("#buildingFilter", "strasse");
+    await expect(page.locator(".filter-hit mark")).toHaveText("Straße");
+
+    await page.fill("#buildingFilter", "große");
+    await expect(page.locator(".filter-hit mark")).toHaveText("Große");
   });
 
   test("die Suche bleibt für die Tastatur erreichbar", async ({ page }) => {

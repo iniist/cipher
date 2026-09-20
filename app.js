@@ -118,7 +118,11 @@
 
   var stored = read(KEY.state, {});
   var state = {
-    building: byId[stored.building] ? stored.building : DEFAULT_BUILDING,
+    // Zuletzt gewaehltes Bauwerk, sonst die Voreinstellung — und falls es
+    // die im Datensatz einmal nicht geben sollte, das erste ueberhaupt.
+    building: byId[stored.building] ? stored.building
+      : byId[DEFAULT_BUILDING] ? DEFAULT_BUILDING
+      : DATA.buildings[0].id,
     level: Number(stored.level) > 0 ? Math.floor(stored.level) : 10,
     factor: Number(stored.factor) >= 185 && Number(stored.factor) <= 200 ? Math.floor(stored.factor) : 190,
     name: typeof stored.name === "string" ? stored.name : "",
@@ -217,14 +221,65 @@
    * ohne einen Klick. Auf dem Telefon spart es zusaetzlich den Weg durch
    * die native Liste mit 49 Eintraegen.
    */
+  /**
+   * Text zeichenweise falten und dabei merken, aus welchem Zeichen des
+   * Originals jedes gefaltete Zeichen stammt. Das braucht die Hervorhebung:
+   * "ß" wird zu "ss", die Stellen verschieben sich also gegeneinander.
+   */
+  function foldWithMap(text) {
+    var folded = "";
+    var origin = [];
+    for (var i = 0; i < text.length; i++) {
+      var piece = normalise(text.charAt(i));
+      for (var j = 0; j < piece.length; j++) origin.push(i);
+      folded += piece;
+    }
+    return { folded: folded, origin: origin };
+  }
+
+  /** Den Treffer im Text mit <mark> auszeichnen, alles Uebrige maskieren. */
+  function highlight(text, needle) {
+    if (!needle) return escapeHtml(text);
+    var mapped = foldWithMap(text);
+    var at = mapped.folded.indexOf(needle);
+    if (at < 0) return escapeHtml(text);
+
+    var from = mapped.origin[at];
+    var to = mapped.origin[at + needle.length - 1] + 1;
+    return escapeHtml(text.slice(0, from)) +
+      "<mark>" + escapeHtml(text.slice(from, to)) + "</mark>" +
+      escapeHtml(text.slice(to));
+  }
+
+  /**
+   * Treffer suchen und nach Fundstelle ordnen.
+   *
+   * Die Suche greift auch auf das Zeitalter — "titan" soll die drei
+   * Saturn-Tore finden. Das erzeugt aber Treffer, denen man nichts ansieht:
+   * "ho" findet den Markusdom, obwohl in "Markusdom" kein "ho" steht, weil
+   * er im Hochmittelalter liegt.
+   *
+   * Zwei Dinge machen das lesbar. Erstens stehen Namenstreffer vor
+   * Zeitalter-Treffern, sonst landet der eigentlich gemeinte Fund ganz
+   * unten. Zweitens wird in der Liste genau die Stelle hervorgehoben, die
+   * getroffen hat — man sieht also, ob der Name oder das Zeitalter gemeint
+   * war.
+   */
   function currentMatches() {
     var needle = normalise($("buildingFilter").value).trim();
     if (!needle) return [];
-    return DATA.buildings.filter(function (building) {
-      return normalise(building.name).indexOf(needle) >= 0 ||
-        normalise(building.short).indexOf(needle) >= 0 ||
-        normalise(building.era).indexOf(needle) >= 0;
+
+    var byName = [];
+    var byEra = [];
+    DATA.buildings.forEach(function (building) {
+      if (normalise(building.name).indexOf(needle) >= 0 ||
+          normalise(building.short).indexOf(needle) >= 0) {
+        byName.push({ building: building, where: "name" });
+      } else if (normalise(building.era).indexOf(needle) >= 0) {
+        byEra.push({ building: building, where: "era" });
+      }
     });
+    return byName.concat(byEra);
   }
 
   function renderFilter() {
@@ -240,10 +295,13 @@
           ? "1 Bauwerk gefunden."
           : matches.length + " Bauwerke gefunden.";
 
-    $("filterResults").innerHTML = matches.map(function (building) {
+    var needle = normalise(query).trim();
+    $("filterResults").innerHTML = matches.map(function (match) {
+      var building = match.building;
       return '<li><button type="button" class="filter-hit" data-pick="' + escapeHtml(building.id) + '"' +
         (building.id === state.building ? ' aria-current="true"' : "") + ">" +
-        "<b>" + escapeHtml(building.name) + "</b><span>" + escapeHtml(building.era) + "</span>" +
+        "<b>" + (match.where === "name" ? highlight(building.name, needle) : escapeHtml(building.name)) + "</b>" +
+        "<span>" + (match.where === "era" ? highlight(building.era, needle) : escapeHtml(building.era)) + "</span>" +
       "</button></li>";
     }).join("");
   }
@@ -607,7 +665,7 @@
       // eindeutig ist.
       if (event.key === "Enter") {
         var first = currentMatches()[0];
-        if (first) { event.preventDefault(); pickBuilding(first.id); }
+        if (first) { event.preventDefault(); pickBuilding(first.building.id); }
       }
     });
 
