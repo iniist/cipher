@@ -1,11 +1,19 @@
 name: Tests
 
-# Die Einheitentests laufen bei jedem Push — sie brauchen keinen Browser und
-# sind in Sekunden durch. Die Browsertests kosten einen Chromium-Download und
-# laufen darum nur dort, wo es zaehlt: bei Pull Requests und auf main.
+# Nur Pull Requests und main.
+#
+# Der erste Entwurf liess die Einheitentests zusaetzlich bei jedem Push auf
+# jedem Zweig laufen. Das hat im ersten Durchgang gezeigt, was daran falsch
+# ist: solange ein Pull Request offen ist, feuern Push und Pull Request
+# beide, und die Einheitentests liefen zweimal fuer denselben Commit.
+# GitHub rechnet je Job auf volle Minuten auf, der zweite Lauf kostete also
+# eine Minute fuer nichts.
+#
+# Ein Zweig ohne Pull Request bekommt damit keine CI — dafuer gibt es
+# `npm test` vor dem Aufmachen.
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -37,8 +45,6 @@ jobs:
 
   browser:
     name: Browsertests
-    # Nur bei Pull Requests und auf main — nicht bei jedem Zwischenstand.
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
