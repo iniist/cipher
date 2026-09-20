@@ -145,6 +145,15 @@ Bauwerke parallel hochziehst. Die Liste zeigt drei Reihen und scrollt darüber
 hinaus, damit sie den Förderplan nicht aus dem Bild schiebt. Sie liegt im
 Browser, nicht auf einem Server.
 
+Die Liste ist **„zuletzt benutzt zuerst“**: Merken und Antippen stellen einen
+Eintrag nach vorn. Der erste Chip ist damit das, womit du zuletzt gearbeitet
+hast — im Normalfall also das Aktive. Vorher galt „zuletzt gemerkt zuerst“,
+und das lehrte das Auge eine Regel, die nur meistens stimmte: direkt nach dem
+Merken stand der neue Eintrag vorn und war aktiv, beim ersten Antippen eines
+älteren Eintrags nicht mehr. Wer per Stufen-Stepper zufällig in eine gemerkte
+Stufe läuft, hat die Liste nicht angefasst — dann bewegt sie sich auch nicht,
+nur der Marker wandert.
+
 Das Gemerkte steht **vor** allem anderen im Bauwerk-Panel. Vorher stand es
 ganz unten dahinter, hinter Suche, Stufe, Name und Faktor — auf dem Telefon
 also außerhalb des ersten Bildschirms, obwohl es genau das ist, wozu die

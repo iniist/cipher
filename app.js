@@ -769,6 +769,10 @@
   }
 
   /**
+   * Die Liste ist "zuletzt benutzt zuerst": Merken und Antippen stellen
+   * einen Eintrag nach vorn. Der erste Chip ist damit das, womit zuletzt
+   * gearbeitet wurde — im Normalfall also das Aktive.
+   *
    * Der Knopf beschriftet sich mit dem, was er merkt, und die Liste steht
    * oben im Panel statt ganz unten dahinter. Vorher war beides unauffaellig:
    * ein graues Label und ein kleiner Stern hinter Suche, Stufe, Name und
@@ -823,6 +827,13 @@
     var bottom = top + entry.offsetHeight;
     if (top < list.scrollTop) list.scrollTop = top;
     else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
+  }
+
+  /** Einen Eintrag an den Anfang der Liste stellen und das speichern. */
+  function moveFavoriteToFront(index) {
+    if (index <= 0 || index >= favorites.length) return;
+    favorites.unshift(favorites.splice(index, 1)[0]);
+    write(KEY.favorites, favorites);
   }
 
   function toggleFavorite() {
@@ -1000,6 +1011,15 @@
       if (button.dataset.load != null) {
         var entry = favorites[Number(button.dataset.load)];
         if (!entry) return;
+        // Zuletzt benutzt zuerst: der angetippte Eintrag rueckt nach vorn,
+        // genau wie ein frisch gemerkter. So steht das Aktive verlaesslich
+        // an erster Stelle — vorher stimmte das nur direkt nach dem Merken
+        // und brach beim ersten Antippen eines aelteren Eintrags.
+        //
+        // Absichtlich nur hier und beim Merken, nicht in render(): wer per
+        // Stufen-Stepper zufaellig in eine gemerkte Stufe laeuft, hat die
+        // Liste nicht angefasst, und dann soll sie sich auch nicht bewegen.
+        moveFavoriteToFront(Number(button.dataset.load));
         state.building = entry.id;
         state.level = entry.level;
         render();

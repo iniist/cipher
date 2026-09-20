@@ -186,3 +186,74 @@ test.describe("Platzierung", () => {
     expect(entry).not.toBe(chip);
   });
 });
+
+test.describe("Zuletzt benutzt zuerst", () => {
+  // Vorher war die Liste "zuletzt gemerkt zuerst". Direkt nach dem Merken
+  // stand der neue Eintrag vorn und war aktiv — das Auge lernte daraus
+  // "erster Chip = das Aktive", und beim ersten Antippen eines aelteren
+  // Eintrags brach die Regel. Jetzt gilt sie immer, wenn man die Liste
+  // selbst angefasst hat.
+  const seed = async (page) => {
+    for (const [id, level] of [["Notre_Dame", "42"], ["Colosseum", "12"], ["The_Arc", "80"]]) {
+      await page.selectOption("#building", id);
+      await page.fill("#level", level);
+      await page.locator("#level").blur();
+      await page.click("#favSave");
+    }
+    await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80", "Kolosseum 12", "Notre Dame 42"]);
+  };
+
+  test("ein angetippter Eintrag rueckt nach vorn und ist dort der aktive", async ({ page }) => {
+    await seed(page);
+
+    await page.locator(".fav-go", { hasText: "Notre Dame 42" }).click();
+
+    await expect(page.locator(".fav-go")).toHaveText(["Notre Dame 42", "Die Arche 80", "Kolosseum 12"]);
+    await expect(favEntries(page).first()).toHaveAttribute("aria-current", "true");
+    await expect(page.locator("#building")).toHaveValue("Notre_Dame");
+    await expect(page.locator("#level")).toHaveValue("42");
+  });
+
+  test("die uebrigen behalten ihre Reihenfolge, es bewegt sich nur der eine", async ({ page }) => {
+    await seed(page);
+    await page.locator(".fav-go", { hasText: "Kolosseum 12" }).click();
+    // Kolosseum nach vorn, Arche und Notre Dame ruecken um genau einen Platz.
+    await expect(page.locator(".fav-go")).toHaveText(["Kolosseum 12", "Die Arche 80", "Notre Dame 42"]);
+  });
+
+  test("die neue Reihenfolge ueberlebt einen Neuladen", async ({ page }) => {
+    await seed(page);
+    await page.locator(".fav-go", { hasText: "Notre Dame 42" }).click();
+
+    await page.reload();
+    await expect(page.locator(".fav-go")).toHaveText(["Notre Dame 42", "Die Arche 80", "Kolosseum 12"]);
+    await expect(favEntries(page).first()).toHaveAttribute("aria-current", "true");
+  });
+
+  test("wer per Stepper in eine gemerkte Stufe laeuft, bewegt die Liste nicht", async ({ page }) => {
+    // Dieselbe Arche auf drei Stufen; neueste zuerst.
+    for (const level of ["10", "40", "80"]) {
+      await page.fill("#level", level);
+      await page.locator("#level").blur();
+      await page.click("#favSave");
+    }
+    await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80", "Die Arche 40", "Die Arche 10"]);
+
+    // Ohne die Liste anzufassen auf Stufe 40 gehen: Eintrag wird aktiv,
+    // bleibt aber an seinem Platz — nur der Marker wandert.
+    await page.fill("#level", "40");
+    await page.locator("#level").blur();
+
+    await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80", "Die Arche 40", "Die Arche 10"]);
+    await expect(favEntries(page).nth(1)).toHaveAttribute("aria-current", "true");
+    await expect(favEntries(page).first()).not.toHaveAttribute("aria-current", "true");
+  });
+
+  test("den ersten Eintrag anzutippen aendert nichts an der Reihenfolge", async ({ page }) => {
+    await seed(page);
+    await page.selectOption("#building", "Hagia_Sophia"); // woanders hin
+    await page.locator(".fav-go", { hasText: "Die Arche 80" }).click();
+    await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80", "Kolosseum 12", "Notre Dame 42"]);
+    await expect(favEntries(page).first()).toHaveAttribute("aria-current", "true");
+  });
+});
