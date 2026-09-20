@@ -170,6 +170,50 @@ test.describe("Rechtstexte", () => {
     await expect(main).not.toContainText("Deutschland gehostet");
   });
 
+  test("die Reichweitenmessung wird vollstaendig beschrieben", async ({ page }) => {
+    await page.goto("/datenschutz.html");
+    const main = page.locator("main");
+
+    await expect(main).toContainText("Reichweitenmessung");
+    await expect(main).toContainText("Web Analytics");
+
+    // Das Wesentliche daran: sie fasst das Geraet nicht an. Genau daran
+    // haengt, dass es kein Einwilligungsbanner braucht.
+    await expect(main).toContainText("kein Cookie gesetzt, kein Skript ausgeführt");
+    await expect(main).toContainText("§ 25 TDDDG");
+    await expect(main).toContainText("kein Cookie-Banner");
+
+    // Und was tatsaechlich ausgewertet wird, samt Unterscheidungsmerkmal
+    // und Aufbewahrung — beides wird sonst leicht verschwiegen.
+    await expect(main).toContainText("anhand der IP-Adresse");
+    await expect(main).toContainText("30 Tage");
+    await expect(main).toContainText("Art. 6 Abs. 1 lit. f DSGVO");
+  });
+
+  test("der Zweck der Logfiles nennt die Auswertung mit", async ({ page }) => {
+    await page.goto("/datenschutz.html");
+    // Die ganze Erklaerung steckt in einer einzigen <section>, ein
+    // Container-Treffer wuerde hier also nichts aussagen. Gesucht ist
+    // genau der Satz, der die Zwecke aufzaehlt: stuende die
+    // Reichweitenmessung nicht darin, waere die Aufzaehlung unvollstaendig.
+    const zwecke = page.locator("main p", { hasText: "Abwehr von Angriffen" });
+    await expect(zwecke).toHaveCount(1);
+    await expect(zwecke).toContainText("Reichweitenmessung");
+    await expect(zwecke).toContainText("Art. 6 Abs. 1 lit. f DSGVO");
+  });
+
+  test("die Zusammenfassung widerspricht den Abschnitten nicht", async ({ page }) => {
+    await page.goto("/datenschutz.html");
+    const kurz = page.locator(".highlight");
+
+    // "keine Analyse-Werkzeuge" stand hier, solange nichts gemessen wurde.
+    await expect(kurz).not.toContainText("keine Analyse-Werkzeuge");
+    await expect(kurz).toContainText("Server-Logfiles");
+    await expect(kurz).toContainText("nichts gespeichert und nichts ausgelesen");
+    // Was weiter stimmt, steht auch weiter da.
+    await expect(kurz).toContainText("keine Cookies");
+  });
+
   test("die Abschnitte der Datenschutzerklaerung sind luckenlos durchnummeriert", async ({ page }) => {
     await page.goto("/datenschutz.html");
     const numbers = await page.locator("main h2").evaluateAll((headings) =>
