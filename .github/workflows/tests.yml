@@ -1,0 +1,73 @@
+name: Tests
+
+# Nur Pull Requests und main.
+#
+# Der erste Entwurf liess die Einheitentests zusaetzlich bei jedem Push auf
+# jedem Zweig laufen. Das hat im ersten Durchgang gezeigt, was daran falsch
+# ist: solange ein Pull Request offen ist, feuern Push und Pull Request
+# beide, und die Einheitentests liefen zweimal fuer denselben Commit.
+# GitHub rechnet je Job auf volle Minuten auf, der zweite Lauf kostete also
+# eine Minute fuer nichts.
+#
+# Ein Zweig ohne Pull Request bekommt damit keine CI — dafuer gibt es
+# `npm test` vor dem Aufmachen.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Ein neuer Push auf denselben Zweig macht den laufenden Durchgang
+# ueberfluessig. Das spart Minuten, die auf einem privaten Repo zaehlen.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  einheiten:
+    name: Rechenkern und Datensatz
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Einheitentests
+        run: npm run test:unit
+
+  browser:
+    name: Browsertests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Nur Chromium: die Suite laeuft in den Projekten "desktop" und
+      # "mobile", beide auf derselben Engine.
+      - name: Chromium bereitstellen
+        run: npx playwright install --with-deps chromium
+
+      - name: Browsertests
+        run: npm run test:e2e
+
+      - name: Bericht bei Fehlschlag sichern
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

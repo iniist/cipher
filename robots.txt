@@ -1,0 +1,9 @@
+# cipher — https://github.com/iniist/cipher
+
+User-agent: *
+Allow: /
+
+# Werkzeuge gehören nicht zur Website. netlify.toml beantwortet sie
+# ohnehin mit 404; das hier ist die zweite Sicherung.
+Disallow: /tools/
+Disallow: /test/

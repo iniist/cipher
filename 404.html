@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark light">
+<meta name="robots" content="noindex">
+<title>Nicht gefunden — cipher</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231f4a7a'/%3E%3Cpath d='M22 10.5a7.5 7.5 0 1 0 0 11' fill='none' stroke='%23f0c24f' stroke-width='3.2' stroke-linecap='square'/%3E%3C/svg%3E">
+<script>
+(function () {
+  try {
+    var saved = JSON.parse(localStorage.getItem("cipher:state") || "{}");
+    if (["light", "dark", "contrast"].indexOf(saved.theme) >= 0) {
+      document.documentElement.dataset.theme = saved.theme;
+    }
+  } catch (e) { /* Speicher gesperrt — das Standard-Theme bleibt stehen. */ }
+})();
+</script>
+<link rel="stylesheet" href="./fonts.css">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<main class="legal">
+
+  <header>
+    <div>
+      <h1>Nichts eingezeichnet</h1>
+      <p class="lead">Diese Seite steht nicht auf der Blaupause.</p>
+    </div>
+  </header>
+
+  <section class="panel">
+    <p>Die Adresse führt ins Leere — vertippt, veraltet oder nie dagewesen.</p>
+    <p><a class="back" href="/">← zurück zu cipher</a></p>
+  </section>
+
+</main>
+
+<footer class="site-foot wide">
+  <hr>
+  <nav class="foot-links" aria-label="Rechtliches">
+    <a href="/">cipher</a>
+    <a href="/impressum.html">Impressum</a>
+    <a href="/datenschutz.html">Datenschutz</a>
+  </nav>
+</footer>
+
+</body>
+</html>

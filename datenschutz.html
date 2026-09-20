@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark light">
+<meta name="robots" content="noindex">
+<title>Datenschutz — cipher</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231f4a7a'/%3E%3Cpath d='M22 10.5a7.5 7.5 0 1 0 0 11' fill='none' stroke='%23f0c24f' stroke-width='3.2' stroke-linecap='square'/%3E%3C/svg%3E">
+<script>
+(function () {
+  try {
+    var saved = JSON.parse(localStorage.getItem("cipher:state") || "{}");
+    if (["light", "dark", "contrast"].indexOf(saved.theme) >= 0) {
+      document.documentElement.dataset.theme = saved.theme;
+    }
+  } catch (e) { /* Speicher gesperrt — das Standard-Theme bleibt stehen. */ }
+})();
+</script>
+<link rel="stylesheet" href="./fonts.css">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<main class="legal">
+
+  <header>
+    <div>
+      <h1>Datenschutzerklärung</h1>
+      <p class="lead">Stand: September 2026</p>
+    </div>
+    <div class="modes" role="group" aria-label="Darstellung">
+      <button type="button" data-mode="light" aria-label="Hell" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
+      <button type="button" data-mode="dark" aria-label="Dunkel" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+      <button type="button" data-mode="contrast" aria-label="Kontrast" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button>
+    </div>
+  </header>
+
+  <a class="back" href="./index.html">← zurück zu cipher</a>
+
+  <div class="highlight">
+    <p><strong>Kurz gesagt:</strong> cipher schickt nichts weg. Es gibt keine Konten, keine Cookies, kein Tracking, keine Analyse-Werkzeuge und keine Inhalte von Dritten. Alles rechnet dein Browser selbst. Was cipher sich merkt — deine Auswahl, dein Spielername, deine Favoriten — bleibt allein auf deinem Gerät und lässt sich unten mit einem Klick löschen.</p>
+  </div>
+
+  <section class="panel">
+    <h2>1. Verantwortlicher</h2>
+    <div class="card">
+      <p>Daniel Scholz</p>
+      <p>Nelly-Sachs-Straße 1</p>
+      <p>79111 Freiburg im Breisgau</p>
+      <p>E-Mail: <a href="mailto:info@iniist.com">info@iniist.com</a></p>
+    </div>
+
+    <h2>2. Wie cipher arbeitet</h2>
+    <p>cipher ist eine statische Website. Die gesamte Berechnung — Gesamtkosten, Belohnungen der Mäzen-Plätze, Einzahlungen, der Text für den Förderchat — findet ausschließlich in deinem Browser statt. Es gibt keine Anmeldung, keine Datenbank und keine Schnittstelle, an die etwas gesendet würde. Deine Eingaben verlassen dein Gerät nicht.</p>
+
+    <h2>3. Lokale Speicherung im Browser</h2>
+    <p>Damit cipher beim nächsten Aufruf dort weitermacht, wo du aufgehört hast, legt es einige Werte im <strong>localStorage</strong> deines Browsers ab. Das ist kein Cookie: Diese Daten werden bei keinem Seitenaufruf an einen Server übermittelt.</p>
+    <ul>
+      <li><code>cipher:state</code> — gewähltes Bauwerk, Stufe, Arche-Faktor, angebotene Plätze, Darstellung (hell/dunkel/Kontrast) und der von dir eingegebene Spielername</li>
+      <li><code>cipher:favorites</code> — die von dir gemerkten Kombinationen aus Bauwerk und Stufe</li>
+      <li><code>cipher:totals</code> und <code>cipher:p1</code> — Zahlen, die du aus dem Förderfenster des Spiels selbst eingetragen hast</li>
+    </ul>
+    <p class="muted">Der Spielername ist die einzige Angabe, die überhaupt einen Personenbezug haben kann — er dient allein dazu, den Text für den Förderchat zusammenzusetzen, und wird ausschließlich lokal gespeichert. Die Speicherung erfolgt, weil sie für den von dir ausdrücklich gewünschten Dienst erforderlich ist (§ 25 Abs. 2 Nr. 2 TDDDG); eine Einwilligung ist dafür nicht nötig, ein Cookie-Banner entsprechend auch nicht. Du kannst die Daten jederzeit über die Einstellungen deines Browsers oder über den Knopf unten löschen.</p>
+
+    <div class="card">
+      <p><button type="button" class="link" id="wipe">Alle lokal gespeicherten cipher-Daten jetzt löschen</button></p>
+      <p class="muted" id="wipeResult" role="status"></p>
+    </div>
+
+    <h2>4. Hosting</h2>
+    <p>Diese Website wird gehostet von:</p>
+    <div class="card">
+      <p>Netlify, Inc.</p>
+      <p>101 2nd Street</p>
+      <p>San Francisco, CA 94105</p>
+      <p>Vereinigte Staaten von Amerika</p>
+    </div>
+    <p class="muted">Beim Aufruf der Seite verarbeitet der Hoster automatisch technische Verbindungsdaten (siehe Server-Logfiles). Netlify ist als Auftragsverarbeiter auf Grundlage eines Auftragsverarbeitungsvertrags (Art. 28 DSGVO) tätig. Rechtsgrundlage ist das berechtigte Interesse an einem sicheren, schnellen und stabilen Betrieb der Website (Art. 6 Abs. 1 lit. f DSGVO).</p>
+
+    <h2>5. Übermittlung in die USA</h2>
+    <p>Netlify liefert diese Seite über ein weltweites Content Delivery Network aus. Dabei werden die Dateien auf Servern in verschiedenen Ländern vorgehalten, und deine Anfrage wird in der Regel vom nächstgelegenen Standort beantwortet. Eine Verarbeitung deiner Verbindungsdaten <strong>außerhalb der Europäischen Union, insbesondere in den USA, lässt sich dabei nicht ausschließen</strong>.</p>
+    <p class="muted">Netlify, Inc. ist nach dem <a href="https://www.dataprivacyframework.gov/list" target="_blank" rel="noopener noreferrer">EU-U.S. Data Privacy Framework</a> zertifiziert. Für Übermittlungen an zertifizierte US-Unternehmen hat die EU-Kommission mit Beschluss vom 10. Juli 2023 ein angemessenes Datenschutzniveau festgestellt; Rechtsgrundlage der Übermittlung ist damit Art. 45 Abs. 1 DSGVO. Ergänzend hat Netlify Standardvertragsklauseln der EU-Kommission vereinbart (Art. 46 Abs. 2 lit. c DSGVO).</p>
+    <p class="muted">Du solltest wissen: Trotz dieser Garantien ist nicht vollständig auszuschließen, dass US-Behörden auf Daten bei einem US-Anbieter zugreifen. Übermittelt werden dabei ausschließlich die technischen Verbindungsdaten aus dem nächsten Abschnitt — deine Eingaben in cipher selbst erreichen den Hoster nie, weil sie dein Gerät nicht verlassen.</p>
+
+    <h2>6. Server-Logfiles</h2>
+    <p>Der Hoster erhebt und speichert automatisch Informationen in sogenannten Server-Logfiles, die dein Browser übermittelt. Dies sind in der Regel:</p>
+    <ul>
+      <li>IP-Adresse</li>
+      <li>Datum und Uhrzeit des Zugriffs</li>
+      <li>Name und URL der abgerufenen Datei</li>
+      <li>verwendeter Browser und ggf. Betriebssystem</li>
+      <li>Referrer-URL (zuvor besuchte Seite)</li>
+    </ul>
+    <p class="muted">Diese Daten dienen der Auslieferung der Seite, der Stabilität und der Sicherheit (z. B. Abwehr von Angriffen). Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Die Speicherdauer richtet sich nach den Vorgaben des Hosters.</p>
+
+    <h2>7. Keine Cookies, kein Tracking</h2>
+    <p>cipher setzt <strong>keine Cookies</strong>, bindet keine Analyse-, Statistik- oder Werbedienste ein und verwendet keine Tracking-Technologien. Es werden keine Profile gebildet und keine Daten an Dritte weitergegeben oder verkauft.</p>
+
+    <h2>8. Keine externen Inhalte</h2>
+    <p>Schriftarten und sämtliche Skripte werden <strong>von derselben Domain</strong> ausgeliefert wie die Seite selbst. Es werden keine Inhalte von Drittanbietern nachgeladen — insbesondere keine Google Fonts, keine Content Delivery Networks und keine eingebetteten Dienste. Beim Aufruf von cipher wird deine IP-Adresse deshalb an keinen Dritten übertragen.</p>
+    <p class="muted">Die Seite enthält Links zu externen Websites (u. a. zum Forge of Empires Wiki, zu GitHub und zu InnoGames). Diese werden erst aufgerufen, wenn du sie anklickst; dann gilt die Datenschutzerklärung des jeweiligen Anbieters. Ein <code>Referrer</code> wird dabei nicht mitgesendet.</p>
+
+    <h2>9. Verschlüsselte Übertragung</h2>
+    <p class="muted">Die Seite wird über eine verschlüsselte HTTPS-Verbindung (SSL/TLS) ausgeliefert.</p>
+
+    <h2>10. Deine Rechte</h2>
+    <p>Dir stehen nach der DSGVO folgende Rechte zu: Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) sowie Widerspruch gegen die Verarbeitung (Art. 21). Wende dich dazu an die oben genannte Kontaktadresse.</p>
+
+    <h2>11. Beschwerderecht</h2>
+    <p class="muted">Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Zuständig ist u. a. der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg (LfDI BW).</p>
+  </section>
+
+</main>
+
+<footer class="site-foot wide">
+  <hr>
+  <nav class="foot-links" aria-label="Rechtliches">
+    <a href="./index.html">cipher</a>
+    <a href="./impressum.html">Impressum</a>
+    <a href="./datenschutz.html">Datenschutz</a>
+    <a href="https://github.com/iniist/cipher" target="_blank" rel="noopener noreferrer">Quelltext</a>
+  </nav>
+</footer>
+
+<script src="./legal.js"></script>
+</body>
+</html>

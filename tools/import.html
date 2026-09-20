@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LG-Datenimport</title>
+<link rel="stylesheet" href="../fonts.css">
+<style>
+:root{
+  --bp:#1f4a7a; --bp-deep:#163959; --ink:#f2f6fb; --ink-dim:#b9cce3;
+  --line:rgba(242,246,251,.22); --ok:#86d9ae; --warn:#f3c86e; --bad:#f39486;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; color:var(--ink); background-color:var(--bp);
+  background-image:
+    linear-gradient(var(--line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line) 1px,transparent 1px),
+    linear-gradient(rgba(242,246,251,.07) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(242,246,251,.07) 1px,transparent 1px);
+  background-size:96px 96px,96px 96px,16px 16px,16px 16px;
+  font-family:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  font-size:17px; line-height:1.45; font-variant-numeric:tabular-nums;
+}
+main{max-width:760px; margin:0 auto; padding:28px 18px 60px}
+h1{font-size:2.3rem; line-height:1.05; font-weight:700; margin:0 0 6px; letter-spacing:-.01em}
+.sub{color:var(--ink-dim); margin:0 0 26px; max-width:60ch}
+.panel{border:1.5px solid var(--ink); background:rgba(22,57,89,.72); padding:16px; margin-bottom:18px}
+.panel h2{font-size:1.15rem; margin:0 0 10px; font-weight:600}
+button{
+  font:inherit; font-weight:600; color:var(--bp-deep); background:var(--ink);
+  border:0; padding:10px 18px; cursor:pointer; margin:0 8px 8px 0;
+}
+button.ghost{background:transparent; color:var(--ink); border:1.5px solid var(--ink)}
+button:disabled{opacity:.45; cursor:default}
+button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--warn); outline-offset:2px}
+textarea{width:100%; min-height:220px; font:14px/1.5 ui-monospace,Menlo,Consolas,monospace; color:var(--ink);
+  background:var(--bp-deep); border:1px solid var(--line); padding:10px}
+details>summary{cursor:pointer; font-weight:600}
+.bar{height:10px; border:1.5px solid var(--ink); margin:12px 0 6px}
+.bar>i{display:block; height:100%; width:0; background:var(--ink); transition:width .2s}
+#status{color:var(--ink-dim); min-height:1.4em}
+.totals{display:flex; flex-wrap:wrap; gap:6px 22px; margin:4px 0 0}
+.totals b{font-size:1.5rem; display:block; line-height:1.1}
+.lg{border-top:1px solid var(--line); padding:10px 0}
+.lg:first-child{border-top:0}
+.lg summary{display:flex; justify-content:space-between; gap:10px; list-style:none}
+.lg summary::-webkit-details-marker{display:none}
+.lg .nm small{color:var(--ink-dim); font-weight:400; margin-left:6px}
+.pills{display:flex; gap:10px; flex-shrink:0; font-weight:500}
+.ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+.lg ul{margin:8px 0 2px; padding-left:18px; color:var(--ink-dim); font-size:.95rem}
+.lg code{font-size:.8rem; word-break:break-all}
+.legend{color:var(--ink-dim); font-size:.95rem; margin-top:10px}
+.foot{color:var(--ink-dim); font-size:.9rem; margin-top:30px}
+@media (prefers-reduced-motion:reduce){.bar>i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>LG-Datenimport</h1>
+  <p class="sub">Holt Kosten und P1-Belohnungen aller Legendären Bauwerke aus dem Forge-of-Empires-Wiki (Fandom), prüft sie gegen die Formeln und erzeugt die Datendatei für den Förderrechner.</p>
+  <p class="sub"><strong>Werkzeug, keine Seite.</strong> Es gehört nicht zur ausgelieferten Website — <code>netlify.toml</code> beantwortet <code>/tools/*</code> mit 404. Lokal läuft es über <code>npm run serve</code> unter <code>/tools/import.html</code>. Das erzeugte JSON wird mit <code>node tools/build-data.js lg-daten.json</code> in <code>data.js</code> überführt.</p>
+
+  <section class="panel">
+    <h2>Import</h2>
+    <button id="btnTest">Probelauf mit 3 LGs</button>
+    <button id="btnAll">Alle LGs importieren</button>
+    <div class="bar"><i id="barFill"></i></div>
+    <div id="status">Bereit.</div>
+    <details style="margin-top:12px">
+      <summary>Seitenliste bearbeiten</summary>
+      <p class="legend">Eine Zeile pro LG: Wiki-Seitentitel | deutscher Name | Zeitalter. Wenn eine Seite nicht gefunden wird, hier den Titel korrigieren.</p>
+      <textarea id="list" spellcheck="false"></textarea>
+    </details>
+  </section>
+
+  <section class="panel" id="resultPanel" hidden>
+    <h2>Ergebnis</h2>
+    <div class="totals" id="totals"></div>
+    <p class="legend">P1: <span class="ok">echt</span> aus dem Wiki, <span class="warn">geschätzt</span> per Formel, <span class="bad">prüfen</span> = Wiki-Wert widerspricht den Regeln. Tippe ein LG an für Details. LGs desselben Zeitalters teilen sich ihre P1-Werte.</p>
+    <div style="margin:12px 0 4px">
+      <button id="btnDl" disabled>Datendatei herunterladen</button>
+      <button id="btnCopy" class="ghost" disabled>JSON kopieren</button>
+    </div>
+    <div id="rows"></div>
+  </section>
+
+  <p class="foot">Datenquelle: forgeofempires.fandom.com, Inhalte unter CC BY-SA. Kosten: aufgerundet A × 1,025^Stufe. P2–P5: jeweils Vorgänger ÷ n, auf 5 gerundet.</p>
+</main>
+
+<script>
+const LIST = `Observatory | Observatorium | Ohne Zeitalter
+Temple_of_Relics | Relikttempel | Ohne Zeitalter
+Oracle_of_Delphi | Orakel von Delphi | Ohne Zeitalter
+Tower_of_Babel | Turm zu Babel | Bronzezeit
+Statue_of_Zeus | Zeusstatue | Bronzezeit
+Colosseum | Kolosseum | Eisenzeit
+Lighthouse_of_Alexandria | Leuchtturm von Alexandria | Eisenzeit
+Hagia_Sophia | Hagia Sophia | Frühes Mittelalter
+Cathedral_of_Aachen | Aachener Dom | Frühes Mittelalter
+Galata_Tower | Galataturm | Frühes Mittelalter
+St._Mark's_Basilica | Markusdom | Hochmittelalter
+Notre_Dame | Notre Dame | Hochmittelalter
+Saint_Basil's_Cathedral | Basilius-Kathedrale | Spätes Mittelalter
+Castel_del_Monte | Castel del Monte | Spätes Mittelalter
+Frauenkirche_of_Dresden | Dresdner Frauenkirche | Kolonialzeit
+Deal_Castle | Deal Castle | Kolonialzeit
+Royal_Albert_Hall | Royal Albert Hall | Industriezeitalter
+Capitol | Kapitol | Industriezeitalter
+Château_Frontenac | Château Frontenac | Jahrhundertwende
+Alcatraz | Alcatraz | Jahrhundertwende
+Space_Needle | Space Needle | Moderne
+Atomium | Atomium | Moderne
+Cape_Canaveral | Cape Canaveral | Postmoderne
+The_Habitat | Das Habitat | Postmoderne
+Lotus_Temple | Lotustempel | Gegenwart
+Innovation_Tower | Innovation Tower | Gegenwart
+Voyager_V1 | Voyager V1 | Morgen
+Truce_Tower | Friedensturm | Morgen
+The_Arc | Die Arche | Zukunft
+Rain_Forest_Project | Regenwald-Projekt | Zukunft
+Gaea_Statue | Gaea-Statue | Arktische Zukunft
+Seed_Vault | Saatgut-Tresor | Arktische Zukunft
+Arctic_Orangery | Arktische Orangerie | Arktische Zukunft
+Atlantis_Museum | Atlantis-Museum | Ozeanische Zukunft
+The_Kraken | Der Kraken | Ozeanische Zukunft
+The_Blue_Galaxy | Die blaue Galaxie | Ozeanische Zukunft
+Terracotta_Army | Terrakotta-Armee | Virtuelle Zukunft
+Himeji_Castle | Burg Himeji | Virtuelle Zukunft
+Star_Gazer | Star Gazer | Mars
+The_Virgo_Project | Das Virgo-Projekt | Mars
+Space_Carrier | Weltraumfrachter | Asteroidengürtel
+Flying_Island | Fliegende Insel | Venus
+A.I._Core | KI-Kern | Jupitermond
+Saturn_VI_Gate_PEGASUS | Saturn VI Tor PEGASUS | Titan
+Saturn_VI_Gate_CENTAURUS | Saturn VI Tor CENTAURUS | Titan
+Saturn_VI_Gate_HYDRA | Saturn VI Tor HYDRA | Titan
+Stellar_Warship | Stellares Kriegsschiff | Raumfahrt-Hub
+Cosmic_Catalyst | Kosmischer Katalysator | Raumfahrt-Hub
+Shattered_Horizon_Siphon | Horizontriss-Siphon | Stellares Zeitalter`;
+
+/* Werte, die im Spiel bzw. in bewährten Rechnern abgelesen wurden: Stufe: [Gesamtkosten, P1] */
+const CHECKS = {
+  Stellar_Warship: { 50: [38477, 1085], 60: [49254, 1350], 120: [216707, 3115], 212: [2101199, 6180] },
+  Saturn_VI_Gate_PEGASUS: { 12: [2648, 185], 60: [8662, 1310], 80: [14193, 1850] }
+};
+
+const API = 'https://forgeofempires.fandom.com/api.php';
+const GROWTH = 1.025, MAXLVL = 200, DEF_EXP = 1.206;
+const $ = id => document.getElementById(id);
+const r5 = x => 5 * Math.floor(x / 5 + 0.5);
+const chain = p1 => { const p = [p1]; for (let n = 2; n <= 5; n++) p.push(r5(p[n - 2] / n)); return p; };
+const median = a => { const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const LABEL_RE = /^Levels?\s*(\d+)\s*[-–—]\s*(\d+)$/i;
+const escapeHtml = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+$('list').value = LIST;
+let result = null;
+
+/* ---------- Wiki holen ---------- */
+async function fetchPage(title) {
+  const url = `${API}?action=parse&page=${encodeURIComponent(title)}&prop=text&format=json&formatversion=2&redirects=1&origin=*`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const j = await res.json();
+  if (j.error) throw new Error(j.error.info || j.error.code);
+  return new DOMParser().parseFromString(j.parse.text, 'text/html');
+}
+
+/* ---------- Kosten ---------- */
+function parseCosts(doc) {
+  const costs = {};
+  for (const t of doc.querySelectorAll('table')) {
+    if (/1st\s*Position/i.test(t.textContent)) continue;
+    const found = [];
+    for (const tr of t.querySelectorAll('tr')) {
+      const c = tr.querySelectorAll('th,td');
+      if (c.length < 2) continue;
+      const l = c[0].textContent.trim(), v = c[1].textContent.trim();
+      if (!/^\d{1,3}$/.test(l) || !/^[\d.,\s]+$/.test(v)) continue;
+      found.push([+l, +v.replace(/[^\d]/g, '')]);
+    }
+    if (found.length >= 3) for (const [l, v] of found) if (!(l in costs)) costs[l] = v;
+  }
+  return costs;
+}
+/* Bereich für A, in dem möglichst viele Stufen exakt passen: ceil(A*1.025^L) = Kosten */
+function costInterval(costs) {
+  const ev = [];
+  for (const [l, v] of Object.entries(costs)) {
+    if (+l < 11) continue;
+    const g = GROWTH ** +l;
+    ev.push([(v - 1) / g, 1], [v / g, -1]);
+  }
+  if (!ev.length) return null;
+  ev.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  let cur = 0, best = 0, lo = null, hi = null;
+  for (let i = 0; i < ev.length; i++) {
+    cur += ev[i][1];
+    if (ev[i][1] === 1 && cur > best && ev[i + 1]) { best = cur; lo = ev[i][0]; hi = ev[i + 1][0]; }
+  }
+  return { lo, hi, best, total: ev.length / 2 };
+}
+const costAt = (r, l) => l <= 10 ? r.cost1to10[l - 1] : Math.ceil(r.costA * GROWTH ** l - 1e-7);
+
+/* ---------- Belohnungen ---------- */
+function cellItems(td) {
+  const items = []; let label = null;
+  const walk = n => {
+    if (n.nodeType === 1) {
+      if (n.tagName === 'IMG') label = n.getAttribute('alt') || n.getAttribute('title') || n.dataset.imageName || label;
+      else if (n.tagName === 'A' && n.title && !n.querySelector('img')) label = n.title;
+      n.childNodes.forEach(walk);
+    } else if (n.nodeType === 3) {
+      const re = /([A-Za-z][A-Za-z ]*)?\+\s*([\d.,]+)/g; let m;
+      while ((m = re.exec(n.textContent))) items.push({ label: ((m[1] || '').trim() || label || '').trim(), val: +m[2].replace(/[^\d]/g, '') });
+    }
+  };
+  walk(td);
+  return items;
+}
+/* FP-Spalte finden: die Werte, die zur Kette P2=P1/2 … P5=P4/5 passen */
+function pickFP(cells) {
+  const byLabel = test => cells.map(its => { const f = its.find(i => test(i.label)); return f ? f.val : 0; });
+  const good = v => v[0] > 0 && v[0] % 5 === 0 && chain(v[0]).every((x, i) => x === v[i]);
+  const cands = [byLabel(l => /forge|fp\b/i.test(l))];
+  for (const L of new Set(cells.flat().map(i => i.label).filter(Boolean))) cands.push(byLabel(l => l === L));
+  cands.push(cells.map(its => its[0] ? its[0].val : 0));
+  for (const c of cands) if (good(c)) return { v: c[0], ok: true };
+  if (cands[0][0] > 0) return { v: cands[0][0], ok: false };
+  return null;
+}
+function blockLabel(table) {
+  for (let el = table.parentElement; el; el = el.parentElement) {
+    for (const a of ['data-mw-tabber-title', 'data-title', 'title', 'data-hash']) {
+      const v = el.getAttribute && el.getAttribute(a);
+      if (v && LABEL_RE.test(v.replace(/_/g, ' ').trim())) return v.replace(/_/g, ' ').trim();
+    }
+    if (el.classList && ['wds-tab__content', 'tabber__panel', 'tabbertab'].some(c => el.classList.contains(c))) {
+      const box = el.closest('.wds-tabber, .tabber');
+      if (box) {
+        const own = sel => [...box.querySelectorAll(sel)].filter(p => p.closest('.wds-tabber, .tabber') === box);
+        const t = own('.wds-tabs__tab-label, .tabber__tab, .wds-tabs__tab')[own('.wds-tab__content, .tabber__panel, .tabbertab').indexOf(el)]?.textContent.trim();
+        if (t && LABEL_RE.test(t)) return t;
+      }
+    }
+  }
+  return null;
+}
+function parseRewards(doc, issues) {
+  const tables = [...doc.querySelectorAll('table')].filter(t => /1st\s*Position/i.test(t.textContent) && /5th\s*Position/i.test(t.textContent));
+  const heads = [...doc.body.querySelectorAll('h2,h3,h4,h5,b,strong,p,span,div,dt,li')]
+    .filter(e => { const t = e.textContent.trim(); return t.length < 25 && LABEL_RE.test(t); });
+  const entries = []; let fails = 0, sample = null;
+  for (const t of tables) {
+    const row = [...t.querySelectorAll('tr')].find(r => r.querySelectorAll('td').length >= 5);
+    if (!row) continue;
+    const tds = [...row.querySelectorAll('td')].slice(0, 5);
+    const fp = pickFP(tds.map(cellItems));
+    if (!fp) { fails++; if (!sample) sample = tds[0].innerHTML.slice(0, 400); }
+    let lab = blockLabel(t);
+    if (!lab) { let last = null; for (const h of heads) if (h.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING) last = h; else break; lab = last ? last.textContent.trim() : null; }
+    entries.push({ lab, fp });
+  }
+  if (fails) issues.push(`P1 in ${fails} Belohnungstabellen nicht lesbar. HTML-Beispiel: <code>${escapeHtml(sample)}</code>`);
+  const groups = [];
+  for (const e of entries) { const g = groups[groups.length - 1]; if (g && g.lab === e.lab) g.items.push(e.fp); else groups.push({ lab: e.lab, items: [e.fp] }); }
+  const out = {};
+  if (groups.every(g => !g.lab)) {
+    if (entries.length) issues.push('Keine Blockbeschriftungen gefunden, Reihenfolge ab Stufe 1 angenommen.');
+    entries.forEach((e, i) => { if (e.fp) out[i + 1] = e.fp; });
+    return out;
+  }
+  for (const g of groups) {
+    const m = g.lab && g.lab.match(LABEL_RE);
+    if (!m) { issues.push(`${g.items.length} Belohnungstabellen ohne Blockzuordnung übersprungen.`); continue; }
+    const a = +m[1], b = +m[2], n = b - a + 1;
+    if (g.items.length !== n) { issues.push(`Block ${a}–${b}: ${g.items.length} von ${n} Stufen im Wiki, übersprungen.`); continue; }
+    g.items.forEach((fp, i) => { if (fp && !((a + i) in out)) out[a + i] = fp; });
+  }
+  return out;
+}
+
+/* ---------- Schritt 1: eine Seite roh einlesen ---------- */
+async function loadRaw({ title, de, age }) {
+  const issues = [];
+  const doc = await fetchPage(title);
+  const costs = parseCosts(doc);
+  const wiki = parseRewards(doc, issues);
+  // Plausibilität: P1 darf mit der Stufe nicht fallen
+  let prev = 0;
+  for (const l of Object.keys(wiki).map(Number).sort((a, b) => a - b)) {
+    if (wiki[l].v < prev) wiki[l].ok = false; else prev = wiki[l].v;
+  }
+  // bekannte Spielwerte schärfen die Kostenformel zusätzlich
+  const known = { ...costs };
+  for (const [l, [c]] of Object.entries(CHECKS[title] || {})) known[l] = c;
+  return { title, de, age, costs, wiki, issues, ci: costInterval(known) };
+}
+
+/* ---------- Schritt 2: alles zusammenführen ---------- */
+function fitCurve(pts) {
+  let use = pts.filter(([l]) => l >= 30);
+  if (use.length < 5) use = pts.filter(([l]) => l >= 11);
+  if (!use.length) return null;
+  let best = { e: DEF_EXP, C: median(use.map(([l, v]) => v / l ** DEF_EXP)), miss: Infinity, d: 0 };
+  if (use.length >= 3) for (let e = 1.18; e <= 1.2305; e += 0.0005) {
+    const C = median(use.map(([l, v]) => v / l ** e));
+    const miss = use.filter(([l, v]) => r5(C * l ** e) !== v).length, d = Math.abs(e - DEF_EXP);
+    if (miss < best.miss || (miss === best.miss && d < best.d)) best = { e: +e.toFixed(4), C, miss, d };
+  }
+  return best;
+}
+
+function finalize(raws) {
+  // Kosten: Bereiche überlappender LGs zusammenlegen, das macht A genauer
+  const usable = raws.filter(r => r.ci && r.ci.total >= 5 && r.ci.best / r.ci.total >= 0.7)
+    .sort((a, b) => (a.ci.lo + a.ci.hi) - (b.ci.lo + b.ci.hi));
+  let cl = [], lo = -Infinity, hi = Infinity;
+  const flush = () => { cl.forEach(r => { r.costA = (lo + hi) / 2; }); cl = []; lo = -Infinity; hi = Infinity; };
+  for (const r of usable) {
+    if (cl.length && !(r.ci.lo < hi && r.ci.hi > lo)) flush();
+    cl.push(r); lo = Math.max(lo, r.ci.lo); hi = Math.min(hi, r.ci.hi);
+  }
+  flush();
+  const clusterAs = [...new Set(usable.map(r => r.costA))];
+  for (const r of raws) {
+    const own = []; for (let l = 1; l <= 10; l++) own.push(r.costs[l] ?? null);
+    r.cost1to10 = own;
+    if (r.costA == null && r.ci && clusterAs.length) {
+      const lv = Object.entries(r.costs).filter(([l]) => +l >= 11);
+      let bestA = null, bestN = -1;
+      for (const A of clusterAs) { const n = lv.filter(([l, v]) => Math.ceil(A * GROWTH ** +l - 1e-7) === v).length; if (n > bestN) { bestN = n; bestA = A; } }
+      if (bestN >= Math.max(5, lv.length * 0.5)) { r.costA = bestA; r.costMatched = true; }
+    }
+  }
+  for (const r of raws) {
+    const own = r.cost1to10;
+    if (r.costA == null || own.includes(null)) {
+      const sib = raws.filter(s => s !== r && s.age === r.age && s.costA != null && !s.costDerived && s.cost1to10 && !s.cost1to10.includes(null))
+        .sort((a, b) => b.ci.total - a.ci.total)[0];
+      if (sib) {
+        if (r.costA == null) { r.costA = sib.costA; r.cost1to10 = sib.cost1to10; r.costDerived = sib.de; r.issues.unshift(`Kosten fehlen im Wiki oder sind unbrauchbar, von ${sib.de} übernommen. Bitte eine Stufe im Spiel gegenprüfen.`); }
+        else { r.cost1to10 = own.map((v, i) => v ?? sib.cost1to10[i]); r.issues.push(`Kosten der Stufen 1–10 teils von ${sib.de} übernommen.`); }
+      } else if (r.costA == null) r.issues.unshift('Keine brauchbaren Kosten und kein Geschwister-LG mit Kosten gefunden.');
+    }
+    r.costBad = [];
+    if (r.costA != null && !r.costDerived) for (const [l, v] of Object.entries(r.costs)) if (+l >= 11 && costAt(r, +l) !== v) r.costBad.push(`Stufe ${l}: Wiki ${v}, Formel ${costAt(r, +l)}`);
+    if (r.costBad.length) r.issues.push(`Wiki-Kosten, die der Formel widersprechen (vermutlich Tippfehler, es gilt die Formel): ${r.costBad.slice(0, 5).join('; ')}${r.costBad.length > 5 ? ' …' : ''}`);
+  }
+
+  // P1: LGs desselben Zeitalters teilen sich die Werte
+  const byAge = {};
+  raws.forEach(r => (byAge[r.age] ||= []).push(r));
+  for (const [age, mem] of Object.entries(byAge)) {
+    const maxL = Math.max(MAXLVL, ...mem.map(r => Math.max(0, ...Object.keys(r.costs).map(Number), ...Object.keys(CHECKS[r.title] || {}).map(Number))));
+    const merged = {};
+    let conflicts = 0;
+    for (let l = 1; l <= maxL; l++) {
+      const game = mem.map(r => CHECKS[r.title]?.[l]?.[1]).find(v => v != null);
+      if (game != null) { merged[l] = { v: game, src: 'w' }; continue; }
+      const vals = mem.map(r => r.wiki[l]).filter(Boolean);
+      if (!vals.length) continue;
+      const okU = [...new Set(vals.filter(x => x.ok).map(x => x.v))];
+      if (okU.length === 1) merged[l] = { v: okU[0], src: 'w' };
+      else { merged[l] = { cands: okU.length ? okU : [...new Set(vals.map(x => x.v))], src: 'x' }; if (okU.length > 1) conflicts++; }
+    }
+    const fit = fitCurve(Object.entries(merged).filter(([, m]) => m.src === 'w').map(([l, m]) => [+l, m.v]));
+    const est = l => fit ? r5(fit.C * l ** fit.e) : null;
+    for (const m of Object.entries(merged)) if (m[1].cands) { const e = est(+m[0]); m[1].v = e == null ? m[1].cands[0] : m[1].cands.reduce((a, b) => Math.abs(b - e) < Math.abs(a - e) ? b : a); }
+    for (const r of mem) {
+      r.maxLevel = maxL; r.p1 = []; r.src = '';
+      for (let l = 1; l <= maxL; l++) {
+        if (merged[l]) { r.p1.push(merged[l].v); r.src += merged[l].src; }
+        else { r.p1.push(est(l)); r.src += 'e'; }
+      }
+      r.fit = fit;
+      if (conflicts) r.issues.push(`${conflicts} Stufen, bei denen sich die Wiki-Werte der ${age}-LGs widersprechen (als „prüfen“ markiert).`);
+      if (mem.length > 1) r.issues.push(`P1 gemeinsam mit: ${mem.filter(x => x !== r).map(x => x.de).join(', ')}.`);
+      if (!fit) r.issues.push('Keine P1-Werte für dieses Zeitalter im Wiki, Schätzung nicht möglich.');
+    }
+  }
+
+  // Abgleich mit bekannten Spielwerten
+  let checks = 0, passed = 0;
+  for (const r of raws) {
+    const c = CHECKS[r.title]; if (!c || r.costA == null) continue;
+    const res = Object.entries(c).map(([l, [cost, p1]]) => {
+      const okC = costAt(r, +l) === cost, okP = r.p1[+l - 1] === p1;
+      checks += 2; passed += okC + okP;
+      return `Stufe ${l}: Kosten ${okC ? '✓' : `✗ (${costAt(r, +l)} statt ${cost})`}, P1 ${okP ? '✓' : `✗ (${r.p1[+l - 1]} statt ${p1})`}`;
+    });
+    r.issues.unshift(`Abgleich mit Spielwerten: ${res.join('; ')}`);
+  }
+
+  return {
+    checks, passed,
+    lgs: raws.map(r => {
+      const cnt = s => [...r.src].filter(x => x === s).length;
+      return {
+        id: r.title, en: r.title.replace(/_/g, ' '), de: r.de, age: r.age,
+        costA: r.costA == null ? null : +r.costA.toFixed(9), costDerivedFrom: r.costDerived || null,
+        cost1to10: r.cost1to10, maxLevel: r.maxLevel,
+        p1Curve: r.fit ? { C: +r.fit.C.toFixed(5), e: r.fit.e } : null,
+        p1: r.p1, p1src: r.src,
+        stats: { costLevels: Object.keys(r.costs).length, costBad: r.costBad.length, w: cnt('w'), e: cnt('e'), x: cnt('x') },
+        issues: r.issues
+      };
+    })
+  };
+}
+
+/* ---------- Ablauf ---------- */
+function readList() {
+  return $('list').value.split('\n').map(s => s.trim()).filter(Boolean).map(s => {
+    const [t, d, a] = s.split('|').map(x => x.trim());
+    return { title: t.replace(/ /g, '_'), de: d || t.replace(/_/g, ' '), age: a || t };
+  });
+}
+async function run(limit) {
+  const list = readList().slice(0, limit || undefined);
+  $('btnTest').disabled = $('btnAll').disabled = $('btnDl').disabled = $('btnCopy').disabled = true;
+  $('resultPanel').hidden = false; $('rows').innerHTML = ''; $('totals').innerHTML = '';
+  const raws = [], failed = [];
+  for (let i = 0; i < list.length; i++) {
+    $('status').textContent = `Lade ${list[i].de} (${i + 1} von ${list.length}) …`;
+    try { raws.push(await loadRaw(list[i])); }
+    catch (err) { failed.push({ ...list[i], err: err.message }); }
+    $('barFill').style.width = `${((i + 1) / list.length) * 100}%`;
+    await sleep(350);
+  }
+  $('status').textContent = 'Werte werden abgeglichen …';
+  const fin = finalize(raws);
+  fin.lgs.forEach(addRow);
+  failed.forEach(addFail);
+  result = {
+    version: 2, generated: new Date().toISOString(),
+    source: 'forgeofempires.fandom.com (CC BY-SA)',
+    rules: { costGrowth: GROWTH, costRounding: 'ceil', rewardChain: 'P(n)=round5(P(n-1)/n)' },
+    lg: fin.lgs
+  };
+  showTotals(fin, failed);
+  $('status').textContent = failed.length ? `Fertig. ${failed.length} Seiten nicht gefunden, Titel in der Seitenliste prüfen.` : 'Fertig.';
+  $('btnTest').disabled = $('btnAll').disabled = false;
+  $('btnDl').disabled = $('btnCopy').disabled = !fin.lgs.length;
+}
+function addRow(r) {
+  const s = r.stats, d = document.createElement('details'); d.className = 'lg';
+  const costCls = r.costA == null ? 'bad' : r.costDerivedFrom || s.costBad ? 'warn' : 'ok';
+  d.innerHTML = `<summary><span class="nm">${escapeHtml(r.de)}<small>${escapeHtml(r.age)}</small></span>
+    <span class="pills"><span class="${costCls}">Kosten</span><span class="ok">${s.w}</span><span class="warn">${s.e}</span><span class="bad">${s.x}</span></span></summary>
+    <ul><li>P1 bis Stufe ${r.maxLevel}: ${s.w} echt, ${s.e} geschätzt, ${s.x} prüfen${r.p1Curve ? ` (Kurve C=${r.p1Curve.C}, e=${r.p1Curve.e})` : ''}</li>
+    ${r.issues.map(i => `<li>${i}</li>`).join('')}</ul>`;
+  $('rows').appendChild(d);
+}
+function addFail(f) {
+  const d = document.createElement('details'); d.className = 'lg';
+  d.innerHTML = `<summary><span class="nm">${escapeHtml(f.de)}<small>${escapeHtml(f.title)}</small></span><span class="pills bad">nicht geladen</span></summary><ul><li>${escapeHtml(f.err)}</li></ul>`;
+  $('rows').appendChild(d);
+}
+function showTotals(fin, failed) {
+  const lgs = fin.lgs, sum = k => lgs.reduce((a, r) => a + r.stats[k], 0);
+  const all = sum('w') + sum('e') + sum('x') || 1;
+  $('totals').innerHTML = `
+    <div><b>${lgs.length}</b>LGs geladen</div>
+    <div><b class="ok">${Math.round(sum('w') / all * 100)} %</b>P1 echt</div>
+    <div><b class="warn">${sum('e')}</b>geschätzt</div>
+    <div><b class="bad">${sum('x')}</b>prüfen</div>
+    ${fin.checks ? `<div><b class="${fin.passed === fin.checks ? 'ok' : 'bad'}">${fin.passed}/${fin.checks}</b>Spielwerte passen</div>` : ''}
+    ${failed.length ? `<div><b class="bad">${failed.length}</b>nicht gefunden</div>` : ''}`;
+}
+$('btnTest').onclick = () => run(3);
+$('btnAll').onclick = () => run(0);
+$('btnDl').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(result)], { type: 'application/json' }));
+  a.download = 'lg-daten.json'; a.click();
+};
+$('btnCopy').onclick = async () => {
+  try { await navigator.clipboard.writeText(JSON.stringify(result)); $('status').textContent = 'JSON kopiert.'; }
+  catch { $('status').textContent = 'Kopieren nicht erlaubt, bitte „Datendatei herunterladen“ nutzen.'; }
+};
+</script>
+</body>
+</html>
