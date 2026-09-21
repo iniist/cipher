@@ -733,30 +733,47 @@
     if (button) button.disabled = !text;
   }
 
-  /** Hinweise zu unsicheren Werten und das Eingabefeld fuer eigene Zahlen. */
+  /**
+   * Hinweise zu unsicheren Werten und das Eingabefeld fuer eigene Zahlen.
+   *
+   * Zwei Toene, weil es zwei Lagen gibt. Fehlt ein Wert, kann ich ohne
+   * Eintrag gar nicht rechnen — das ist eine Bitte, und der Kasten warnt.
+   * Ist ein Wert dagegen hochgerechnet oder aus widerspruechlichen
+   * Wiki-Angaben gewaehlt, steht bereits die bestbegruendete Zahl im Plan
+   * und im Feld; dann ist der Kasten eine Einladung zum Gegenlesen. Beides
+   * gleich alarmiert auszuzeichnen macht den Plan unglaubwuerdiger, als er
+   * ist: Bei einem Widerspruch waehlt der Datensatz den Wert, der zur
+   * Kurve des Zeitalters passt, und der stimmt fast immer.
+   */
   function renderNote(building, total, p1) {
     var needTotal = !TRUSTED_SOURCES[total.source];
     var needP1 = !TRUSTED_SOURCES[p1.source];
     var html = "";
 
     if (needTotal || needP1) {
-      var reasons = [];
+      var missing = []; // Ohne diese Zahlen fehlt dem Plan die Grundlage
+      var checks = [];  // Diese Zahlen stehen im Plan, nur ungeprueft
+
       if (total.source === null) {
-        reasons.push(building.base == null
+        missing.push(building.base == null
           ? "Für " + escapeHtml(building.name) + " gibt es noch keine Kostendaten. Nach deinem ersten Eintrag rechne ich die übrigen Stufen hoch."
           : "Gesamtkosten fehlen.");
       }
-      if (total.source === "derived") reasons.push("Gesamt ist aus deinem Eintrag auf Stufe " + total.from + " hochgerechnet.");
-      if (p1.source === null) reasons.push("P1 ist für diese Stufe noch unbekannt.");
-      if (p1.source === "derived") reasons.push("P1 ist auf dieser Stufe geschätzt und kann um 5 FP abweichen.");
-      if (p1.source === "conflict") reasons.push("Die Wiki-Angaben für P1 auf dieser Stufe widersprechen sich.");
+      if (total.source === "derived") checks.push("Gesamt ist aus deinem Eintrag auf Stufe " + total.from + " hochgerechnet.");
+      if (p1.source === null) missing.push("P1 ist für diese Stufe noch unbekannt.");
+      if (p1.source === "derived") checks.push("P1 ist auf dieser Stufe aus der Kurve des Zeitalters hochgerechnet und kann um 5 FP danebenliegen.");
+      if (p1.source === "conflict") checks.push("Für P1 auf dieser Stufe nennt das Wiki mehr als eine Zahl. Im Plan steht die, die zur Kurve des Zeitalters passt — erfahrungsgemäß ist das die richtige.");
 
-      html += '<div class="note">' + reasons.join(" ") +
-        " Bitte im Förderfenster nachsehen und eintragen, dann ist alles exakt." +
+      var urgent = missing.length > 0;
+      var lead = missing.concat(checks).join(" ") + " " + (urgent
+        ? "Bitte im Förderfenster nachsehen und eintragen, dann ist alles exakt."
+        : "Ein Blick ins Förderfenster bestätigt das in Sekunden. Stimmt die Zahl, übernimm sie einmal — dann rechne ich hier ohne Vorbehalt weiter und frage auf dieser Stufe nicht wieder.");
+
+      html += '<div class="note' + (urgent ? "" : " chk") + '">' + lead +
         '<div class="in">' +
           (needTotal ? '<div><label for="inputTotal">Gesamt-FP</label><input id="inputTotal" type="number" inputmode="numeric" min="1" value="' + (total.value == null ? "" : total.value) + '"></div>' : "") +
           (needP1 ? '<div><label for="inputP1">P1-Belohnung</label><input id="inputP1" type="number" inputmode="numeric" min="5" step="5" value="' + (p1.value == null ? "" : p1.value) + '"></div>' : "") +
-          '<button type="button" class="go" id="applyInput">Übernehmen</button>' +
+          '<button type="button" class="go" id="applyInput">' + (urgent ? "Übernehmen" : "Bestätigen") + '</button>' +
         "</div></div>";
     }
 

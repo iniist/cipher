@@ -128,6 +128,29 @@ test("fehlende Daten fuehren zur Eingabeaufforderung, eigene Werte rechnen weite
   await expect(page.locator("td.empty")).toBeVisible();
 });
 
+test("ein widerspruechlicher Wiki-Wert bittet um Bestaetigung, nicht um Rettung", async ({ page }) => {
+  // Stufe 84 des Observatoriums: Die Kosten stehen fest, nur die P1-Angaben
+  // des Wikis widersprechen sich. Der Plan rechnet trotzdem mit dem Wert,
+  // der zur Kurve passt — der Kasten darf also nicht warnen.
+  await page.selectOption("#building", "Observatory");
+  await page.fill("#level", "84");
+  await page.locator("#level").blur();
+
+  await expect(page.locator("#rows tr")).toHaveCount(5);
+  await expect(page.locator("td.empty")).toHaveCount(0);
+
+  const note = page.locator(".note.chk");
+  await expect(note).toContainText("mehr als eine Zahl");
+  await expect(page.locator("#inputTotal")).toHaveCount(0);
+  await expect(page.locator("#inputP1")).toHaveValue("890");
+  await expect(page.locator("#applyInput")).toHaveText("Bestätigen");
+
+  // Bestaetigen heisst: einmal antippen, und der Hinweis ist erledigt.
+  await page.click("#applyInput");
+  await expect(page.locator(".note.chk")).toHaveCount(0);
+  await expect(page.locator(".note.man")).toContainText("P1");
+});
+
 test("eine ungueltige P1-Eingabe wird abgelehnt", async ({ page }) => {
   await page.selectOption("#building", "Shattered_Horizon_Siphon");
   await page.fill("#level", "20");

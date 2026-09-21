@@ -617,6 +617,11 @@ tr.off td.pay { text-decoration: line-through }
   font-size: .95rem;
 }
 .note.man { border-color: var(--ok); color: var(--ok) }
+
+/* Ein Wert, der nur gegengelesen werden will, ist keine Warnung: gleiche
+   Form, aber die ruhige Schrift des Plans statt des Warngelbs. */
+.note.chk { border-color: var(--frame); color: var(--ink) }
+.note.chk .go { background: var(--btn); color: var(--btn-ink) }
 .note .in { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px }
 .note .in div { flex: 1 1 40% }
 .note .in .go { flex: 1 1 100% }
