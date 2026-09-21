@@ -20,7 +20,8 @@
     state: "cipher:state",           // Auswahl, Faktor, Name, Theme
     favorites: "cipher:favorites",   // Gemerkte Bauwerk/Stufe-Paare
     totals: "cipher:totals",         // Selbst eingetragene Gesamtkosten
-    p1: "cipher:p1"                  // Selbst eingetragene P1-Belohnungen
+    p1: "cipher:p1",                 // Selbst eingetragene P1-Belohnungen
+    collection: "cipher:collection"  // Gesammelte Chat-Zeilen mehrerer Bauwerke
   };
 
   /** Aeltere Schluessel aus dem Vorgaenger, werden einmalig uebernommen. */
@@ -49,6 +50,14 @@
   var THEMES = ["light", "dark", "contrast"];
   var DEFAULT_BUILDING = "The_Arc";
   var MAX_FAVORITES = 12;
+
+  /**
+   * Wie viele Zeilen die Sammlung haelt. Mehr als ein gutes Dutzend
+   * Bauwerke stellt niemand auf einmal in die Foerdergruppe; die Grenze
+   * ist vor allem ein Schutz gegen eine Liste, die keiner mehr uebersieht.
+   * Laeuft sie ueber, faellt die aelteste Zeile heraus.
+   */
+  var MAX_COLLECTED = 15;
 
   /** Quellen, die keinen Hinweis ausloesen — sie gelten als belastbar. */
   var TRUSTED_SOURCES = { table: true, formula: true, manual: true };
@@ -232,6 +241,33 @@
   var ownTotals = read(KEY.totals, {});
   var ownP1 = read(KEY.p1, {});
   var favorites = normaliseFavorites(read(KEY.favorites, []));
+
+  /**
+   * Die gesammelten Chat-Zeilen, in der Reihenfolge, in der sie gesammelt
+   * wurden — das ist die Reihenfolge, in der sie spaeter im Chat stehen.
+   */
+  var collection = normaliseCollection(read(KEY.collection, []));
+
+  /**
+   * Nur Eintraege behalten, die wirklich eine Zeile enthalten, und je
+   * Bauwerk nur einen. Das Bauwerk steht nur zum Wiedererkennen dabei;
+   * gezeigt wird immer der gespeicherte Text, damit eine gesammelte Zeile
+   * auch dann noch stimmt, wenn sich der Datensatz darunter geaendert hat.
+   */
+  function normaliseCollection(value) {
+    if (!Array.isArray(value)) return [];
+    var seen = {};
+    return value.filter(function (entry) {
+      if (!entry || typeof entry.text !== "string") return false;
+      if (!entry.text.trim()) return false;
+      var id = String(entry.id);
+      if (seen[id]) return false;
+      seen[id] = true;
+      return true;
+    }).slice(-MAX_COLLECTED).map(function (entry) {
+      return { id: String(entry.id), text: entry.text };
+    });
+  }
 
   /**
    * Nur Eintraege behalten, deren Bauwerk es noch gibt und deren Stufe passt
@@ -761,6 +797,74 @@
     if (button) button.disabled = !text;
   }
 
+  // ---------------------------------------------------------------- Sammlung
+
+  /*
+   * Wer mehrere Bauwerke gleichzeitig in die Foerdergruppe stellt, braucht
+   * am Ende eine Nachricht mit allen Zeilen darin. Bisher war der Umweg
+   * dafuer eine Notiz ausserhalb: kopieren, wegschreiben, naechstes
+   * Bauwerk, wieder kopieren. Die Sammlung ist diese Notiz — nur an der
+   * Stelle, an der die Zeilen ohnehin entstehen.
+   *
+   * Gesammelt wird beim Kopieren und nicht ueber einen eigenen Knopf. Der
+   * Grund ist die Wahl zwischen "Nur Plaetze" und "Mit FP": ein Knopf
+   * "Sammeln" muesste sie ein zweites Mal stellen. Der Kopierknopf hat sie
+   * schon beantwortet, also nimmt die Sammlung genau die Zeile, die auch
+   * in der Zwischenablage landet.
+   */
+
+  /** Die Zeile eines Bauwerks in die Sammlung legen. */
+  function collect(id, text) {
+    if (!text) return;
+
+    // Je Bauwerk eine Zeile: wer nach einer Korrektur erneut kopiert,
+    // meint dieselbe Foerderung noch einmal, nicht eine zweite. Die neue
+    // Zeile ersetzt die alte an deren Platz, damit die Reihenfolge der
+    // Sammlung die Reihenfolge des Sammelns bleibt.
+    var at = collectionIndex(id);
+    if (at >= 0) collection[at] = { id: id, text: text };
+    else collection.push({ id: id, text: text });
+
+    if (collection.length > MAX_COLLECTED) collection.shift();
+
+    write(KEY.collection, collection);
+    renderCollection(at >= 0 ? at : collection.length - 1);
+  }
+
+  function collectionIndex(id) {
+    for (var i = 0; i < collection.length; i++) {
+      if (collection[i].id === id) return i;
+    }
+    return -1;
+  }
+
+  /** Alle gesammelten Zeilen so, wie sie in den Chat gehoeren. */
+  function collectionText() {
+    return collection.map(function (entry) { return entry.text; }).join("\n");
+  }
+
+  /**
+   * Die Sammlung zeichnen. `fresh` ist der Eintrag, der gerade dazukam —
+   * er blinkt kurz auf, sonst sieht man dem Kopierknopf nicht an, dass er
+   * zwei Dinge getan hat.
+   */
+  function renderCollection(fresh) {
+    var box = $("collection");
+    box.hidden = collection.length === 0;
+    $("collCount").textContent = collection.length +
+      (collection.length === 1 ? " Zeile" : " Zeilen");
+
+    $("collList").innerHTML = collection.map(function (entry, index) {
+      var building = byId[entry.id];
+      var what = building ? building.short : entry.text;
+      return '<li' + (index === fresh ? ' class="fresh"' : "") + ">" +
+        '<span class="coll-t">' + escapeHtml(entry.text) + "</span>" +
+        '<button type="button" class="coll-del" data-drop="' + index + '" aria-label="' +
+          escapeHtml(what) + ' aus der Sammlung entfernen">×</button>' +
+      "</li>";
+    }).join("");
+  }
+
   /**
    * Den Ausblendtest fuer das Zeitalter eines Bauwerks holen.
    * @returns {{samples:number, misses:number, worst:number}|null}
@@ -1233,7 +1337,30 @@
     });
 
     document.querySelectorAll("[data-copy]").forEach(function (button) {
-      button.addEventListener("click", function () { copyToClipboard(button); });
+      button.addEventListener("click", function () {
+        var source = $(button.dataset.copy);
+        var text = source.textContent;
+        copyToClipboard(button, text, source);
+        collect(state.building, text);
+      });
+    });
+
+    $("collCopy").addEventListener("click", function () {
+      copyToClipboard($("collCopy"), collectionText(), $("collList"));
+    });
+
+    $("collClear").addEventListener("click", function () {
+      collection = [];
+      write(KEY.collection, collection);
+      renderCollection();
+    });
+
+    $("collList").addEventListener("click", function (event) {
+      var button = event.target.closest("[data-drop]");
+      if (!button) return;
+      collection.splice(Number(button.dataset.drop), 1);
+      write(KEY.collection, collection);
+      renderCollection();
     });
   }
 
@@ -1262,9 +1389,12 @@
     render();
   }
 
-  function copyToClipboard(button) {
-    var source = $(button.dataset.copy);
-    var text = source.textContent;
+  /**
+   * Text in die Zwischenablage legen und den Knopf kurz quittieren.
+   * `source` ist der Kasten, dessen Inhalt gemeint ist — ohne
+   * Zwischenablage-API bleibt nur, ihn zu markieren.
+   */
+  function copyToClipboard(button, text, source) {
     if (!text) return;
 
     var done = function () {
@@ -1435,5 +1565,6 @@
   bindEvents();
   watchKonami();
   watchWordmark();
+  renderCollection();
   render();
 })(window, document);
