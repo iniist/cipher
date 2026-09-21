@@ -3,3 +3,6 @@ test-results/
 playwright-report/
 blob-report/
 .DS_Store
+
+# Arbeitskopien der Agenten — reine Scratch-Verzeichnisse
+.claude/worktrees/
