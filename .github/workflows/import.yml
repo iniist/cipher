@@ -82,21 +82,6 @@ jobs:
             build-bericht.txt
           retention-days: 7
 
-      # Scheitert die Pruefung, ist der erzeugte Datensatz das Einzige, an
-      # dem sich nachvollziehen laesst, was das Wiki geliefert hat. Ohne
-      # diesen Schritt wird er mit dem Laeufer weggeworfen und der naechste
-      # Lauf faengt bei der Fehlersuche wieder von vorn an.
-      - name: Ergebnis sichern, wenn die Pruefung scheitert
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: datensatz-entwurf
-          path: |
-            data.js
-            lg-daten.json
-            build-bericht.txt
-          retention-days: 7
-
       - name: Hat sich etwas geaendert?
         id: diff
         run: |
