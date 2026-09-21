@@ -652,14 +652,48 @@ tr.off td.pay { text-decoration: line-through }
   min-height: 2.6em;
 }
 :root[data-theme="contrast"] .copy .t { border: 2px solid #000 }
-.copy button {
+.copy button, .coll-copy {
   font: inherit; font-weight: 600; cursor: pointer;
-  width: 100%; margin-top: 6px;
   background: var(--btn); color: var(--btn-ink);
   border: 0; padding: 11px;
 }
-.copy button.done { background: var(--ok); color: var(--on-accent) }
+.copy button { width: 100%; margin-top: 6px }
+.copy button.done, .coll-copy.done { background: var(--ok); color: var(--on-accent) }
 .copy button:disabled { opacity: .45; cursor: default }
+
+/* ------------------------------------------------------------- Sammlung */
+
+/* Der dritte Kasten unter den beiden Kopierkaesten. Eine gestrichelte Linie
+   trennt ihn ab: er gehoert zum Foerderchat, ist aber nicht noch eine
+   Zeile, sondern das, was sich aus ihnen angesammelt hat. */
+.coll { margin-top: 18px; border-top: 1.5px dashed var(--field-border); padding-top: 12px }
+.coll[hidden] { display: none }
+
+.coll-head { display: flex; align-items: baseline; gap: 8px }
+.coll-head .l { margin: 0 }
+.coll-badge {
+  font-weight: 700; color: var(--gold);
+  border: 1.5px solid var(--gold);
+  padding: 0 6px; font-size: .82rem;
+}
+
+.coll-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px }
+.coll-list li { display: flex; background: var(--field); border: 1px solid var(--grid) }
+:root[data-theme="contrast"] .coll-list li { border: 2px solid #000 }
+
+.coll-t { flex: 1; font-size: .95rem; padding: 8px 10px; word-break: break-word }
+.coll-del {
+  font: inherit; line-height: 1;
+  background: transparent; color: var(--dim);
+  border: 0; border-left: 1px solid var(--grid);
+  padding: 4px 10px; cursor: pointer;
+}
+:root[data-theme="contrast"] .coll-del { color: #000; border-left: 2px solid #000 }
+.coll-del:hover { color: var(--own) }
+
+.coll-note { color: var(--dim); font-size: .82rem; margin: 8px 0 0 }
+.coll-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px }
+.coll-copy { flex: 1 }
 
 /* ----------------------------------------------------------------- Fuss */
 
@@ -857,6 +891,12 @@ tr.off td.pay { text-decoration: line-through }
 td.chg { animation: flash .7s ease-out }
 :root[data-theme="contrast"] td.chg { animation: none }
 
+/* Frisch gesammelt: sonst sieht man dem Kopierknopf nicht an, dass die
+   Zeile zusaetzlich in der Sammlung gelandet ist. */
+@keyframes coll-in { from { background: rgba(255, 211, 110, .28) } }
+.coll-list li.fresh { animation: coll-in .7s ease-out }
+:root[data-theme="contrast"] .coll-list li.fresh { animation: none }
+
 button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
   outline: 3px solid var(--warn);
   outline-offset: 2px;
@@ -865,6 +905,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 @media (prefers-reduced-motion: reduce) {
   .bar i { transition: none }
   .safe, td.chg, .stamp, .scan, .wordmark.plotting > span, .toast { animation: none }
+  .coll-list li.fresh { animation: none }
   /* Der Stempel wuerde sonst dauerhaft stehen bleiben — er wird in diesem
      Modus gar nicht erst eingeblendet (siehe app.js). */
 }

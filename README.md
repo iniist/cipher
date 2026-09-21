@@ -28,7 +28,8 @@ dir dann für jeden der fünf Mäzen-Plätze:
 | **Vorher sichern** | Was *du* vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann |
 
 Dazu die Aufteilung in Eigenanteil und Fremdkapital, den Betrag, den du vorab
-einzahlen solltest, und zwei fertige Zeilen zum Kopieren in den Förderchat.
+einzahlen solltest, und zwei fertige Zeilen zum Kopieren in den Förderchat —
+samt einer Sammlung, die mehrere davon aufhebt.
 
 Häkchen weg = der Platz wird nicht angeboten und fällt in deinen Eigenanteil.
 
@@ -173,6 +174,31 @@ Der Stern steht dafür unten bei dem, was er merkt, und sagt es auch:
 und die Einträge im Streifen sind gefüllt statt umrandet — die Faktor-Chips
 daneben sind Einstellungen, diese hier Sprungmarken, und gleiche Optik hieße
 gleiche Bedeutung.
+
+### Sammlung
+
+Manche stellen mehrere Bauwerke **gleichzeitig** in die Fördergruppe. Am Ende
+soll dann eine Nachricht alle Zeilen enthalten — und genau dafür lief der Weg
+bisher über eine Notiz außerhalb: kopieren, wegschreiben, nächstes Bauwerk,
+wieder kopieren.
+
+Die Sammlung ist diese Notiz, nur an der Stelle, an der die Zeilen ohnehin
+entstehen. Unter den beiden Kopierkästen sammelt sie jede Zeile, die du
+kopierst; „Alle kopieren“ gibt sie am Ende untereinander zurück. Jede Zeile
+lässt sich einzeln wieder herausnehmen, „Sammlung leeren“ räumt alles weg.
+Sie liegt im `localStorage` und überdauert damit das Schließen des Browsers.
+Solange nichts gesammelt ist, fällt der Kasten ganz weg.
+
+Gesammelt wird **beim Kopieren** und nicht über einen eigenen Knopf. Der Grund
+ist die Wahl zwischen „Nur Plätze“ und „Mit FP“: ein Knopf „Sammeln“ müsste sie
+ein zweites Mal stellen. Der Kopierknopf hat sie schon beantwortet, also nimmt
+die Sammlung genau die Zeile, die auch in der Zwischenablage landet.
+
+Je Bauwerk steht **eine** Zeile in der Sammlung. Wer nach einer Korrektur
+erneut kopiert, meint dieselbe Förderung noch einmal und nicht eine zweite —
+die neue Zeile ersetzt darum die alte an deren Platz, und die Reihenfolge der
+Sammlung bleibt die Reihenfolge des Sammelns. Mehr als 15 Zeilen hält sie
+nicht; läuft sie über, fällt die älteste heraus.
 
 ### Wenn Daten fehlen
 
