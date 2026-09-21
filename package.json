@@ -10,6 +10,7 @@
     "test": "node --test \"test/*.test.js\" && npm run test:e2e",
     "test:unit": "node --test \"test/*.test.js\"",
     "test:e2e": "playwright test",
+    "import": "node tools/import-run.js && node tools/build-data.js lg-daten.json",
     "serve": "node tools/serve.js"
   },
   "devDependencies": {

@@ -4,5 +4,9 @@ playwright-report/
 blob-report/
 .DS_Store
 
+# Zwischenergebnis eines Importlaufs
+lg-daten.json
+build-bericht.txt
+
 # Arbeitskopien der Agenten — reine Scratch-Verzeichnisse
 .claude/worktrees/

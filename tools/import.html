@@ -63,7 +63,7 @@ details>summary{cursor:pointer; font-weight:600}
 <main>
   <h1>LG-Datenimport</h1>
   <p class="sub">Holt Kosten und P1-Belohnungen aller Legendären Bauwerke aus dem Forge-of-Empires-Wiki (Fandom), prüft sie gegen die Formeln und erzeugt die Datendatei für den Förderrechner.</p>
-  <p class="sub"><strong>Werkzeug, keine Seite.</strong> Es gehört nicht zur ausgelieferten Website — <code>netlify.toml</code> beantwortet <code>/tools/*</code> mit 404. Lokal läuft es über <code>npm run serve</code> unter <code>/tools/import.html</code>. Das erzeugte JSON wird mit <code>node tools/build-data.js lg-daten.json</code> in <code>data.js</code> überführt.</p>
+  <p class="sub"><strong>Werkzeug, keine Seite.</strong> Es gehört nicht zur ausgelieferten Website — <code>netlify.toml</code> beantwortet <code>/tools/*</code> mit 404. Auch <code>npm run serve</code> hält sich daran und antwortet hier mit 404 — diese Datei wird <strong>direkt im Browser geöffnet</strong> (Doppelklick, <code>file://</code>), einen Server braucht sie nicht. Das erzeugte JSON wird mit <code>node tools/build-data.js lg-daten.json</code> in <code>data.js</code> überführt. Wer keinen Rechner zur Hand hat, startet stattdessen den Arbeitsablauf <em>Datensatz importieren</em> unter GitHub Actions; der macht dasselbe und legt das Ergebnis als Pull Request ab.</p>
 
   <section class="panel">
     <h2>Import</h2>

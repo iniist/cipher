@@ -1,0 +1,152 @@
+name: Datensatz importieren
+
+# Von Hand gestartet, nie automatisch.
+#
+# Das Importwerkzeug ist eine Browser-Seite: sie holt die Wiki-Tabellen,
+# raeumt sie auf und erzeugt das JSON. Von Hand heisst das bisher: Datei
+# im Browser oeffnen, Knopf druecken, JSON herunterladen, build-data.js
+# aufrufen, Tests laufen lassen, committen. Das geht am Rechner, nicht am
+# Telefon — und genau dort sitzt, wer im Spiel gerade Werte abliest.
+#
+# Dieser Ablauf macht dieselben Schritte auf einem Laeufer und legt das
+# Ergebnis als Pull Request ab. Ein Knopf in der Actions-Oberflaeche, der
+# Rest passiert von allein. Der Datensatz aendert sich dabei nie ohne
+# Nachschau: ohne Merge bleibt alles, wie es war.
+on:
+  workflow_dispatch:
+    inputs:
+      notiz:
+        description: "Notiz für den Pull Request (optional)"
+        required: false
+        default: ""
+
+# Zwei Laeufe gleichzeitig wuerden sich denselben Zweig streitig machen.
+concurrency:
+  group: import
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  import:
+    name: Wiki holen und Datensatz erzeugen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Chromium bereitstellen
+        run: npx playwright install --with-deps chromium
+
+      - name: Wiki importieren
+        id: lauf
+        run: node tools/import-run.js lg-daten.json
+
+      - name: Datensatz erzeugen
+        run: node tools/build-data.js lg-daten.json | tee build-bericht.txt
+
+      # Die Datentests pruefen den frischen Datensatz auf Plausibilitaet:
+      # fallende Belohnungen, krumme Zahlen, fehlende Herkunftszeichen.
+      # Schlaegt das fehl, ist am Wiki etwas passiert, das niemand
+      # stillschweigend uebernehmen sollte.
+      - name: Datensatz pruefen
+        run: npm run test:unit
+
+      - name: Hat sich etwas geaendert?
+        id: diff
+        run: |
+          if git diff --quiet -- data.js; then
+            echo "geaendert=nein" >> "$GITHUB_OUTPUT"
+          else
+            echo "geaendert=ja" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Nichts zu tun
+        if: steps.diff.outputs.geaendert == 'nein'
+        run: |
+          {
+            echo "### Datensatz unveraendert"
+            echo
+            echo "Das Wiki liefert dieselben Werte wie bisher. Kein Pull Request noetig."
+            echo
+            echo '```'
+            cat build-bericht.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Die Ausgaben des Laufs kommen ueber die Umgebung ins Skript, nicht
+      # per ${{ }} mitten in den Shell-Text: was aus dem Wiki stammt, soll
+      # hier kein Kommando werden koennen.
+      - name: Pull Request aufmachen
+        if: steps.diff.outputs.geaendert == 'ja'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTIZ: ${{ inputs.notiz }}
+          STATUS: ${{ steps.lauf.outputs.status }}
+          SUMMARY: ${{ steps.lauf.outputs.summary }}
+          STARTER: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          ZWEIG="import/$(date -u +%Y-%m-%d-%H%M)"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$ZWEIG"
+          git add data.js
+
+          {
+            echo "Datensatz aus dem Wiki erneuert"
+            echo
+            echo "Erzeugt vom Arbeitsablauf \"Datensatz importieren\"."
+            echo
+            echo "$STATUS"
+            echo "$SUMMARY"
+          } > commit-text.txt
+          git commit -F commit-text.txt
+          git push -u origin "$ZWEIG"
+
+          {
+            echo "Erzeugt vom Arbeitsablauf **Datensatz importieren**, gestartet von @$STARTER."
+            echo
+            if [ -n "$NOTIZ" ]; then printf '> %s\n\n' "$NOTIZ"; fi
+            echo "## Lauf"
+            echo
+            echo '```'
+            echo "$STATUS"
+            echo "$SUMMARY"
+            echo '```'
+            echo
+            echo "## Datensatz"
+            echo
+            echo '```'
+            cat build-bericht.txt
+            echo '```'
+            echo
+            echo "## Vor dem Mergen ansehen"
+            echo
+            echo "- **Wiki-Werte verworfen**: erwartet werden die bekannten Stellen der Jahrhundertwende. Deutlich mehr hiesse, die Regel greift zu scharf."
+            echo "- **Spielwerte passen**: muss vollstaendig aufgehen — das sind die im Spiel abgelesenen Werte aus \`CHECKS\`."
+            echo "- **uebernommen**: Hinweise, in denen Werte aus dem bisherigen Datensatz weitergetragen wurden (etwa der Siphon, den das Wiki nicht kennt)."
+            echo
+            echo "Die Datentests sind in diesem Lauf bereits gruen gelaufen; die uebrige CI laeuft am Pull Request."
+          } > pr-text.md
+
+          gh pr create \
+            --title "Datensatz aus dem Wiki erneuert" \
+            --body-file pr-text.md \
+            --base main \
+            --head "$ZWEIG"
+
+          {
+            echo "### Pull Request aufgemacht"
+            echo
+            git diff --stat HEAD~1 -- data.js
+          } >> "$GITHUB_STEP_SUMMARY"
