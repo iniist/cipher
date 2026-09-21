@@ -193,6 +193,23 @@ Die Belohnungen der hinteren Plätze folgen aus P1: P2 = P1/2, P3 = P2/3,
 P4 = P3/4, P5 = P4/5 — jeweils kaufmännisch auf ein Vielfaches von 5 gerundet.
 Die Einzahlung ist `floor((Belohnung × Faktor + 50) / 100)`.
 
+**Ist P1 nur hochgerechnet, sichert cipher vorsichtiger ab.** Fünf im Spiel
+abgelesene Werte gegen die Rechnung gehalten: drei trafen genau, zwei lagen
+5 FP unter der Rechnung, keiner darüber. Ein zu hohes P1 ist die gefährliche
+Richtung — `needed = remaining − 2 × Einzahlung` fällt dann zu niedrig aus und
+der Platz bleibt überbietbar, obwohl der Plan ihn als sicher ausweist. Bei
+hochgerechnetem oder widersprüchlichem P1 bekommt `buildPlan` darum ein
+`p1Secure` (P1 − 5): die Schwellwerte entstehen aus den Einzahlungen dieses
+kleineren P1, angezeigt werden weiter Belohnung und Einzahlung des echten.
+Gezahlt wird dadurch nichts mehr — der Zuschlag verschiebt nur zwischen
+„vorher sichern“ und dem Rest, den du ohnehin selbst einzahlst.
+
+Eine Ausnahme: Würde ein kleiner Platz durch den Zuschlag rechnerisch gar
+nicht mehr in die Reststufe passen und ganz aus dem Plan fallen, gilt der
+Plan ohne Zuschlag — ein Platz ohne Zuschlag ist mehr wert als kein Platz.
+Über alle 15.285 Pläne mit hochgerechnetem P1 (alle Bauwerke, alle Stufen,
+Faktoren 1,80/1,90/2,00) trifft das auf sechs zu.
+
 Der ganze Rechenkern steckt in [`calc.js`](./calc.js) und besteht nur aus reinen
 Funktionen — ohne DOM, ohne Speicherzugriff, vollständig getestet.
 

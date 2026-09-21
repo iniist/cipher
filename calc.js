@@ -357,9 +357,21 @@
    * schwaecherer Faktor bedeutet also automatisch mehr vorher sichern —
    * was stimmt, weil ein kleinerer Beitrag leichter zu ueberbieten ist.
    *
+   * Steht P1 nicht fest, rechnet die Absicherung vorsichtiger: options.p1Secure
+   * gibt die kleinere P1-Belohnung vor, aus der `needed` seine Einzahlungen
+   * ableitet. Belohnung und angezeigte Einzahlung kommen weiter aus options.p1.
+   *
    * @param {object} options
    * @param {number} options.total Gesamtkosten der Stufe
    * @param {number} options.p1 Belohnung fuer Platz 1
+   * @param {number} [options.p1Secure] Die P1-Belohnung, mit der die Absicherung
+   *   rechnet; fehlt sie oder ist sie null, gilt options.p1. Ein hergeleitetes
+   *   P1 liegt nie zu niedrig, aber gelegentlich 5 FP zu hoch — und zu hoch ist
+   *   die gefaehrliche Richtung, weil `needed` dann zu klein ausfaellt und der
+   *   Platz ueberbietbar bleibt. Mit dem kleineren Wert wird jeder Platz weiter
+   *   vorgesichert. Ausnahme: Faellt durch den Zuschlag ein Platz heraus, der
+   *   sonst angeboten wuerde, gilt der Plan ohne Zuschlag — ein Platz ohne
+   *   Zuschlag ist mehr wert als gar kein Platz.
    * @param {number} options.factor Arche-Faktor in Prozent, gilt fuer jeden
    *   Platz ohne eigenen Wert
    * @param {Array<number|null>} [options.factors] Faktor je Platz; null oder
@@ -382,57 +394,88 @@
       return factors[index] != null ? factors[index] : options.factor;
     }
 
-    var remaining = total;
-    var upfront = 0; // Was du zahlst, bevor alle Plaetze vergeben sind
-    var external = 0; // Was die Foerderer zusammen einzahlen
-    var anyTooTight = false;
+    /** Die Einzahlungen aller fuenf Plaetze zu einer P1-Belohnung. */
+    function paymentsFor(p1) {
+      return rewardChain(p1).map(function (reward, index) {
+        return contribution(reward, factorFor(index));
+      });
+    }
 
-    var rows = rewardChain(options.p1).map(function (reward, index) {
-      var pay = contribution(reward, factorFor(index));
-      var row = {
-        slot: index + 1,
-        reward: reward,
-        factor: factorFor(index),
-        contribution: pay,
-        offered: Boolean(enabled[index]) && reward > 0,
-        secure: null,
-        tooTight: false
-      };
-      if (!row.offered) return row;
+    // Was die Foerderer tatsaechlich einzahlen — das steht so im Plan.
+    var payments = paymentsFor(options.p1);
 
-      // Ein Platz ist sicher, sobald hoechstens noch 2x seine Einzahlung offen
-      // ist: nach der Einzahlung bleibt dann genau `pay` uebrig, ein Nachzuegler
-      // kann also hoechstens gleichziehen, nie ueberbieten.
-      //
-      // Das setzt die Spielregel voraus, dass bei gleichem Betrag der fruehere
-      // Foerderer den Platz behaelt. So ist es in Forge of Empires; wuerde das
-      // Spiel Gleichstand anders aufloesen, muesste hier `2 * pay - 1` stehen.
-      var needed = Math.max(0, remaining - 2 * pay);
-      if (remaining - needed < pay) {
-        // Der Platz passt rechnerisch nicht mehr in die verbleibende Stufe.
-        row.offered = false;
-        row.tooTight = true;
-        anyTooTight = true;
+    /**
+     * Einen Plan rechnen, dessen Absicherung von `securePay` ausgeht.
+     * @param {number[]} securePay Einzahlung je Platz, mit der `needed` rechnet
+     */
+    function planWith(securePay) {
+      var remaining = total;
+      var upfront = 0; // Was du zahlst, bevor alle Plaetze vergeben sind
+      var external = 0; // Was die Foerderer zusammen einzahlen
+      var anyTooTight = false;
+
+      var rows = rewardChain(options.p1).map(function (reward, index) {
+        var pay = payments[index];
+        var row = {
+          slot: index + 1,
+          reward: reward,
+          factor: factorFor(index),
+          contribution: pay,
+          offered: Boolean(enabled[index]) && reward > 0,
+          secure: null,
+          tooTight: false
+        };
+        if (!row.offered) return row;
+
+        // Ein Platz ist sicher, sobald hoechstens noch 2x seine Einzahlung offen
+        // ist: nach der Einzahlung bleibt dann genau `pay` uebrig, ein Nachzuegler
+        // kann also hoechstens gleichziehen, nie ueberbieten.
+        //
+        // Das setzt die Spielregel voraus, dass bei gleichem Betrag der fruehere
+        // Foerderer den Platz behaelt. So ist es in Forge of Empires; wuerde das
+        // Spiel Gleichstand anders aufloesen, muesste hier `2 * pay - 1` stehen.
+        var needed = Math.max(0, remaining - 2 * securePay[index]);
+        if (remaining - needed < pay) {
+          // Der Platz passt rechnerisch nicht mehr in die verbleibende Stufe.
+          row.offered = false;
+          row.tooTight = true;
+          anyTooTight = true;
+          return row;
+        }
+
+        upfront += needed;
+        remaining -= needed;
+        row.secure = needed;
+        remaining -= pay;
+        external += pay;
         return row;
-      }
+      });
 
-      upfront += needed;
-      remaining -= needed;
-      row.secure = needed;
-      remaining -= pay;
-      external += pay;
-      return row;
+      return {
+        rows: rows,
+        total: total,
+        external: external,
+        ownShare: upfront + remaining,
+        upfront: upfront,
+        remainder: remaining,
+        anyTooTight: anyTooTight
+      };
+    }
+
+    var p1Secure = options.p1Secure != null ? options.p1Secure : options.p1;
+    if (p1Secure === options.p1) return planWith(payments);
+
+    var careful = planWith(paymentsFor(p1Secure));
+    if (!careful.anyTooTight) return careful;
+
+    // Lieber ein Platz ohne Zuschlag als gar kein Platz: kostet die
+    // vorsichtigere Absicherung einen Platz, der sonst angeboten wuerde,
+    // gilt der Plan ohne Zuschlag.
+    var plain = planWith(payments);
+    var lost = careful.rows.some(function (row, index) {
+      return plain.rows[index].offered && !row.offered;
     });
-
-    return {
-      rows: rows,
-      total: total,
-      external: external,
-      ownShare: upfront + remaining,
-      upfront: upfront,
-      remainder: remaining,
-      anyTooTight: anyTooTight
-    };
+    return lost ? plain : careful;
   }
 
   /**

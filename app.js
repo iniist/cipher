@@ -53,6 +53,16 @@
   /** Quellen, die keinen Hinweis ausloesen — sie gelten als belastbar. */
   var TRUSTED_SOURCES = { table: true, formula: true, manual: true };
 
+  /**
+   * Quellen, deren P1 danebenliegen kann — und zwar nur nach oben: von fuenf
+   * im Spiel abgelesenen Werten lagen zwei genau 5 FP unter der Rechnung,
+   * keiner darueber. Ein zu hohes P1 ist die gefaehrliche Richtung, weil die
+   * Absicherung dann zu niedrig ausfaellt. Darum rechnet sie bei diesen
+   * Quellen mit P1 minus P1_SLACK; angezeigt wird weiter das echte P1.
+   */
+  var UNSURE_P1_SOURCES = { derived: true, conflict: true };
+  var P1_SLACK = 5;
+
   var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // ------------------------------------------------------------------ Helfer
@@ -595,6 +605,7 @@
     var plan = Calc.buildPlan({
       total: total.value,
       p1: p1.value,
+      p1Secure: UNSURE_P1_SOURCES[p1.source] ? p1.value - P1_SLACK : null,
       factor: state.factor,
       factors: state.slotFactors,
       enabled: state.enabled

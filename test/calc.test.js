@@ -13,6 +13,7 @@ const DATA = require("../data.js");
 const arc = DATA.buildings.find((b) => b.id === "The_Arc");
 const observatory = DATA.buildings.find((b) => b.id === "Observatory");
 const siphon = DATA.buildings.find((b) => b.id === "Shattered_Horizon_Siphon");
+const colosseum = DATA.buildings.find((b) => b.id === "Colosseum");
 
 const allOn = [true, true, true, true, true];
 
@@ -455,4 +456,99 @@ test("nach dem Sichern bleibt genau eine Einzahlung offen — nicht weniger, nic
     assert.ok(remaining <= row.contribution, `P${row.slot}: nach der Einzahlung bleiben ${remaining} offen`);
   }
   assert.equal(remaining, plan.remainder);
+});
+
+// -------------------------------------------- Vorsichtige Absicherung
+
+test("p1Secure sichert weiter vor, laesst Belohnung und Einzahlung aber stehen", () => {
+  // Ein hergeleitetes P1 liegt nie zu niedrig, aber manchmal 5 FP zu hoch.
+  // Die Absicherung rechnet deshalb mit dem kleineren Wert; was im Plan
+  // steht, kommt weiter aus dem echten P1.
+  const argument = { total: 10000, p1: 800, factor: 190, enabled: allOn };
+  const ohne = Calc.buildPlan(argument);
+  const mit = Calc.buildPlan({ ...argument, p1Secure: 795 });
+
+  assert.ok(mit.rows[0].secure > ohne.rows[0].secure,
+    "P1 muss mit unsicherem P1 weiter vorgesichert werden");
+  assert.deepEqual(mit.rows.map((row) => row.reward), ohne.rows.map((row) => row.reward));
+  assert.deepEqual(mit.rows.map((row) => row.contribution), ohne.rows.map((row) => row.contribution));
+  assert.deepEqual(mit.rows.map((row) => row.offered), ohne.rows.map((row) => row.offered));
+
+  // Der Zuschlag ist eine Umverteilung, keine Zusatzzahlung: Fremdanteil und
+  // Eigenanteil bleiben, nur vorab und Rest verschieben sich gegeneinander.
+  assert.equal(mit.external, ohne.external);
+  assert.equal(mit.ownShare, ohne.ownShare);
+  assert.equal(mit.upfront + mit.remainder, mit.ownShare);
+  assert.equal(mit.external + mit.ownShare, mit.total);
+});
+
+test("die Absicherung haelt auch, wenn P1 um 5 FP zu hoch war", () => {
+  // Der Plan wird mit dem echten P1 angezeigt, muss aber gegen die
+  // Einzahlungen des kleineren P1 dichthalten: nach dem Sichern darf
+  // hoechstens deren doppelter Betrag offen sein.
+  const echt = 800;
+  const vorsichtig = echt - 5;
+  const plan = Calc.buildPlan({ total: 10000, p1: echt, p1Secure: vorsichtig, factor: 190, enabled: allOn });
+  const klein = Calc.rewardChain(vorsichtig).map((reward) => Calc.contribution(reward, 190));
+
+  let remaining = plan.total;
+  for (const row of plan.rows) {
+    if (!row.offered) continue;
+    remaining -= row.secure;
+    assert.ok(remaining <= 2 * klein[row.slot - 1],
+      `P${row.slot}: nach dem Sichern sind ${remaining} offen, sicher waeren ${2 * klein[row.slot - 1]}`);
+    remaining -= row.contribution;
+  }
+});
+
+test("ein sicheres P1 rechnet exakt wie bisher", () => {
+  // p1Secure fehlt, ist null oder gleich p1: kein Zuschlag, kein Unterschied.
+  let compared = 0;
+  for (const building of DATA.buildings) {
+    for (const level of [1, 5, 11, 20, 37, 63, 120]) {
+      const total = Calc.totalCost(building, level, {}).value;
+      const p1 = Calc.p1Reward(building, level, DATA.curves, {}).value;
+      if (total == null || p1 == null) continue;
+
+      for (const factor of [180, 190, 200]) {
+        const argument = { total, p1, factor, enabled: allOn };
+        const ohne = Calc.buildPlan(argument);
+        for (const p1Secure of [undefined, null, p1]) {
+          assert.deepEqual(Calc.buildPlan({ ...argument, p1Secure }), ohne,
+            `${building.id} Stufe ${level} Faktor ${factor}: p1Secure=${p1Secure} hat den Plan veraendert`);
+        }
+        compared++;
+      }
+    }
+  }
+  assert.ok(compared > 500, `zu wenige Vergleiche: ${compared}`);
+});
+
+test("lieber ein Platz ohne Zuschlag als gar kein Platz", () => {
+  // Kolosseum Stufe 37: P5 wirft genau 5 FP ab. Aus dem um 5 FP kleineren
+  // P1 faellt die Belohnung von P5 auf 0 — der Platz passte damit rechnerisch
+  // nicht mehr in die Reststufe und fiele ganz aus dem Plan. Das waere ein
+  // schlechter Tausch, also gilt hier der Plan ohne Zuschlag.
+  const total = Calc.totalCost(colosseum, 37, {}).value;
+  const p1 = Calc.p1Reward(colosseum, 37, DATA.curves, {});
+  assert.equal(p1.source, "derived", "der Beleg haengt an einem hergeleiteten P1");
+
+  for (const factor of [180, 190, 200]) {
+    const argument = { total, p1: p1.value, factor, enabled: allOn };
+    const ohne = Calc.buildPlan(argument);
+    const mit = Calc.buildPlan({ ...argument, p1Secure: p1.value - 5 });
+
+    assert.ok(ohne.rows[4].offered, "ohne Zuschlag wird P5 angeboten");
+    assert.deepEqual(mit, ohne, `Faktor ${factor}: der Zuschlag haette P5 gekostet`);
+    assert.ok(!mit.anyTooTight);
+  }
+});
+
+test("faellt kein Platz heraus, bleibt es beim Zuschlag", () => {
+  // Die Gegenprobe zur Ausnahme: eine Stufe tiefer passt P5 auch mit dem
+  // kleineren P1 noch, und dort wirkt der Zuschlag.
+  const argument = { total: 10000, p1: 800, factor: 190, enabled: allOn };
+  const mit = Calc.buildPlan({ ...argument, p1Secure: 795 });
+  assert.notDeepEqual(mit, Calc.buildPlan(argument));
+  assert.ok(mit.rows.every((row) => !row.tooTight));
 });
