@@ -439,16 +439,19 @@ Wert ist. `tools/build-data.js` überführt das Ergebnis in `data.js`.
 Unterschied zur Anwendung fragt er das Wiki ab — aber erst auf Knopfdruck, beim
 Laden der Seite geht keine Anfrage hinaus.
 
-Zwei Dinge stehen nicht im Wiki und übernimmt der Konverter deshalb aus der
-bestehenden `data.js`:
+Drei Dinge stehen nicht zwingend im Wiki und übernimmt der Konverter deshalb
+aus der bestehenden `data.js`:
 
 - die **Kurznamen** für den Förderchat (`Leuchtturm von Alexandria` →
   `Leuchtturm`), die von Hand gepflegt sind — sie dürfen in `data.js` direkt
   geändert werden und überleben den nächsten Lauf
 - **Bauwerke, die der Import nicht liefert**; sie bleiben mit ihren bisherigen
   Werten stehen, statt stillschweigend zu verschwinden
+- **Kostenformel und P1-Kurve eines Bauwerks, das der Import leer liefert** —
+  etwa der Horizontriss-Siphon, den das Wiki nicht kennt und dessen Werte aus
+  im Spiel abgelesenen Stufen stammen
 
-Beides meldet der Konverter im Lauf. `test/build-data.test.js` prüft es, indem
+Alle drei meldet der Konverter im Lauf. `test/build-data.test.js` prüft es, indem
 es aus `data.js` ein Import-JSON baut, durch den Konverter schickt und das
 Ergebnis mit dem Original vergleicht.
 

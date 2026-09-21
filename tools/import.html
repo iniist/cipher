@@ -163,7 +163,14 @@ const CHECKS = {
     99: [7474, 1390], 164: [37201, 2555], 165: [38131, 2570],
     169: [42090, 2645], 174: [47621, 2740], 175: [48811, 2760],
     177: [51282, null], 197: [84032, 3180]
-  }
+  },
+  // Im Spiel abgelesen; das Wiki kennt den Siphon bisher gar nicht. Für die
+  // Kostenbasis reichen diese vier Stufen noch nicht: finalize verlangt
+  // mindestens fünf Ablesungen ab Stufe 11 (ci.total >= 5). Bis eine fünfte
+  // dazukommt, trägt tools/build-data.js die Basis aus dem bestehenden
+  // data.js weiter. Die P1-Kurve des Stellaren Zeitalters entsteht dagegen
+  // schon hier: vier Stützpunkte genügen dem Fit.
+  Shattered_Horizon_Siphon: { 11: [14894, 175], 19: [18146, 345], 25: [21044, 480], 33: [25640, 675] }
 };
 
 const API = 'https://forgeofempires.fandom.com/api.php';

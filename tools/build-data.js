@@ -5,14 +5,18 @@
  *   node tools/build-data.js lg-daten.json --dry          (nur berichten)
  *   node tools/build-data.js lg-daten.json --out tmp.js   (woanders hinschreiben)
  *
- * Der Importer liest das Wiki und kennt darum nur, was dort steht. Zwei
- * Dinge stehen nicht im Wiki und werden deshalb aus dem bestehenden data.js
- * uebernommen:
+ * Der Importer liest das Wiki und kennt darum nur, was dort steht. Drei
+ * Dinge stehen nicht zwingend im Wiki und werden deshalb aus dem bestehenden
+ * data.js uebernommen:
  *
  *   - die Kurznamen fuer den Foerderchat ("Leuchtturm von Alexandria" ->
  *     "Leuchtturm"), die von Hand gepflegt sind
  *   - Bauwerke, die der Import nicht laden konnte; sie bleiben mit ihren
  *     bisherigen Werten stehen, statt stillschweigend zu verschwinden
+ *   - Kostenformel und P1-Kurve eines Bauwerks, das der Import zwar liefert,
+ *     aber ohne Inhalt. Solche Werte stammen aus dem Spiel abgelesenen
+ *     Stufen; sie waeren sonst nach einem Lauf weg. Jeder dieser Faelle
+ *     steht als Hinweis im Bericht.
  *
  * Nach dem Lauf: `npm run test:unit` — die Datentests pruefen den neuen
  * Datensatz auf Vollstaendigkeit und Plausibilitaet.
@@ -56,7 +60,7 @@ if (!Array.isArray(imported.lg) || !imported.lg.length) {
   process.exit(1);
 }
 
-/** Bisheriger Datensatz, sofern vorhanden — Quelle für Kurznamen. */
+/** Bisheriger Datensatz, sofern vorhanden — Quelle für Kurznamen und Rettung. */
 let previous = { buildings: [], curves: {} };
 try {
   previous = require(SOURCE);
@@ -74,25 +78,45 @@ const seenEras = new Map();
 for (const entry of imported.lg) {
   const known = previousById.get(entry.id);
 
-  if (entry.costA == null) warn(`${entry.de}: keine Kostenformel im Import.`);
-  if (Array.isArray(entry.cost1to10) && entry.cost1to10.includes(null)) {
-    warn(`${entry.de}: Kosten der Stufen 1–10 unvollständig.`);
-  }
-
-  const curveKey = buildCurve(entry);
+  const cost = buildCost(entry, known);
+  const curveKey = buildCurve(entry, known);
 
   buildings.push({
     id: entry.id,
     name: entry.de,
     short: known ? known.short : entry.de,
     era: entry.age,
-    base: entry.costA == null ? null : entry.costA,
+    base: cost.base,
     maxLevel: entry.maxLevel,
     curve: curveKey,
-    costs: entry.costA == null ? null : entry.cost1to10
+    costs: cost.costs
   });
 
   if (!known) warn(`${entry.de}: neu im Datensatz — bitte einen Kurznamen prüfen.`);
+}
+
+/**
+ * Basiswert und Kosten der Stufen 1-10 bestimmen.
+ *
+ * Liefert der Import keine Kostenformel, der bestehende Datensatz aber eine,
+ * bleibt die bestehende stehen. Sie kann nur von Hand oder aus abgelesenen
+ * Spielwerten stammen — der Import wuerde sie mit null ueberschreiben und
+ * damit ersatzlos loeschen.
+ */
+function buildCost(entry, known) {
+  if (entry.costA == null) {
+    if (known && known.base != null) {
+      warn(`${entry.de}: keine Kostenformel im Import, bisherige Basis übernommen.`);
+      return { base: known.base, costs: known.costs };
+    }
+    warn(`${entry.de}: keine Kostenformel im Import.`);
+    return { base: null, costs: null };
+  }
+
+  if (Array.isArray(entry.cost1to10) && entry.cost1to10.includes(null)) {
+    warn(`${entry.de}: Kosten der Stufen 1–10 unvollständig.`);
+  }
+  return { base: entry.costA, costs: entry.cost1to10 };
 }
 
 /**
@@ -100,14 +124,12 @@ for (const entry of imported.lg) {
  * teilen sich dieselbe Kurve; der Importer liefert sie darum identisch
  * mehrfach. Weicht eine ab, ist etwas faul.
  */
-function buildCurve(entry) {
+function buildCurve(entry, known) {
   if (!Array.isArray(entry.p1) || !entry.p1.length) {
-    warn(`${entry.de}: keine P1-Werte im Import.`);
-    return null;
+    return keepCurve(entry, known, "keine P1-Werte im Import");
   }
   if (entry.p1.includes(null)) {
-    warn(`${entry.de}: P1-Kurve hat Lücken, Zeitalter "${entry.age}" bleibt ohne Kurve.`);
-    return null;
+    return keepCurve(entry, known, "P1-Kurve hat Lücken");
   }
 
   const serialised = entry.p1.join(",") + "|" + entry.p1src;
@@ -118,6 +140,24 @@ function buildCurve(entry) {
     warn(`${entry.de}: P1-Kurve weicht von den übrigen "${entry.age}"-Bauwerken ab, erste gewinnt.`);
   }
   return entry.age;
+}
+
+/**
+ * Der Import bringt keine brauchbare Kurve mit: die bisherige des Bauwerks
+ * weitertragen, sofern es eine gab. Steht sie nicht im Wiki, ist sie hier
+ * die einzige Quelle — ohne diese Rettung waere sie nach einem Lauf weg.
+ * Ein spaeteres Bauwerk desselben Zeitalters mit echter Kurve aus dem
+ * Import ueberschreibt sie weiterhin; der Import hat Vorrang.
+ */
+function keepCurve(entry, known, reason) {
+  const key = known && known.curve;
+  if (key && previous.curves[key]) {
+    warn(`${entry.de}: ${reason}, bisherige Kurve "${key}" übernommen.`);
+    if (!curves[key]) curves[key] = previous.curves[key];
+    return key;
+  }
+  warn(`${entry.de}: ${reason}, Zeitalter "${entry.age}" bleibt ohne Kurve.`);
+  return null;
 }
 
 // Bauwerke, die der Import nicht kennt, nicht verlieren.
@@ -164,8 +204,13 @@ let out = `/*!
  *
  * Diese Datei wird erzeugt von tools/build-data.js aus dem JSON, das
  * tools/import.html herunterlädt. Handische Änderungen gehen beim nächsten
- * Lauf verloren — mit einer Ausnahme: die Kurznamen (.short) werden aus der
- * bestehenden Datei übernommen und dürfen hier gepflegt werden.
+ * Lauf verloren — mit drei Ausnahmen, die der Lauf aus der bestehenden
+ * Datei übernimmt und jeweils als Hinweis meldet:
+ *
+ *   - die Kurznamen (.short); sie sind von Hand gepflegt
+ *   - Bauwerke, die der Import gar nicht geliefert hat
+ *   - .base/.costs und die Kurve eines Bauwerks, für das der Import nichts
+ *     mitbringt; sie stammen dann aus im Spiel abgelesenen Stufen
  */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();

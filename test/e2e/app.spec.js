@@ -3,6 +3,7 @@
  * Ausfuehren mit: npm run test:e2e
  */
 const { test, expect } = require("@playwright/test");
+const { mitTestdaten, OHNE_DATEN } = require("./testdaten");
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/index.html");
@@ -105,8 +106,12 @@ test("Bauwerk, Stufe und Name ueberleben einen Neuladen", async ({ page }) => {
 });
 
 test("fehlende Daten fuehren zur Eingabeaufforderung, eigene Werte rechnen weiter", async ({ page }) => {
-  // Fuer dieses Bauwerk kennt der Datensatz weder Kosten noch P1.
-  await page.selectOption("#building", "Shattered_Horizon_Siphon");
+  // Der Leerzustand braucht ein Bauwerk ohne Kosten und ohne Kurve. Statt
+  // auf eine Luecke im echten Datensatz zu hoffen, liefern die Testdaten
+  // eines mit.
+  await mitTestdaten(page);
+  await page.goto("/index.html");
+  await page.selectOption("#building", OHNE_DATEN);
   await page.fill("#level", "20");
   await page.locator("#level").blur();
 
@@ -185,7 +190,9 @@ test("ein wackliges Zeitalter sagt, wie weit es danebenliegen kann", async ({ pa
 });
 
 test("eine ungueltige P1-Eingabe wird abgelehnt", async ({ page }) => {
-  await page.selectOption("#building", "Shattered_Horizon_Siphon");
+  await mitTestdaten(page);
+  await page.goto("/index.html");
+  await page.selectOption("#building", OHNE_DATEN);
   await page.fill("#level", "20");
   await page.locator("#level").blur();
 

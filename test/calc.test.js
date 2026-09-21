@@ -12,8 +12,24 @@ const DATA = require("../data.js");
 
 const arc = DATA.buildings.find((b) => b.id === "The_Arc");
 const observatory = DATA.buildings.find((b) => b.id === "Observatory");
-const siphon = DATA.buildings.find((b) => b.id === "Shattered_Horizon_Siphon");
 const colosseum = DATA.buildings.find((b) => b.id === "Colosseum");
+
+/**
+ * Ein Bauwerk ohne jede Datengrundlage. Bewusst hier gebaut und nicht aus
+ * dem Datensatz gefischt: sobald das letzte Bauwerk mit einer Luecke seine
+ * Werte bekommt, haetten diese Tests sonst keinen Gegenstand mehr.
+ * totalCost und p1Reward nehmen jedes Objekt dieser Form.
+ */
+const ohneDaten = {
+  id: "Leeres_Bauwerk",
+  name: "Leeres Bauwerk",
+  short: "Leer",
+  era: "Ohne Daten",
+  base: null,
+  maxLevel: 200,
+  curve: null,
+  costs: null
+};
 
 const allOn = [true, true, true, true, true];
 
@@ -74,33 +90,33 @@ test("totalCost bevorzugt einen eigenen Eintrag", () => {
 });
 
 test("totalCost meldet nichts, wenn Basiswert und Eintrag fehlen", () => {
-  assert.deepEqual(Calc.totalCost(siphon, 20, {}), { value: null, source: null });
+  assert.deepEqual(Calc.totalCost(ohneDaten, 20, {}), { value: null, source: null });
 });
 
 test("totalCost rechnet ohne Basiswert aus dem eigenen Eintrag hoch", () => {
-  const overrides = { "Shattered_Horizon_Siphon:20": 2500 };
+  const overrides = { "Leeres_Bauwerk:20": 2500 };
 
-  const same = Calc.totalCost(siphon, 20, overrides);
+  const same = Calc.totalCost(ohneDaten, 20, overrides);
   assert.deepEqual(same, { value: 2500, source: "manual" });
 
-  const higher = Calc.totalCost(siphon, 25, overrides);
+  const higher = Calc.totalCost(ohneDaten, 25, overrides);
   assert.equal(higher.source, "derived");
   assert.equal(higher.from, 20);
   assert.equal(higher.value, Math.ceil((2500 / Math.pow(1.025, 20)) * Math.pow(1.025, 25) - 1e-7));
   assert.ok(higher.value > 2500);
 
   // Unterhalb von Stufe 11 wird nicht hochgerechnet
-  assert.deepEqual(Calc.totalCost(siphon, 5, overrides), { value: null, source: null });
+  assert.deepEqual(Calc.totalCost(ohneDaten, 5, overrides), { value: null, source: null });
 });
 
 test("totalCost nimmt beim Hochrechnen den hoechsten eigenen Eintrag", () => {
   const overrides = {
-    "Shattered_Horizon_Siphon:15": 1000,
-    "Shattered_Horizon_Siphon:40": 9000,
-    "Shattered_Horizon_Siphon:22": 3000,
+    "Leeres_Bauwerk:15": 1000,
+    "Leeres_Bauwerk:40": 9000,
+    "Leeres_Bauwerk:22": 3000,
     "The_Arc:60": 1 // anderes Bauwerk, darf nicht stoeren
   };
-  assert.equal(Calc.totalCost(siphon, 50, overrides).from, 40);
+  assert.equal(Calc.totalCost(ohneDaten, 50, overrides).from, 40);
 });
 
 test("p1Reward liest die Kurve des Zeitalters", () => {
@@ -228,7 +244,7 @@ test("p1Reward bevorzugt einen eigenen Eintrag", () => {
 });
 
 test("p1Reward meldet nichts ohne hinterlegte Kurve", () => {
-  assert.deepEqual(Calc.p1Reward(siphon, 20, DATA.curves, {}), { value: null, source: null });
+  assert.deepEqual(Calc.p1Reward(ohneDaten, 20, DATA.curves, {}), { value: null, source: null });
 });
 
 test("buildPlan verteilt die Gesamtkosten vollstaendig", () => {
