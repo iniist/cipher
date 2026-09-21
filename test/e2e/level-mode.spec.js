@@ -57,18 +57,19 @@ test("im aktuellen Modus rechnet cipher die Stufe darueber", async ({ page }) =>
 });
 
 test("die Grenzen des Feldes wandern mit", async ({ page }) => {
-  await page.selectOption("#building", "Tower_of_Babel"); // maxLevel 200
+  await page.selectOption("#building", "Tower_of_Babel");
 
   await expect(page.locator("#level")).toHaveAttribute("min", "1");
-  await expect(page.locator("#level")).toHaveAttribute("max", "200");
+  await expect(page.locator("#level")).toHaveAttribute("max", "1000");
 
+  // In der Lesart "aktuell" steht ueberall eine Stufe weniger.
   await modeButton(page, "current").click();
   await expect(page.locator("#level")).toHaveAttribute("min", "0");
-  await expect(page.locator("#level")).toHaveAttribute("max", "199");
+  await expect(page.locator("#level")).toHaveAttribute("max", "999");
 
   await page.fill("#level", "9999");
   await page.locator("#level").blur();
-  await expect(page.locator("#level")).toHaveValue("199");
+  await expect(page.locator("#level")).toHaveValue("999");
 });
 
 test("Stufe 0 ist im aktuellen Modus erlaubt und heisst: noch nicht gebaut", async ({ page }) => {

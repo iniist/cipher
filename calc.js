@@ -28,6 +28,17 @@
   var EPSILON = 1e-7;
 
   /**
+   * Die P1-Kurve eines Zeitalters folgt C * Stufe^e. Diese Grenzen fuer den
+   * Exponenten stammen aus tools/import.html, das denselben Fit auf die
+   * Wiki-Werte legt; der Vorgabewert gilt, wenn zu wenige Stuetzpunkte da
+   * sind, um ihn auszurechnen.
+   */
+  var DEFAULT_EXPONENT = 1.206;
+  var EXPONENT_MIN = 1.18;
+  var EXPONENT_MAX = 1.2305;
+  var EXPONENT_STEP = 0.0005;
+
+  /**
    * Kaufmaennisch auf ein Vielfaches von 5 runden.
    * Belohnungen im Spiel sind immer durch 5 teilbar.
    * @param {number} value
@@ -127,6 +138,85 @@
     return best;
   }
 
+  /** Median einer nicht leeren Zahlenliste. */
+  function median(values) {
+    var sorted = values.slice().sort(function (a, b) { return a - b; });
+    var middle = sorted.length >> 1;
+    return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+  }
+
+  /**
+   * Aus den echten Werten einer Kurve die Potenzfunktion C * Stufe^e
+   * bestimmen, die moeglichst viele davon auf den Punkt trifft.
+   *
+   * Dieselbe Rechnung steht in tools/import.html, das damit die Luecken im
+   * Datensatz fuellt. Hier wird sie gebraucht, weil der Datensatz nur so
+   * weit reicht, wie das Wiki Stufen kennt — wer sein Bauwerk darueber
+   * hinaus gezogen hat, bekaeme sonst gar keine Zahl. Die Werte ab Stufe 30
+   * beschreiben die Kurve am besten; erst wenn zu wenige davon da sind,
+   * kommen die niedrigen dazu.
+   *
+   * @param {object} curve Eintrag aus CIPHER_DATA.curves
+   * @returns {{factor: number, exponent: number}|null}
+   */
+  function fitCurve(curve) {
+    var points = [];
+    for (var i = 0; i < curve.p1.length; i++) {
+      if (curve.source[i] === "w" && curve.p1[i] > 0) points.push([i + 1, curve.p1[i]]);
+    }
+
+    var use = points.filter(function (point) { return point[0] >= 30; });
+    if (use.length < 5) use = points.filter(function (point) { return point[0] >= 11; });
+    if (!use.length) return null;
+
+    function factorFor(exponent) {
+      return median(use.map(function (point) { return point[1] / Math.pow(point[0], exponent); }));
+    }
+
+    /** Wie viele Stuetzpunkte dieser Exponent verfehlt. */
+    function misses(exponent, factor) {
+      return use.filter(function (point) {
+        return roundTo5(factor * Math.pow(point[0], exponent)) !== point[1];
+      }).length;
+    }
+
+    var best = { exponent: DEFAULT_EXPONENT, factor: factorFor(DEFAULT_EXPONENT) };
+    if (use.length < 3) return best;
+
+    best.miss = misses(best.exponent, best.factor);
+    best.distance = 0;
+    for (var e = EXPONENT_MIN; e <= EXPONENT_MAX; e += EXPONENT_STEP) {
+      var exponent = Number(e.toFixed(4));
+      var factor = factorFor(exponent);
+      var miss = misses(exponent, factor);
+      var distance = Math.abs(exponent - DEFAULT_EXPONENT);
+      // Bei gleich vielen Fehlern gewinnt der Exponent, der dem ueblichen
+      // naeher liegt — sonst wackelt die Kurve mit jedem neuen Wert.
+      if (miss < best.miss || (miss === best.miss && distance < best.distance)) {
+        best = { exponent: exponent, factor: factor, miss: miss, distance: distance };
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Der zuletzt berechnete Fit je Zeitalter.
+   *
+   * Der Fit kostet einen Durchlauf ueber gut hundert Exponenten und aendert
+   * sich nie, solange der Datensatz derselbe ist. Der Vergleich auf das
+   * Kurvenobjekt haelt den Zwischenspeicher ehrlich, wenn ein Test einen
+   * eigenen Datensatz unterschiebt.
+   */
+  var fits = {};
+
+  function curveFit(name, curve) {
+    var cached = fits[name];
+    if (cached && cached.curve === curve) return cached.fit;
+    var fit = fitCurve(curve);
+    fits[name] = { curve: curve, fit: fit };
+    return fit;
+  }
+
   /** Herkunftszeichen im Datensatz in sprechende Namen uebersetzen. */
   var SOURCE_NAMES = { w: "table", e: "derived", x: "conflict" };
 
@@ -146,11 +236,16 @@
     if (!building.curve) return { value: null, source: null };
 
     var curve = curves[building.curve];
-    var value = curve && curve.p1[level - 1];
-    if (value == null) return { value: null, source: null };
+    if (!curve) return { value: null, source: null };
 
+    var value = curve.p1[level - 1];
     // "w" = Wiki, "e" = geschaetzt, "x" = widerspruechlich
-    return { value: value, source: SOURCE_NAMES[curve.source[level - 1]] || null };
+    if (value != null) return { value: value, source: SOURCE_NAMES[curve.source[level - 1]] || null };
+
+    // Jenseits der gespeicherten Stufen: die Kurve des Zeitalters weiterrechnen.
+    var fit = curveFit(building.curve, curve);
+    if (!fit) return { value: null, source: null };
+    return { value: roundTo5(fit.factor * Math.pow(level, fit.exponent)), source: "derived" };
   }
 
   /**
@@ -269,6 +364,7 @@
     contribution: contribution,
     totalCost: totalCost,
     p1Reward: p1Reward,
+    fitCurve: fitCurve,
     buildPlan: buildPlan,
     chatLine: chatLine
   };

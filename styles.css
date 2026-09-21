@@ -617,6 +617,11 @@ tr.off td.pay { text-decoration: line-through }
   font-size: .95rem;
 }
 .note.man { border-color: var(--ok); color: var(--ok) }
+
+/* Ein Wert, der nur gegengelesen werden will, ist keine Warnung: gleiche
+   Form, aber die ruhige Schrift des Plans statt des Warngelbs. */
+.note.chk { border-color: var(--frame); color: var(--ink) }
+.note.chk .go { background: var(--btn); color: var(--btn-ink) }
 .note .in { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px }
 .note .in div { flex: 1 1 40% }
 .note .in .go { flex: 1 1 100% }
@@ -646,6 +651,20 @@ tr.off td.pay { text-decoration: line-through }
 }
 .copy button.done { background: var(--ok); color: var(--on-accent) }
 .copy button:disabled { opacity: .45; cursor: default }
+
+/* Der Ausfuhrblock ist Quelltext: feste Schrittweite, keine Worttrennung
+   mitten in einer Zahl, und bei vielen Zeilen scrollt er statt die Seite
+   auseinanderzuziehen. */
+.copy .t.mono {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: .82rem; line-height: 1.5;
+  white-space: pre; overflow-x: auto; word-break: normal;
+  max-height: 14em; overflow-y: auto;
+}
+
+.own-lead { margin: 0 0 10px }
+.own-hint { color: var(--dim); font-size: .88rem; margin: 8px 0 0 }
+.own-hint a { color: inherit }
 
 /* ----------------------------------------------------------------- Fuss */
 
@@ -809,6 +828,7 @@ tr.off td.pay { text-decoration: line-through }
   main > .panel:nth-of-type(1) { grid-column: 1; grid-row: 2 }   /* Bauwerk */
   main > .panel:nth-of-type(2) { grid-column: 2; grid-row: 2 / span 2 } /* Foerderplan */
   main > .panel:nth-of-type(3) { grid-column: 1; grid-row: 3 }   /* Foerderchat */
+  main > .panel:nth-of-type(4) { grid-column: 1; grid-row: 4 }   /* Deine Werte */
 
   /* Der Kopf stand hochkant untereinander; quer passt er in eine Zeile. */
   header {

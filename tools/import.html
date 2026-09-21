@@ -143,10 +143,17 @@ Stellar_Warship | Stellares Kriegsschiff | Raumfahrt-Hub
 Cosmic_Catalyst | Kosmischer Katalysator | Raumfahrt-Hub
 Shattered_Horizon_Siphon | Horizontriss-Siphon | Stellares Zeitalter`;
 
-/* Werte, die im Spiel bzw. in bewährten Rechnern abgelesen wurden: Stufe: [Gesamtkosten, P1] */
+/* Werte, die im Spiel bzw. in bewährten Rechnern abgelesen wurden:
+   Stufe: [Gesamtkosten, P1]. Was nicht abgelesen wurde, steht als null —
+   meist die Kosten, denn die stimmen ohnehin per Formel. Diese Tabelle
+   schlägt jede Wiki-Angabe und schärft die Kurve des ganzen Zeitalters.
+   Der Sammelplatz "Deine Werte" im Rechner gibt genau diese Form aus. */
 const CHECKS = {
   Stellar_Warship: { 50: [38477, 1085], 60: [49254, 1350], 120: [216707, 3115], 212: [2101199, 6180] },
-  Saturn_VI_Gate_PEGASUS: { 12: [2648, 185], 60: [8662, 1310], 80: [14193, 1850] }
+  Saturn_VI_Gate_PEGASUS: { 12: [2648, 185], 60: [8662, 1310], 80: [14193, 1850] },
+  // Im Förderfenster abgelesen. Stufe 202 liegt über allem, was das Wiki
+  // für die Bronzezeit kennt, und zieht deren Kurve am oberen Ende gerade.
+  Statue_of_Zeus: { 111: [6176, 975], 125: [8726, 1125], 202: [58419, 2005] }
 };
 
 const API = 'https://forgeofempires.fandom.com/api.php';
@@ -299,7 +306,7 @@ async function loadRaw({ title, de, age }) {
   }
   // bekannte Spielwerte schärfen die Kostenformel zusätzlich
   const known = { ...costs };
-  for (const [l, [c]] of Object.entries(CHECKS[title] || {})) known[l] = c;
+  for (const [l, [c]] of Object.entries(CHECKS[title] || {})) if (c != null) known[l] = c;
   return { title, de, age, costs, wiki, issues, ci: costInterval(known) };
 }
 
@@ -391,9 +398,18 @@ function finalize(raws) {
   for (const r of raws) {
     const c = CHECKS[r.title]; if (!c || r.costA == null) continue;
     const res = Object.entries(c).map(([l, [cost, p1]]) => {
-      const okC = costAt(r, +l) === cost, okP = r.p1[+l - 1] === p1;
-      checks += 2; passed += okC + okP;
-      return `Stufe ${l}: Kosten ${okC ? '✓' : `✗ (${costAt(r, +l)} statt ${cost})`}, P1 ${okP ? '✓' : `✗ (${r.p1[+l - 1]} statt ${p1})`}`;
+      const parts = [];
+      if (cost != null) {
+        const okC = costAt(r, +l) === cost;
+        checks++; passed += okC;
+        parts.push(`Kosten ${okC ? '✓' : `✗ (${costAt(r, +l)} statt ${cost})`}`);
+      }
+      if (p1 != null) {
+        const okP = r.p1[+l - 1] === p1;
+        checks++; passed += okP;
+        parts.push(`P1 ${okP ? '✓' : `✗ (${r.p1[+l - 1]} statt ${p1})`}`);
+      }
+      return `Stufe ${l}: ${parts.join(', ')}`;
     });
     r.issues.unshift(`Abgleich mit Spielwerten: ${res.join('; ')}`);
   }
