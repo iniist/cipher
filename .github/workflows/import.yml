@@ -53,12 +53,34 @@ jobs:
       - name: Datensatz erzeugen
         run: node tools/build-data.js lg-daten.json | tee build-bericht.txt
 
-      # Die Datentests pruefen den frischen Datensatz auf Plausibilitaet:
-      # fallende Belohnungen, krumme Zahlen, fehlende Herkunftszeichen.
-      # Schlaegt das fehl, ist am Wiki etwas passiert, das niemand
-      # stillschweigend uebernehmen sollte.
+      # Hier laeuft die volle Suite, nicht nur die Datentests — und das aus
+      # einem Grund, der erst der erste Lauf gezeigt hat: Einen Pull Request,
+      # den der Arbeitsablauf selbst aufmacht, laesst GitHub nicht ohne
+      # Weiteres von der CI pruefen. Der Lauf "Tests" bleibt auf
+      # "action_required" stehen und wartet auf einen Menschen. Wer ihn
+      # uebersieht, mergt einen Datensatz, den die Browsertests nie gesehen
+      # haben. Also wird hier geprueft, bevor der Pull Request entsteht.
+      #
+      # Die Datentests fangen dabei ab, was aus dem Wiki kommt: fallende
+      # Belohnungen, krumme Zahlen, fehlende Herkunftszeichen. Schlaegt das
+      # fehl, soll es niemand stillschweigend uebernehmen.
       - name: Datensatz pruefen
-        run: npm run test:unit
+        run: npm test
+
+      # Scheitert die Pruefung, ist der erzeugte Datensatz das Einzige, an
+      # dem sich nachvollziehen laesst, was das Wiki geliefert hat. Ohne
+      # diesen Schritt wird er mit dem Laeufer weggeworfen und der naechste
+      # Lauf faengt bei der Fehlersuche wieder von vorn an.
+      - name: Ergebnis sichern, wenn die Pruefung scheitert
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: datensatz-entwurf
+          path: |
+            data.js
+            lg-daten.json
+            build-bericht.txt
+          retention-days: 7
 
       # Scheitert die Pruefung, ist der erzeugte Datensatz das Einzige, an
       # dem sich nachvollziehen laesst, was das Wiki geliefert hat. Ohne
@@ -151,7 +173,7 @@ jobs:
             echo "- **Spielwerte passen**: muss vollstaendig aufgehen — das sind die im Spiel abgelesenen Werte aus \`CHECKS\`."
             echo "- **uebernommen**: Hinweise, in denen Werte aus dem bisherigen Datensatz weitergetragen wurden (etwa der Siphon, den das Wiki nicht kennt)."
             echo
-            echo "Die Datentests sind in diesem Lauf bereits gruen gelaufen; die uebrige CI laeuft am Pull Request."
+            echo "Einheiten- und Browsertests sind in diesem Lauf bereits gruen gelaufen — der Lauf \"Tests\" an diesem Pull Request bleibt auf \"action_required\" stehen, weil ein Arbeitsablauf ihn aufgemacht hat. Wer ihn trotzdem sehen will, gibt ihn in den Actions frei."
           } > pr-text.md
 
           gh pr create \

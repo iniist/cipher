@@ -3,6 +3,7 @@
  * Ausfuehren mit: npm run test:e2e
  */
 const { test, expect } = require("@playwright/test");
+const DATA = require("../../data.js");
 const { mitTestdaten, OHNE_DATEN } = require("./testdaten");
 
 test.beforeEach(async ({ page }) => {
@@ -222,14 +223,22 @@ test("der Kopierknopf quittiert den Kopiervorgang", async ({ page, context, brow
 });
 
 test.describe("Datum der Datenquelle", () => {
-  // "2026-09-19" ueber new Date() gelesen ist UTC-Mitternacht — westlich von
-  // Greenwich stand dann der Vortag im Fuss. Der Test laeuft darum in einer
-  // Zeitzone, in der das sichtbar wird.
+  // Ein ISO-Datum ueber new Date("2026-09-19") gelesen ist UTC-Mitternacht —
+  // westlich von Greenwich stand dann der Vortag im Fuss. Der Test laeuft
+  // darum in einer Zeitzone, in der das sichtbar wuerde.
   test.use({ timezoneId: "America/Los_Angeles" });
 
   test("wird auch westlich von Greenwich nicht zum Vortag", async ({ page }) => {
+    // Erwartet wird das Datum des Datensatzes, nicht ein festes. Frueher
+    // stand hier "19.9.2026" — der damalige Stand als Sollwert, den jeder
+    // Importlauf gebrochen haette. Geprueft gehoert die Zeitzone, nicht der
+    // Tag: die Ziffern kommen darum aus derselben Quelle wie in der
+    // Anwendung, nur die Umrechnung wird nachgestellt.
+    const [jahr, monat, tag] = DATA.generated.split("-").map(Number);
+    const erwartet = `${tag}.${monat}.${jahr}`;
+
     await page.goto("/index.html");
-    await expect(page.locator("#dataDate")).toHaveText("19.9.2026");
+    await expect(page.locator("#dataDate")).toHaveText(erwartet);
   });
 });
 
