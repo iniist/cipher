@@ -84,10 +84,18 @@ test("jede Kurve ist in sich stimmig", () => {
   }
 });
 
-test("die bekannte Wiki-Unstimmigkeit ist als solche markiert", () => {
-  // Zum Zeitpunkt des Exports faellt genau eine Belohnung gegenueber ihrer
-  // Vorstufe. Dieser Test haelt fest, dass jeder solche Ausrutscher im
-  // Datensatz als "x" gekennzeichnet ist — sonst waere es ein echter Fehler.
+test("jede fallende Belohnung ist als unstimmig gekennzeichnet", () => {
+  // Eine Belohnung, die gegenueber ihrer Vorstufe faellt, kann es im Spiel
+  // nicht geben — im Wiki schon, durch Tippfehler. Erlaubt ist so eine
+  // Stelle darum nur mit dem Zeichen "x": dann weiss die Anwendung, dass
+  // der Wert nicht gesichert ist, und bittet um eine eigene Eingabe.
+  //
+  // Frueher stand hier zusaetzlich, es gebe genau eine solche Stelle. Das
+  // war der damalige Datenstand als Sollwert verkleidet, und es fiel dem
+  // ersten Import zum Opfer, der die verdorbenen Wiki-Werte der
+  // Jahrhundertwende durch Kurvenwerte ersetzt hat: danach faellt nirgends
+  // mehr etwas, und der Test schlug ausgerechnet wegen einer Verbesserung
+  // fehl. Gezaehlt wird darum nichts mehr — geprueft wird die Regel.
   const dips = [];
   for (const [era, curve] of Object.entries(DATA.curves)) {
     for (let index = 1; index < curve.p1.length; index++) {
@@ -100,7 +108,6 @@ test("die bekannte Wiki-Unstimmigkeit ist als solche markiert", () => {
     assert.equal(dip.source, "x",
       `${dip.era} Stufe ${dip.level}: fallende Belohnung ohne Kennzeichnung als widerspruechlich`);
   }
-  assert.equal(dips.length, 1, `unerwartet viele fallende Stellen: ${JSON.stringify(dips)}`);
 });
 
 test("die Standardauswahl existiert", () => {
