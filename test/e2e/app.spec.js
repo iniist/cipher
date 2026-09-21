@@ -44,11 +44,17 @@ test("die Stufe laesst sich ueber die Knoepfe aendern", async ({ page }) => {
   await expect(page.locator("#level")).toHaveValue("39");
 });
 
-test("die Stufe wird auf das Maximum des Bauwerks begrenzt", async ({ page }) => {
-  await page.selectOption("#building", "Tower_of_Babel"); // maxLevel 200
+test("die Stufe wird erst weit oberhalb des Dokumentierten begrenzt", async ({ page }) => {
+  // Die Stufe aus dem Wiki ist keine Wand mehr — Bauwerke im Spiel stehen
+  // hoeher. Abgefangen wird nur, was kein Spielstand hergibt.
+  await page.selectOption("#building", "Tower_of_Babel");
+  await page.fill("#level", "260");
+  await page.locator("#level").blur();
+  await expect(page.locator("#level")).toHaveValue("260");
+
   await page.fill("#level", "9999");
   await page.locator("#level").blur();
-  await expect(page.locator("#level")).toHaveValue("200");
+  await expect(page.locator("#level")).toHaveValue("1000");
 });
 
 test("der Faktor laesst sich ueber die Schnellwahl setzen", async ({ page }) => {
@@ -193,20 +199,65 @@ test.describe("Datum der Datenquelle", () => {
   });
 });
 
+test("der Sammelplatz gibt eigene Werte in der Form des Importwerkzeugs aus", async ({ page }) => {
+  // Ohne eigene Eintraege gibt es nichts zu sammeln.
+  await expect(page.locator("#ownPanel")).toBeHidden();
+
+  await page.selectOption("#building", "Statue_of_Zeus");
+  await page.fill("#level", "202");
+  await page.locator("#level").blur();
+
+  // Auf dieser Stufe ist P1 hochgerechnet, das Feld also vorbelegt.
+  await page.fill("#inputP1", "2005");
+  await page.click("#applyInput");
+
+  await expect(page.locator("#ownPanel")).toBeVisible();
+  const block = page.locator("#ownExport");
+  await expect(block).toContainText("Statue_of_Zeus: { 202: [null, 2005] }");
+  // Die Abweichung zum Datensatz wird benannt, nicht verschwiegen.
+  await expect(block).toContainText("P1 war 2010");
+  await expect(page.locator("#ownLead")).toContainText("weicht vom Datensatz ab");
+
+  await expect(page.locator('[data-copy="ownExport"]')).toBeEnabled();
+});
+
 test.describe("Stufen-Stepper an den Grenzen", () => {
   test("bei Stufe 1 ist Minus aus, beim Maximum Plus", async ({ page }) => {
     await page.goto("/index.html");
-    await page.selectOption("#building", "Tower_of_Babel"); // maxLevel 200
+    await page.selectOption("#building", "Tower_of_Babel");
 
     await page.fill("#level", "1");
     await page.locator("#level").blur();
     await expect(page.locator("#levelDown")).toBeDisabled();
     await expect(page.locator("#levelUp")).toBeEnabled();
 
+    // Die Grenze ist nicht mehr die dokumentierte Stufe des Bauwerks,
+    // sondern der Schutzwert des Feldes.
     await page.fill("#level", "200");
+    await page.locator("#level").blur();
+    await expect(page.locator("#levelUp")).toBeEnabled();
+
+    await page.fill("#level", "1000");
     await page.locator("#level").blur();
     await expect(page.locator("#levelUp")).toBeDisabled();
     await expect(page.locator("#levelDown")).toBeEnabled();
+  });
+
+  test("ueber der dokumentierten Stufe rechnet cipher weiter", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.selectOption("#building", "Statue_of_Zeus");
+
+    // Stufe 202 gibt es im Wiki nicht mehr — im Spiel schon.
+    await page.fill("#level", "202");
+    await page.locator("#level").blur();
+    await expect(page.locator("#level")).toHaveValue("202");
+
+    await expect(page.locator("td.empty")).toHaveCount(0);
+    await expect(page.locator("#rows tr")).toHaveCount(5);
+    await expect(page.locator("#sumTotal")).toHaveText("58.419");
+
+    // Ein hochgerechneter Wert bittet um Gegenlesen, er warnt nicht.
+    await expect(page.locator(".note.chk")).toContainText("hochgerechnet");
   });
 
   test("in der Lesart „aktuell“ gilt die Grenze bei angezeigter Stufe 0", async ({ page }) => {

@@ -115,10 +115,49 @@ test("p1Reward kennzeichnet geschaetzte und widerspruechliche Stufen", () => {
   assert.equal(Calc.p1Reward(observatory, conflictLevel, DATA.curves, {}).source, "conflict");
 });
 
-test("p1Reward meldet nichts oberhalb der bekannten Kurve", () => {
+test("p1Reward rechnet oberhalb der bekannten Kurve weiter", () => {
   const curve = DATA.curves[observatory.curve];
-  const beyond = curve.p1.length + 1;
-  assert.deepEqual(Calc.p1Reward(observatory, beyond, DATA.curves, {}), { value: null, source: null });
+  const last = curve.p1.length;
+  const beyond = Calc.p1Reward(observatory, last + 1, DATA.curves, {});
+
+  assert.equal(beyond.source, "derived", "jenseits der Kurve ist jeder Wert hergeleitet");
+  assert.ok(beyond.value > curve.p1[last - 1], "die Belohnung waechst weiter");
+  assert.equal(beyond.value % 5, 0, "Belohnungen sind durch 5 teilbar");
+
+  // Der Sprung ueber die Kante darf nicht groesser sein als die Schritte davor.
+  const step = curve.p1[last - 1] - curve.p1[last - 2];
+  assert.ok(beyond.value - curve.p1[last - 1] <= step + 5, "die Kurve knickt an der Kante nicht");
+});
+
+test("die Kurve laeuft auch weit oberhalb der Daten monoton", () => {
+  let previous = 0;
+  for (let level = 200; level <= 1000; level += 50) {
+    const value = Calc.p1Reward(observatory, level, DATA.curves, {}).value;
+    assert.ok(value > previous, `Stufe ${level}: ${value} faellt gegenueber ${previous}`);
+    previous = value;
+  }
+});
+
+/**
+ * Der Rechenkern legt denselben Fit an wie tools/import.html beim Erzeugen
+ * des Datensatzes. Solange das stimmt, ist die Fortsetzung oberhalb der
+ * Kurve nahtlos — und ein Auseinanderdriften der beiden Stellen faellt hier
+ * auf, nicht erst in einem krummen Plan.
+ */
+test("der Fit reproduziert jeden geschaetzten Wert des Datensatzes", () => {
+  let checked = 0;
+  for (const [era, curve] of Object.entries(DATA.curves)) {
+    const fit = Calc.fitCurve(curve);
+    assert.ok(fit, `${era}: ohne Fit laesst sich nichts fortsetzen`);
+    for (let index = 0; index < curve.p1.length; index++) {
+      if (curve.source[index] !== "e") continue;
+      checked++;
+      assert.equal(
+        Calc.roundTo5(fit.factor * Math.pow(index + 1, fit.exponent)), curve.p1[index],
+        `${era} Stufe ${index + 1}: Laufzeit-Fit weicht vom Datensatz ab`);
+    }
+  }
+  assert.ok(checked > 1000, `es wurden nur ${checked} geschaetzte Stufen geprueft`);
 });
 
 test("p1Reward bevorzugt einen eigenen Eintrag", () => {

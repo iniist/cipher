@@ -652,6 +652,20 @@ tr.off td.pay { text-decoration: line-through }
 .copy button.done { background: var(--ok); color: var(--on-accent) }
 .copy button:disabled { opacity: .45; cursor: default }
 
+/* Der Ausfuhrblock ist Quelltext: feste Schrittweite, keine Worttrennung
+   mitten in einer Zahl, und bei vielen Zeilen scrollt er statt die Seite
+   auseinanderzuziehen. */
+.copy .t.mono {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: .82rem; line-height: 1.5;
+  white-space: pre; overflow-x: auto; word-break: normal;
+  max-height: 14em; overflow-y: auto;
+}
+
+.own-lead { margin: 0 0 10px }
+.own-hint { color: var(--dim); font-size: .88rem; margin: 8px 0 0 }
+.own-hint a { color: inherit }
+
 /* ----------------------------------------------------------------- Fuss */
 
 .foot { color: var(--dim); font-size: .85rem; margin-top: 20px }

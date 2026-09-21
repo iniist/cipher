@@ -33,6 +33,19 @@
   var FACTOR_MIN = 180;
   var FACTOR_MAX = 200;
 
+  /**
+   * Hoechste Stufe, die das Stufenfeld annimmt.
+   *
+   * Frueher war hier die maxLevel des Bauwerks die Wand. Die stammt aber aus
+   * dem Wiki und sagt nur, bis wohin dort Stufen dokumentiert sind — nicht,
+   * wo das Spiel aufhoert. Wer sein Bauwerk darueber hinaus gezogen hat,
+   * konnte seine Stufe nicht einmal eintippen: das Feld sprang wortlos
+   * zurueck. Die Kostenformel und die Kurve des Zeitalters rechnen beliebig
+   * weit, also darf das Feld das auch. Die Grenze hier ist nur noch ein
+   * Schutz gegen Zahlen, die kein Spielstand hergibt.
+   */
+  var LEVEL_MAX = 1000;
+
   var THEMES = ["light", "dark", "contrast"];
   var DEFAULT_BUILDING = "The_Arc";
   var MAX_FAVORITES = 12;
@@ -226,7 +239,7 @@
     return value.filter(function (entry) {
       if (!entry || !byId[entry.id]) return false;
       var level = Number(entry.level);
-      if (!(level >= 1 && level <= byId[entry.id].maxLevel)) return false;
+      if (!(level >= 1 && level <= LEVEL_MAX)) return false;
       if (seen[entry.id]) return false;
       seen[entry.id] = true;
       return true;
@@ -523,17 +536,15 @@
    * die falsche Lesart annimmt, rechnet eine Stufe daneben. Der Umschalter
    * stellt die Lesart ein, die Zeile unter dem Feld nennt jeweils die andere
    * Zahl — damit steht die Antwort da, egal wie herum jemand denkt.
-   *
-   * @param {object} building Das gewaehlte Bauwerk
    */
-  function renderLevelField(building) {
+  function renderLevelField() {
     var offset = levelOffset();
 
     $("level").value = String(state.level - offset);
     $("level").min = String(1 - offset);
-    $("level").max = String(building.maxLevel - offset);
+    $("level").max = String(LEVEL_MAX - offset);
     $("levelDown").disabled = state.level <= 1;
-    $("levelUp").disabled = state.level >= building.maxLevel;
+    $("levelUp").disabled = state.level >= LEVEL_MAX;
 
     $("levelLabel").textContent = offset ? "Aktuelle Stufe" : "Nächste Stufe";
     $("levelHint").textContent = offset
@@ -551,10 +562,10 @@
 
   function render() {
     var building = byId[state.building];
-    state.level = Math.min(Math.max(1, Math.floor(state.level) || 1), building.maxLevel);
+    state.level = Math.min(Math.max(1, Math.floor(state.level) || 1), LEVEL_MAX);
 
     $("building").value = building.id;
-    renderLevelField(building);
+    renderLevelField();
     // Waehrend des Tippens nicht dazwischenfunken.
     if (document.activeElement !== $("factor")) $("factor").value = formatFactor(state.factor);
     $("factorGauge").style.width =
@@ -569,6 +580,7 @@
     renderSlotFactors();
     syncFavoriteLevel();
     renderFavorites();
+    renderOwnExport();
 
     var total = Calc.totalCost(building, state.level, ownTotals);
     var p1 = Calc.p1Reward(building, state.level, DATA.curves, ownP1);
@@ -761,7 +773,9 @@
       }
       if (total.source === "derived") checks.push("Gesamt ist aus deinem Eintrag auf Stufe " + total.from + " hochgerechnet.");
       if (p1.source === null) missing.push("P1 ist für diese Stufe noch unbekannt.");
-      if (p1.source === "derived") checks.push("P1 ist auf dieser Stufe aus der Kurve des Zeitalters hochgerechnet und kann um 5 FP danebenliegen.");
+      if (p1.source === "derived") checks.push(state.level > building.maxLevel
+        ? "Stufe " + state.level + " liegt über dem, was das Wiki für " + escapeHtml(building.name) + " dokumentiert (bis " + building.maxLevel + "). Die Gesamtkosten folgen weiter der Formel, P1 ist aus der Kurve des Zeitalters hochgerechnet."
+        : "P1 ist auf dieser Stufe aus der Kurve des Zeitalters hochgerechnet und kann um 5 FP danebenliegen.");
       if (p1.source === "conflict") checks.push("Für P1 auf dieser Stufe nennt das Wiki mehr als eine Zahl. Im Plan steht die, die zur Kurve des Zeitalters passt — erfahrungsgemäß ist das die richtige.");
 
       var urgent = missing.length > 0;
@@ -784,6 +798,99 @@
     }
 
     $("note").innerHTML = html;
+  }
+
+  // ------------------------------------------------------- Eigene Ablesungen
+
+  /**
+   * Die selbst eingetragenen Zahlen als Block fuer tools/import.html.
+   *
+   * Wer im Spiel nachsieht, sammelt damit ueber die Zeit echte Werte an —
+   * die liegen aber nur im Browser und nuetzen sonst niemandem. Dieser
+   * Block hat genau die Form der Tabelle CHECKS im Importwerkzeug: ein
+   * Bauwerk, eine Stufe, Kosten und P1 als Paar. Von dort schlagen die
+   * Werte jede Wiki-Angabe und schaerfen die Kurve des ganzen Zeitalters.
+   *
+   * Ob ein Eintrag den Datensatz bestaetigt oder ihm widerspricht, wird
+   * hier frisch ausgerechnet statt beim Eintragen gemerkt: So bleibt die
+   * Aussage richtig, auch wenn der Datensatz sich zwischendurch aendert.
+   *
+   * @returns {{text: string, count: number, corrections: number}}
+   */
+  function buildOwnExport() {
+    var perBuilding = {};
+    var count = 0;
+    var corrections = 0;
+
+    function entry(key) {
+      var split = key.lastIndexOf(":");
+      var id = key.slice(0, split);
+      var level = Number(key.slice(split + 1));
+      if (!byId[id] || !(level >= 1)) return null;
+      var rows = perBuilding[id] || (perBuilding[id] = {});
+      return rows[level] || (rows[level] = { level: level, total: null, p1: null, notes: [] });
+    }
+
+    Object.keys(ownTotals).forEach(function (key) {
+      var row = entry(key);
+      if (row) row.total = ownTotals[key];
+    });
+    Object.keys(ownP1).forEach(function (key) {
+      var row = entry(key);
+      if (row) row.p1 = ownP1[key];
+    });
+
+    var ids = Object.keys(perBuilding).sort();
+    var lines = ids.map(function (id) {
+      var building = byId[id];
+      var rows = perBuilding[id];
+      var levels = Object.keys(rows).map(Number).sort(function (a, b) { return a - b; });
+
+      var pairs = levels.map(function (level) {
+        var row = rows[level];
+        count++;
+
+        // Was der Datensatz ohne diesen Eintrag sagen wuerde.
+        var wasTotal = Calc.totalCost(building, level, {});
+        var wasP1 = Calc.p1Reward(building, level, DATA.curves, {});
+        if (row.total != null && wasTotal.value !== row.total) row.notes.push("Gesamt war " + wasTotal.value);
+        if (row.p1 != null && wasP1.value !== row.p1) row.notes.push("P1 war " + (wasP1.value == null ? "unbekannt" : wasP1.value));
+        if (row.notes.length) corrections++;
+
+        return level + ": [" + row.total + ", " + row.p1 + "]";
+      });
+
+      var notes = levels.filter(function (level) { return rows[level].notes.length; })
+        .map(function (level) { return "Stufe " + level + ": " + rows[level].notes.join(", "); });
+
+      return "  " + id + ": { " + pairs.join(", ") + " }," +
+        (notes.length ? " // " + notes.join("; ") : "");
+    });
+
+    return { text: lines.join("\n"), count: count, corrections: corrections };
+  }
+
+  /** Den Sammelplatz fuellen — oder ihn weglassen, solange nichts da ist. */
+  function renderOwnExport() {
+    var own = buildOwnExport();
+    $("ownPanel").hidden = own.count === 0;
+    if (!own.count) {
+      setChatLine("ownExport", "");
+      return;
+    }
+
+    var lead = own.count === 1
+      ? "Eine Stufe hast du aus dem Spiel eingetragen."
+      : own.count + " Stufen hast du aus dem Spiel eingetragen.";
+    if (own.corrections === own.count) {
+      lead += own.count === 1 ? " Sie weicht vom Datensatz ab." : " Alle weichen vom Datensatz ab.";
+    } else if (own.corrections === 1) {
+      lead += " Eine davon weicht vom Datensatz ab.";
+    } else if (own.corrections) {
+      lead += " " + own.corrections + " davon weichen vom Datensatz ab.";
+    }
+    $("ownLead").textContent = lead;
+    setChatLine("ownExport", own.text);
   }
 
   // --------------------------------------------------------------- Favoriten
