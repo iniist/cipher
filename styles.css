@@ -828,6 +828,7 @@ tr.off td.pay { text-decoration: line-through }
   main > .panel:nth-of-type(1) { grid-column: 1; grid-row: 2 }   /* Bauwerk */
   main > .panel:nth-of-type(2) { grid-column: 2; grid-row: 2 / span 2 } /* Foerderplan */
   main > .panel:nth-of-type(3) { grid-column: 1; grid-row: 3 }   /* Foerderchat */
+  main > .panel:nth-of-type(4) { grid-column: 1; grid-row: 4 }   /* Deine Werte */
 
   /* Der Kopf stand hochkant untereinander; quer passt er in eine Zeile. */
   header {
