@@ -160,11 +160,30 @@
    * @returns {{factor: number, exponent: number}|null}
    */
   function fitCurve(curve) {
+    return fitPoints(curvePoints(curve));
+  }
+
+  /**
+   * Die echten Werte einer Kurve als Stuetzpunkte [Stufe, Belohnung].
+   * Echt heisst: aus dem Wiki ("w"). Geschaetzte Werte stammen selbst aus
+   * dem Fit, sie koennten ihn nicht pruefen.
+   * @param {object} curve
+   * @returns {Array<number[]>}
+   */
+  function curvePoints(curve) {
     var points = [];
     for (var i = 0; i < curve.p1.length; i++) {
       if (curve.source[i] === "w" && curve.p1[i] > 0) points.push([i + 1, curve.p1[i]]);
     }
+    return points;
+  }
 
+  /**
+   * Der eigentliche Fit ueber eine Liste von Stuetzpunkten.
+   * @param {Array<number[]>} points
+   * @returns {{factor: number, exponent: number}|null}
+   */
+  function fitPoints(points) {
     var use = points.filter(function (point) { return point[0] >= 30; });
     if (use.length < 5) use = points.filter(function (point) { return point[0] >= 11; });
     if (!use.length) return null;
@@ -215,6 +234,82 @@
     var fit = fitCurve(curve);
     fits[name] = { curve: curve, fit: fit };
     return fit;
+  }
+
+  /**
+   * Ausblendtest: Wie gut trifft die Kurve Stufen, die sie nicht kennt?
+   *
+   * Es wird jeweils nur der untere Teil der echten Werte gefittet und der
+   * Rest vorhergesagt — genau die Lage, in der p1Reward oberhalb des
+   * Datensatzes steckt. Die Schnitte liegen bei diesen Anteilen der
+   * hoechsten belegten Stufe.
+   */
+  var RELIABILITY_CUTS = [0.5, 0.65, 0.8];
+
+  /** Mit weniger Stuetzpunkten unterhalb des Schnitts taugt der Fit nichts. */
+  var RELIABILITY_MIN_FIT = 20;
+
+  /** Unter so vielen echten Werten laesst sich nichts sinnvoll ausblenden. */
+  var RELIABILITY_MIN_POINTS = 40;
+
+  /**
+   * Was noch als Treffer gilt. Belohnungen sind auf 5 gerundet; eine
+   * Abweichung von genau einer Rundungsstufe ist kein Irrtum der Kurve,
+   * sondern das Rauschen des Rundens.
+   */
+  var RELIABILITY_TOLERANCE = 5;
+
+  /**
+   * Den Ausblendtest auf einer Kurve durchfuehren.
+   * @param {object} curve Eintrag aus CIPHER_DATA.curves
+   * @returns {{samples: number, misses: number, worst: number}|null}
+   *   null heisst: zu wenige echte Werte, die Kurve laesst sich nicht pruefen.
+   */
+  function measureReliability(curve) {
+    var points = curvePoints(curve);
+    if (points.length < RELIABILITY_MIN_POINTS) return null;
+
+    var top = points[points.length - 1][0];
+    var samples = 0;
+    var misses = 0;
+    var worst = 0;
+
+    RELIABILITY_CUTS.forEach(function (share) {
+      var cut = Math.round(top * share);
+      var known = points.filter(function (point) { return point[0] <= cut; });
+      if (known.length < RELIABILITY_MIN_FIT) return;
+
+      var fit = fitPoints(known);
+      if (!fit) return;
+
+      points.forEach(function (point) {
+        if (point[0] <= cut) return;
+        samples++;
+        var off = Math.abs(roundTo5(fit.factor * Math.pow(point[0], fit.exponent)) - point[1]);
+        if (off > worst) worst = off;
+        if (off > RELIABILITY_TOLERANCE) misses++;
+      });
+    });
+
+    return samples ? { samples: samples, misses: misses, worst: worst } : null;
+  }
+
+  /**
+   * Das zuletzt gemessene Ergebnis je Zeitalter.
+   *
+   * Der Ausblendtest legt mehrere Fits an und ist damit ein Vielfaches
+   * teurer als curveFit — gerechnet wird er darum einmal. Der Vergleich
+   * auf das Kurvenobjekt haelt den Zwischenspeicher ehrlich, wenn ein Test
+   * einen eigenen Datensatz unterschiebt.
+   */
+  var reliabilities = {};
+
+  function curveReliability(name, curve) {
+    var cached = reliabilities[name];
+    if (cached && cached.curve === curve) return cached.result;
+    var result = measureReliability(curve);
+    reliabilities[name] = { curve: curve, result: result };
+    return result;
   }
 
   /** Herkunftszeichen im Datensatz in sprechende Namen uebersetzen. */
@@ -365,6 +460,7 @@
     totalCost: totalCost,
     p1Reward: p1Reward,
     fitCurve: fitCurve,
+    curveReliability: curveReliability,
     buildPlan: buildPlan,
     chatLine: chatLine
   };

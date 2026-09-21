@@ -157,6 +157,33 @@ test("ein widerspruechlicher Wiki-Wert bittet um Bestaetigung, nicht um Rettung"
   await expect(page.locator(".note.man")).toContainText("P1");
 });
 
+test("ein wackliges Zeitalter sagt, wie weit es danebenliegen kann", async ({ page }) => {
+  // Gegenstueck zur Bronzezeit: die Virtuelle Zukunft verfehlt im
+  // Ausblendtest etliche Stufen deutlich. Über der Wiki-Grenze steht darum
+  // eine Zeile — eine Zeile, kein Kasten, und die Gesamtkosten kommen nicht
+  // vor: die Kostenformel ist geprueft.
+  await page.selectOption("#building", "Terracotta_Army");
+  await page.fill("#level", "210");
+  await page.locator("#level").blur();
+
+  const note = page.locator(".note.quiet");
+  await expect(note).toContainText("hochgerechnet");
+  await expect(note).toContainText(/bis auf \d+ FP genau/);
+  await expect(note).not.toContainText("Gesamt");
+  await expect(page.locator(".note.chk")).toHaveCount(0);
+
+  // Das Feld ist da, es draengt sich nur nicht auf.
+  await expect(page.locator("#inputP1")).toBeHidden();
+  await page.click("#noteReveal");
+  await expect(page.locator("#inputP1")).toBeVisible();
+  await expect(page.locator("#inputP1")).toHaveValue("4980");
+  await expect(page.locator("#inputTotal")).toHaveCount(0);
+
+  await page.click("#applyInput");
+  await expect(page.locator(".note.quiet")).toHaveCount(0);
+  await expect(page.locator(".note.man")).toContainText("P1");
+});
+
 test("eine ungueltige P1-Eingabe wird abgelehnt", async ({ page }) => {
   await page.selectOption("#building", "Shattered_Horizon_Siphon");
   await page.fill("#level", "20");
@@ -203,19 +230,21 @@ test("der Sammelplatz gibt eigene Werte in der Form des Importwerkzeugs aus", as
   // Ohne eigene Eintraege gibt es nichts zu sammeln.
   await expect(page.locator("#ownPanel")).toBeHidden();
 
-  await page.selectOption("#building", "Statue_of_Zeus");
-  await page.fill("#level", "202");
+  await page.selectOption("#building", "Terracotta_Army");
+  await page.fill("#level", "210");
   await page.locator("#level").blur();
 
-  // Auf dieser Stufe ist P1 hochgerechnet, das Feld also vorbelegt.
-  await page.fill("#inputP1", "2005");
+  // Auf dieser Stufe ist P1 hochgerechnet; das Feld steckt hinter dem
+  // Textknopf und ist vorbelegt.
+  await page.click("#noteReveal");
+  await page.fill("#inputP1", "4975");
   await page.click("#applyInput");
 
   await expect(page.locator("#ownPanel")).toBeVisible();
   const block = page.locator("#ownExport");
-  await expect(block).toContainText("Statue_of_Zeus: { 202: [null, 2005] }");
+  await expect(block).toContainText("Terracotta_Army: { 210: [null, 4975] }");
   // Die Abweichung zum Datensatz wird benannt, nicht verschwiegen.
-  await expect(block).toContainText("P1 war 2010");
+  await expect(block).toContainText("P1 war 4980");
   await expect(page.locator("#ownLead")).toContainText("weicht vom Datensatz ab");
 
   await expect(page.locator('[data-copy="ownExport"]')).toBeEnabled();
@@ -256,8 +285,9 @@ test.describe("Stufen-Stepper an den Grenzen", () => {
     await expect(page.locator("#rows tr")).toHaveCount(5);
     await expect(page.locator("#sumTotal")).toHaveText("58.419");
 
-    // Ein hochgerechneter Wert bittet um Gegenlesen, er warnt nicht.
-    await expect(page.locator(".note.chk")).toContainText("hochgerechnet");
+    // Die Kurve der Bronzezeit besteht den Ausblendtest ohne Fehlschuss:
+    // hier ist nichts zu beteuern, der Plan steht einfach da.
+    await expect(page.locator("#note .note")).toHaveCount(0);
   });
 
   test("in der Lesart „aktuell“ gilt die Grenze bei angezeigter Stufe 0", async ({ page }) => {

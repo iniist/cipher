@@ -622,6 +622,15 @@ tr.off td.pay { text-decoration: line-through }
    Form, aber die ruhige Schrift des Plans statt des Warngelbs. */
 .note.chk { border-color: var(--frame); color: var(--ink) }
 .note.chk .go { background: var(--btn); color: var(--btn-ink) }
+
+/* Und ein hochgerechnetes P1 ist nicht einmal das: die Kurve des
+   Zeitalters trifft, der Plan steht. Bleibt ueberhaupt etwas zu sagen,
+   dann als Zeile unter dem Plan — ohne Rahmen, ohne Feld. Das Feld holt
+   der Textknopf hervor, wenn jemand die Zahl wirklich gegenlesen will. */
+.note.quiet { border: 0; padding: 0; color: var(--dim); font-size: .88rem }
+.note.quiet .link { color: var(--ink) }
+.note.quiet .go { background: var(--btn); color: var(--btn-ink) }
+.note.quiet .in[hidden] { display: none }
 .note .in { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px }
 .note .in div { flex: 1 1 40% }
 .note .in .go { flex: 1 1 100% }

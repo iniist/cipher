@@ -160,6 +160,65 @@ test("der Fit reproduziert jeden geschaetzten Wert des Datensatzes", () => {
   assert.ok(checked > 1000, `es wurden nur ${checked} geschaetzte Stufen geprueft`);
 });
 
+/**
+ * Der Ausblendtest ist die Grundlage dafuer, wie laut die Oberflaeche einen
+ * hochgerechneten Wert kommentiert. Er darf darum weder eine saubere Kurve
+ * schlechtreden noch eine krumme durchwinken.
+ */
+test("curveReliability findet auf einer exakten Kurve keine Abweichung", () => {
+  // Eine Kurve, die genau der Potenzfunktion folgt, die der Fit sucht.
+  const levels = 120;
+  const curve = { p1: [], source: "w".repeat(levels) };
+  for (let level = 1; level <= levels; level++) {
+    curve.p1.push(Calc.roundTo5(30 * Math.pow(level, 1.206)));
+  }
+
+  const result = Calc.curveReliability("Prueffall exakt", curve);
+  assert.ok(result, "120 echte Werte reichen zum Pruefen");
+  assert.ok(result.samples > 50, `zu wenige Proben: ${result.samples}`);
+  assert.equal(result.misses, 0, "eine exakte Kurve wird auch ausgeblendet getroffen");
+  // Mehr als eine Rundungsstufe darf dabei nirgends herauskommen: der
+  // Faktor wird aus bereits gerundeten Werten geschaetzt, das reicht als
+  // ganze Unschaerfe.
+  assert.ok(result.worst <= 5, `groesste Abweichung war ${result.worst} FP`);
+});
+
+test("curveReliability schweigt, wo zu wenige echte Werte stehen", () => {
+  const curve = { p1: [], source: "w".repeat(30) };
+  for (let level = 1; level <= 30; level++) curve.p1.push(Calc.roundTo5(30 * Math.pow(level, 1.206)));
+  assert.equal(Calc.curveReliability("Prueffall kurz", curve), null);
+
+  // Geschaetzte Werte zaehlen nicht mit: sie stammen selbst aus dem Fit.
+  const guessed = { p1: [], source: "e".repeat(120) };
+  for (let level = 1; level <= 120; level++) guessed.p1.push(Calc.roundTo5(30 * Math.pow(level, 1.206)));
+  assert.equal(Calc.curveReliability("Prueffall geschaetzt", guessed), null);
+});
+
+test("curveReliability merkt sich das Ergebnis je Kurvenobjekt", () => {
+  const curve = DATA.curves["Bronzezeit"];
+  assert.equal(Calc.curveReliability("Bronzezeit", curve), Calc.curveReliability("Bronzezeit", curve));
+});
+
+test("der Ausblendtest trennt verlaessliche von wackligen Zeitaltern", () => {
+  // Diese beiden Zeitalter traegt auch der Browsertest: in der Bronzezeit
+  // steht ueber der Wiki-Grenze kein Hinweis, in der Virtuellen Zukunft schon.
+  const bronze = Calc.curveReliability("Bronzezeit", DATA.curves["Bronzezeit"]);
+  assert.equal(bronze.misses, 0, "die Bronzezeit trifft jede ausgeblendete Stufe auf 5 FP genau");
+
+  const virtual = Calc.curveReliability("Virtuelle Zukunft", DATA.curves["Virtuelle Zukunft"]);
+  assert.ok(virtual.misses > 0, "die Virtuelle Zukunft tut das nicht");
+  assert.ok(virtual.worst > 5, `groesste Abweichung war nur ${virtual.worst} FP`);
+
+  // Jede gepruefte Kurve nennt entweder Zahlen oder gar nichts.
+  for (const [era, curve] of Object.entries(DATA.curves)) {
+    const result = Calc.curveReliability(era, curve);
+    if (result === null) continue;
+    assert.ok(result.samples > 0, `${era}: ein Ergebnis ohne Proben ist keines`);
+    assert.ok(result.misses <= result.samples, `${era}: mehr Fehlschuesse als Proben`);
+    assert.ok(result.worst >= 0);
+  }
+});
+
 test("p1Reward bevorzugt einen eigenen Eintrag", () => {
   assert.deepEqual(
     Calc.p1Reward(observatory, 1, DATA.curves, { "Observatory:1": 25 }),
