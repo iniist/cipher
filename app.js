@@ -590,7 +590,6 @@
     renderSlotFactors();
     syncFavoriteLevel();
     renderFavorites();
-    renderOwnExport();
 
     var total = Calc.totalCost(building, state.level, ownTotals);
     var p1 = Calc.p1Reward(building, state.level, DATA.curves, ownP1);
@@ -883,99 +882,6 @@
     }
 
     $("note").innerHTML = html;
-  }
-
-  // ------------------------------------------------------- Eigene Ablesungen
-
-  /**
-   * Die selbst eingetragenen Zahlen als Block fuer tools/import.html.
-   *
-   * Wer im Spiel nachsieht, sammelt damit ueber die Zeit echte Werte an —
-   * die liegen aber nur im Browser und nuetzen sonst niemandem. Dieser
-   * Block hat genau die Form der Tabelle CHECKS im Importwerkzeug: ein
-   * Bauwerk, eine Stufe, Kosten und P1 als Paar. Von dort schlagen die
-   * Werte jede Wiki-Angabe und schaerfen die Kurve des ganzen Zeitalters.
-   *
-   * Ob ein Eintrag den Datensatz bestaetigt oder ihm widerspricht, wird
-   * hier frisch ausgerechnet statt beim Eintragen gemerkt: So bleibt die
-   * Aussage richtig, auch wenn der Datensatz sich zwischendurch aendert.
-   *
-   * @returns {{text: string, count: number, corrections: number}}
-   */
-  function buildOwnExport() {
-    var perBuilding = {};
-    var count = 0;
-    var corrections = 0;
-
-    function entry(key) {
-      var split = key.lastIndexOf(":");
-      var id = key.slice(0, split);
-      var level = Number(key.slice(split + 1));
-      if (!byId[id] || !(level >= 1)) return null;
-      var rows = perBuilding[id] || (perBuilding[id] = {});
-      return rows[level] || (rows[level] = { level: level, total: null, p1: null, notes: [] });
-    }
-
-    Object.keys(ownTotals).forEach(function (key) {
-      var row = entry(key);
-      if (row) row.total = ownTotals[key];
-    });
-    Object.keys(ownP1).forEach(function (key) {
-      var row = entry(key);
-      if (row) row.p1 = ownP1[key];
-    });
-
-    var ids = Object.keys(perBuilding).sort();
-    var lines = ids.map(function (id) {
-      var building = byId[id];
-      var rows = perBuilding[id];
-      var levels = Object.keys(rows).map(Number).sort(function (a, b) { return a - b; });
-
-      var pairs = levels.map(function (level) {
-        var row = rows[level];
-        count++;
-
-        // Was der Datensatz ohne diesen Eintrag sagen wuerde.
-        var wasTotal = Calc.totalCost(building, level, {});
-        var wasP1 = Calc.p1Reward(building, level, DATA.curves, {});
-        if (row.total != null && wasTotal.value !== row.total) row.notes.push("Gesamt war " + wasTotal.value);
-        if (row.p1 != null && wasP1.value !== row.p1) row.notes.push("P1 war " + (wasP1.value == null ? "unbekannt" : wasP1.value));
-        if (row.notes.length) corrections++;
-
-        return level + ": [" + row.total + ", " + row.p1 + "]";
-      });
-
-      var notes = levels.filter(function (level) { return rows[level].notes.length; })
-        .map(function (level) { return "Stufe " + level + ": " + rows[level].notes.join(", "); });
-
-      return "  " + id + ": { " + pairs.join(", ") + " }," +
-        (notes.length ? " // " + notes.join("; ") : "");
-    });
-
-    return { text: lines.join("\n"), count: count, corrections: corrections };
-  }
-
-  /** Den Sammelplatz fuellen — oder ihn weglassen, solange nichts da ist. */
-  function renderOwnExport() {
-    var own = buildOwnExport();
-    $("ownPanel").hidden = own.count === 0;
-    if (!own.count) {
-      setChatLine("ownExport", "");
-      return;
-    }
-
-    var lead = own.count === 1
-      ? "Eine Stufe hast du aus dem Spiel eingetragen."
-      : own.count + " Stufen hast du aus dem Spiel eingetragen.";
-    if (own.corrections === own.count) {
-      lead += own.count === 1 ? " Sie weicht vom Datensatz ab." : " Alle weichen vom Datensatz ab.";
-    } else if (own.corrections === 1) {
-      lead += " Eine davon weicht vom Datensatz ab.";
-    } else if (own.corrections) {
-      lead += " " + own.corrections + " davon weichen vom Datensatz ab.";
-    }
-    $("ownLead").textContent = lead;
-    setChatLine("ownExport", own.text);
   }
 
   // --------------------------------------------------------------- Favoriten

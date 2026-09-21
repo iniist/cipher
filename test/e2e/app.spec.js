@@ -242,30 +242,6 @@ test.describe("Datum der Datenquelle", () => {
   });
 });
 
-test("der Sammelplatz gibt eigene Werte in der Form des Importwerkzeugs aus", async ({ page }) => {
-  // Ohne eigene Eintraege gibt es nichts zu sammeln.
-  await expect(page.locator("#ownPanel")).toBeHidden();
-
-  await page.selectOption("#building", "Terracotta_Army");
-  await page.fill("#level", "210");
-  await page.locator("#level").blur();
-
-  // Auf dieser Stufe ist P1 hochgerechnet; das Feld steckt hinter dem
-  // Textknopf und ist vorbelegt.
-  await page.click("#noteReveal");
-  await page.fill("#inputP1", "4975");
-  await page.click("#applyInput");
-
-  await expect(page.locator("#ownPanel")).toBeVisible();
-  const block = page.locator("#ownExport");
-  await expect(block).toContainText("Terracotta_Army: { 210: [null, 4975] }");
-  // Die Abweichung zum Datensatz wird benannt, nicht verschwiegen.
-  await expect(block).toContainText("P1 war 4980");
-  await expect(page.locator("#ownLead")).toContainText("weicht vom Datensatz ab");
-
-  await expect(page.locator('[data-copy="ownExport"]')).toBeEnabled();
-});
-
 test.describe("Stufen-Stepper an den Grenzen", () => {
   test("bei Stufe 1 ist Minus aus, beim Maximum Plus", async ({ page }) => {
     await page.goto("/index.html");

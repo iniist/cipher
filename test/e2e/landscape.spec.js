@@ -9,10 +9,7 @@ const { test, expect } = require("@playwright/test");
 /** Kennzahlen des Aufbaus, die der Querformat-Block veraendern wuerde. */
 const layout = (page) => page.evaluate(() => {
   const main = document.querySelector("main");
-  // Nur was gerade steht: der Sammelplatz fuer eigene Werte bleibt weg,
-  // solange keine da sind, und soll die Kennzahlen nicht verfaelschen.
-  const panels = [...document.querySelectorAll("main > .panel")]
-    .filter((el) => el.getClientRects().length > 0);
+  const panels = [...document.querySelectorAll("main > .panel")];
   const box = (el) => el.getBoundingClientRect();
   return {
     display: getComputedStyle(main).display,
