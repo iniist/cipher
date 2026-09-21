@@ -146,8 +146,7 @@ Shattered_Horizon_Siphon | Horizontriss-Siphon | Stellares Zeitalter`;
 /* Werte, die im Spiel bzw. in bewährten Rechnern abgelesen wurden:
    Stufe: [Gesamtkosten, P1]. Was nicht abgelesen wurde, steht als null —
    meist die Kosten, denn die stimmen ohnehin per Formel. Diese Tabelle
-   schlägt jede Wiki-Angabe und schärft die Kurve des ganzen Zeitalters.
-   Der Sammelplatz "Deine Werte" im Rechner gibt genau diese Form aus. */
+   schlägt jede Wiki-Angabe und schärft die Kurve des ganzen Zeitalters. */
 const CHECKS = {
   Stellar_Warship: { 50: [38477, 1085], 60: [49254, 1350], 120: [216707, 3115], 212: [2101199, 6180] },
   Saturn_VI_Gate_PEGASUS: { 12: [2648, 185], 60: [8662, 1310], 80: [14193, 1850] },
@@ -164,13 +163,13 @@ const CHECKS = {
     169: [42090, 2645], 174: [47621, 2740], 175: [48811, 2760],
     177: [51282, null], 197: [84032, 3180]
   },
-  // Im Spiel abgelesen; das Wiki kennt den Siphon bisher gar nicht. Für die
-  // Kostenbasis reichen diese vier Stufen noch nicht: finalize verlangt
-  // mindestens fünf Ablesungen ab Stufe 11 (ci.total >= 5). Bis eine fünfte
-  // dazukommt, trägt tools/build-data.js die Basis aus dem bestehenden
-  // data.js weiter. Die P1-Kurve des Stellaren Zeitalters entsteht dagegen
-  // schon hier: vier Stützpunkte genügen dem Fit.
-  Shattered_Horizon_Siphon: { 11: [14894, 175], 19: [18146, 345], 25: [21044, 480], 33: [25640, 675] }
+  // Im Spiel abgelesen; das Wiki kennt den Siphon gar nicht. Mit der fünften
+  // Stufe ist die Schwelle erreicht, ab der finalize die Kostenbasis selbst
+  // herleitet (ci.total >= 5, gezählt werden nur Stufen ab 11) — die Rettung
+  // in tools/build-data.js muss sie nicht mehr weitertragen. Die P1-Kurve des
+  // Stellaren Zeitalters entsteht aus denselben fünf Stützpunkten und trifft
+  // alle fünf auf den Punkt.
+  Shattered_Horizon_Siphon: { 11: [14894, 175], 19: [18146, 345], 25: [21044, 480], 33: [25640, 675], 41: [31240, 880] }
 };
 
 const API = 'https://forgeofempires.fandom.com/api.php';
