@@ -159,7 +159,8 @@ let out = `/*!
  *   curves{era}           P1-Belohnung je Stufe, gemeinsam für alle Bauwerke eines Zeitalters
  *     .p1[level-1]        Belohnung für Platz 1 in FP
  *     .source[level-1]    Herkunft als Zeichen: "w" = Wiki, "e" = geschätzt,
- *                         "x" = Wiki-Angaben widersprechen sich
+ *                         "x" = Wiki-Angabe widerspricht sich oder der Kurve
+ *                               des Zeitalters, es gilt der Kurvenwert
  *
  * Diese Datei wird erzeugt von tools/build-data.js aus dem JSON, das
  * tools/import.html herunterlädt. Handische Änderungen gehen beim nächsten

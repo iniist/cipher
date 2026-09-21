@@ -81,7 +81,7 @@ details>summary{cursor:pointer; font-weight:600}
   <section class="panel" id="resultPanel" hidden>
     <h2>Ergebnis</h2>
     <div class="totals" id="totals"></div>
-    <p class="legend">P1: <span class="ok">echt</span> aus dem Wiki, <span class="warn">geschätzt</span> per Formel, <span class="bad">prüfen</span> = Wiki-Wert widerspricht den Regeln. Tippe ein LG an für Details. LGs desselben Zeitalters teilen sich ihre P1-Werte.</p>
+    <p class="legend">P1: <span class="ok">echt</span> aus dem Wiki, <span class="warn">geschätzt</span> per Formel, <span class="bad">prüfen</span> = Wiki-Wert widerspricht den Regeln oder liegt weiter als 5 FP neben der Kurve des Zeitalters (dann gilt der Kurvenwert). Tippe ein LG an für Details. LGs desselben Zeitalters teilen sich ihre P1-Werte.</p>
     <div style="margin:12px 0 4px">
       <button id="btnDl" disabled>Datendatei herunterladen</button>
       <button id="btnCopy" class="ghost" disabled>JSON kopieren</button>
@@ -323,6 +323,22 @@ function fitCurve(pts) {
   }
   return best;
 }
+/* Das Wiki wird abgetippt, und Tippfehler sehen aus wie Wahrheit: dreimal
+   dieselbe Zahl hintereinander, eine um eine Zeile verrutschte Spalte. Solche
+   Werte steigen brav an und fallen der Plausibilitaetspruefung nicht auf, sie
+   liegen aber 20 bis 40 FP neben der Kurve des Zeitalters, waehrend echte
+   Rundungsabweichungen bei einer Rundungsstufe bleiben. Was weiter abliegt,
+   gilt darum nicht mehr als gesichert. Im Spiel abgelesene Werte (CHECKS)
+   urteilt niemand ab, die stehen fest. */
+const FIT_TOL = 5;
+function markOutliers(merged, fit) {
+  let n = 0;
+  for (const [l, m] of Object.entries(merged)) {
+    m.off = !!fit && m.src === 'w' && !m.game && Math.abs(m.v - r5(fit.C * (+l) ** fit.e)) > FIT_TOL;
+    if (m.off) n++;
+  }
+  return n;
+}
 
 function finalize(raws) {
   // Kosten: Bereiche überlappender LGs zusammenlegen, das macht A genauer
@@ -370,24 +386,36 @@ function finalize(raws) {
     let conflicts = 0;
     for (let l = 1; l <= maxL; l++) {
       const game = mem.map(r => CHECKS[r.title]?.[l]?.[1]).find(v => v != null);
-      if (game != null) { merged[l] = { v: game, src: 'w' }; continue; }
+      if (game != null) { merged[l] = { v: game, src: 'w', game: true }; continue; }
       const vals = mem.map(r => r.wiki[l]).filter(Boolean);
       if (!vals.length) continue;
       const okU = [...new Set(vals.filter(x => x.ok).map(x => x.v))];
       if (okU.length === 1) merged[l] = { v: okU[0], src: 'w' };
       else { merged[l] = { cands: okU.length ? okU : [...new Set(vals.map(x => x.v))], src: 'x' }; if (okU.length > 1) conflicts++; }
     }
-    const fit = fitCurve(Object.entries(merged).filter(([, m]) => m.src === 'w').map(([l, m]) => [+l, m.v]));
+    // Die Kurve wird zweimal gefittet: der erste Lauf ueber alle bisher als
+    // gesichert geltenden Werte deckt die Ausreisser auf, der zweite laeuft
+    // ohne sie. Sonst zoegen die Tippfehler den Median mit und die Kurve
+    // liefe zwischen den falschen Werten hindurch statt an ihnen vorbei.
+    const solid = () => Object.entries(merged).filter(([, m]) => m.src === 'w' && !m.off).map(([l, m]) => [+l, m.v]);
+    let fit = fitCurve(solid());
+    let outliers = markOutliers(merged, fit);
+    if (outliers) { fit = fitCurve(solid()) || fit; outliers = markOutliers(merged, fit); }
     const est = l => fit ? r5(fit.C * l ** fit.e) : null;
-    for (const m of Object.entries(merged)) if (m[1].cands) { const e = est(+m[0]); m[1].v = e == null ? m[1].cands[0] : m[1].cands.reduce((a, b) => Math.abs(b - e) < Math.abs(a - e) ? b : a); }
+    for (const [l, m] of Object.entries(merged)) {
+      // Ausreisser bekommen den Kurvenwert, nicht den Wiki-Wert, und das „x“
+      if (m.off) { m.src = 'x'; m.v = est(+l); }
+      else if (m.cands) { const e = est(+l); m.v = e == null ? m.cands[0] : m.cands.reduce((a, b) => Math.abs(b - e) < Math.abs(a - e) ? b : a); }
+    }
     for (const r of mem) {
       r.maxLevel = maxL; r.p1 = []; r.src = '';
       for (let l = 1; l <= maxL; l++) {
         if (merged[l]) { r.p1.push(merged[l].v); r.src += merged[l].src; }
         else { r.p1.push(est(l)); r.src += 'e'; }
       }
-      r.fit = fit;
+      r.fit = fit; r.p1off = outliers;
       if (conflicts) r.issues.push(`${conflicts} Stufen, bei denen sich die Wiki-Werte der ${age}-LGs widersprechen (als „prüfen“ markiert).`);
+      if (outliers) r.issues.push(`${outliers} Stufen, deren Wiki-Wert mehr als ${FIT_TOL} FP von der Kurve des Zeitalters abweicht (vermutlich Tippfehler im Wiki, verworfen: es gilt der Kurvenwert, als „prüfen“ markiert).`);
       if (mem.length > 1) r.issues.push(`P1 gemeinsam mit: ${mem.filter(x => x !== r).map(x => x.de).join(', ')}.`);
       if (!fit) r.issues.push('Keine P1-Werte für dieses Zeitalter im Wiki, Schätzung nicht möglich.');
     }
@@ -424,7 +452,7 @@ function finalize(raws) {
         cost1to10: r.cost1to10, maxLevel: r.maxLevel,
         p1Curve: r.fit ? { C: +r.fit.C.toFixed(5), e: r.fit.e } : null,
         p1: r.p1, p1src: r.src,
-        stats: { costLevels: Object.keys(r.costs).length, costBad: r.costBad.length, w: cnt('w'), e: cnt('e'), x: cnt('x') },
+        stats: { costLevels: Object.keys(r.costs).length, costBad: r.costBad.length, w: cnt('w'), e: cnt('e'), x: cnt('x'), off: r.p1off || 0 },
         issues: r.issues
       };
     })
@@ -469,8 +497,8 @@ function addRow(r) {
   const s = r.stats, d = document.createElement('details'); d.className = 'lg';
   const costCls = r.costA == null ? 'bad' : r.costDerivedFrom || s.costBad ? 'warn' : 'ok';
   d.innerHTML = `<summary><span class="nm">${escapeHtml(r.de)}<small>${escapeHtml(r.age)}</small></span>
-    <span class="pills"><span class="${costCls}">Kosten</span><span class="ok">${s.w}</span><span class="warn">${s.e}</span><span class="bad">${s.x}</span></span></summary>
-    <ul><li>P1 bis Stufe ${r.maxLevel}: ${s.w} echt, ${s.e} geschätzt, ${s.x} prüfen${r.p1Curve ? ` (Kurve C=${r.p1Curve.C}, e=${r.p1Curve.e})` : ''}</li>
+    <span class="pills"><span class="${costCls}">Kosten</span><span class="ok" title="echt">${s.w}</span><span class="warn" title="geschätzt">${s.e}</span><span class="bad" title="prüfen${s.off ? `, davon ${s.off} als Wiki-Tippfehler verworfen` : ''}">${s.x}</span></span></summary>
+    <ul><li>P1 bis Stufe ${r.maxLevel}: ${s.w} echt, ${s.e} geschätzt, ${s.x} prüfen${s.off ? `, davon ${s.off} als Wiki-Tippfehler verworfen` : ''}${r.p1Curve ? ` (Kurve C=${r.p1Curve.C}, e=${r.p1Curve.e})` : ''}</li>
     ${r.issues.map(i => `<li>${i}</li>`).join('')}</ul>`;
   $('rows').appendChild(d);
 }
@@ -487,6 +515,7 @@ function showTotals(fin, failed) {
     <div><b class="ok">${Math.round(sum('w') / all * 100)} %</b>P1 echt</div>
     <div><b class="warn">${sum('e')}</b>geschätzt</div>
     <div><b class="bad">${sum('x')}</b>prüfen</div>
+    ${sum('off') ? `<div><b class="bad">${sum('off')}</b>Wiki-Werte verworfen</div>` : ''}
     ${fin.checks ? `<div><b class="${fin.passed === fin.checks ? 'ok' : 'bad'}">${fin.passed}/${fin.checks}</b>Spielwerte passen</div>` : ''}
     ${failed.length ? `<div><b class="bad">${failed.length}</b>nicht gefunden</div>` : ''}`;
 }

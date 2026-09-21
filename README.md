@@ -391,7 +391,10 @@ daraus abgeleitete Datensatz in `data.js` wird unter derselben Lizenz
 weitergegeben. Stand siehe `generated` in der Datei.
 
 Wo das Wiki sich widerspricht, ist die Stufe im Datensatz als solche markiert
-(`source: "x"`) und die Anwendung weist beim Aufruf darauf hin.
+(`source: "x"`) und die Anwendung weist beim Aufruf darauf hin. Dasselbe
+Zeichen bekommen Wiki-Werte, die weiter als eine Rundungsstufe (5 FP) neben der
+Kurve ihres Zeitalters liegen: verrutschte Zeilen und doppelt abgetippte Zahlen
+steigen zwar brav an, sind aber keine Wahrheit — dort gilt der Kurvenwert.
 
 ### Datensatz erneuern
 
