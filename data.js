@@ -22,8 +22,13 @@
  *
  * Diese Datei wird erzeugt von tools/build-data.js aus dem JSON, das
  * tools/import.html herunterlädt. Handische Änderungen gehen beim nächsten
- * Lauf verloren — mit einer Ausnahme: die Kurznamen (.short) werden aus der
- * bestehenden Datei übernommen und dürfen hier gepflegt werden.
+ * Lauf verloren — mit drei Ausnahmen, die der Lauf aus der bestehenden
+ * Datei übernimmt und jeweils als Hinweis meldet:
+ *
+ *   - die Kurznamen (.short); sie sind von Hand gepflegt
+ *   - Bauwerke, die der Import gar nicht geliefert hat
+ *   - .base/.costs und die Kurve eines Bauwerks, für das der Import nichts
+ *     mitbringt; sie stammen dann aus im Spiel abgelesenen Stufen
  */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();
@@ -80,7 +85,7 @@
     { id: "Saturn_VI_Gate_HYDRA", name: "Saturn VI Tor HYDRA", short: "HYDRA", era: "Titan", base: 3109.169154893, maxLevel: 200, curve: "Titan", costs: [290, 430, 800, 1230, 1630, 2060, 2550, 3000, 3520, 3980] },
     { id: "Stellar_Warship", name: "Stellares Kriegsschiff", short: "Kriegsschiff", era: "Raumfahrt-Hub", base: 11194.57333207, maxLevel: 212, curve: "Raumfahrt-Hub", costs: [1040, 1550, 2880, 4430, 5870, 7420, 9180, 10800, 12670, 14330] },
     { id: "Cosmic_Catalyst", name: "Kosmischer Katalysator", short: "Katalysator", era: "Raumfahrt-Hub", base: 9015.029466917, maxLevel: 212, curve: "Raumfahrt-Hub", costs: [840, 1250, 2320, 3570, 4730, 5970, 7400, 8700, 10210, 11540] },
-    { id: "Shattered_Horizon_Siphon", name: "Horizontriss-Siphon", short: "Siphon", era: "Stellares Zeitalter", base: null, maxLevel: 200, curve: null, costs: null },
+    { id: "Shattered_Horizon_Siphon", name: "Horizontriss-Siphon", short: "Siphon", era: "Stellares Zeitalter", base: 11350.724091612, maxLevel: 200, curve: "Stellares Zeitalter", costs: null },
   ];
 
   var curves = {
@@ -175,6 +180,10 @@
     "Raumfahrt-Hub": {
       p1: [10, 20, 30, 45, 65, 85, 100, 120, 135, 155, 175, 195, 215, 235, 255, 275, 295, 315, 340, 360, 380, 405, 425, 450, 470, 495, 515, 540, 560, 585, 610, 635, 655, 680, 705, 730, 755, 780, 805, 830, 855, 880, 905, 930, 955, 980, 1005, 1030, 1060, 1085, 1110, 1135, 1165, 1190, 1215, 1245, 1270, 1295, 1325, 1350, 1380, 1405, 1435, 1460, 1490, 1515, 1545, 1570, 1600, 1625, 1655, 1685, 1710, 1740, 1765, 1795, 1825, 1855, 1880, 1910, 1940, 1970, 1995, 2025, 2055, 2085, 2115, 2145, 2170, 2200, 2230, 2260, 2290, 2320, 2350, 2380, 2410, 2440, 2470, 2500, 2530, 2560, 2590, 2620, 2650, 2680, 2710, 2745, 2775, 2805, 2835, 2865, 2895, 2925, 2960, 2990, 3020, 3050, 3085, 3115, 3145, 3175, 3210, 3240, 3270, 3305, 3335, 3365, 3400, 3430, 3460, 3495, 3525, 3555, 3590, 3620, 3655, 3685, 3715, 3750, 3780, 3815, 3845, 3880, 3910, 3945, 3975, 4010, 4040, 4075, 4105, 4140, 4175, 4205, 4240, 4270, 4305, 4340, 4370, 4405, 4435, 4470, 4505, 4535, 4570, 4605, 4635, 4670, 4705, 4740, 4770, 4805, 4840, 4875, 4905, 4940, 4975, 5010, 5040, 5075, 5110, 5145, 5180, 5210, 5245, 5280, 5315, 5350, 5385, 5415, 5450, 5485, 5520, 5555, 5590, 5625, 5660, 5695, 5730, 5765, 5800, 5830, 5865, 5900, 5935, 5970, 6005, 6040, 6075, 6110, 6145, 6180],
       source: "wwwwweeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeweeeeeeeeeweeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeweeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeew"
+    },
+    "Stellares Zeitalter": {
+      p1: [10, 20, 35, 50, 70, 85, 105, 120, 140, 160, 175, 195, 215, 240, 260, 280, 300, 325, 345, 365, 390, 410, 435, 455, 480, 505, 530, 550, 575, 600, 625, 650, 675, 700, 725, 750, 775, 800, 825, 850, 875, 900, 930, 955, 980, 1005, 1035, 1060, 1090, 1115, 1140, 1170, 1195, 1225, 1250, 1280, 1305, 1335, 1365, 1390, 1420, 1445, 1475, 1505, 1535, 1560, 1590, 1620, 1650, 1675, 1705, 1735, 1765, 1795, 1825, 1855, 1880, 1910, 1940, 1970, 2000, 2030, 2060, 2090, 2120, 2155, 2185, 2215, 2245, 2275, 2305, 2335, 2365, 2400, 2430, 2460, 2490, 2520, 2555, 2585, 2615, 2650, 2680, 2710, 2745, 2775, 2805, 2840, 2870, 2900, 2935, 2965, 3000, 3030, 3065, 3095, 3125, 3160, 3190, 3225, 3260, 3290, 3325, 3355, 3390, 3420, 3455, 3490, 3520, 3555, 3585, 3620, 3655, 3685, 3720, 3755, 3790, 3820, 3855, 3890, 3920, 3955, 3990, 4025, 4060, 4090, 4125, 4160, 4195, 4230, 4260, 4295, 4330, 4365, 4400, 4435, 4470, 4505, 4540, 4570, 4605, 4640, 4675, 4710, 4745, 4780, 4815, 4850, 4885, 4920, 4955, 4990, 5025, 5060, 5100, 5135, 5170, 5205, 5240, 5275, 5310, 5345, 5380, 5420, 5455, 5490, 5525, 5560, 5595, 5635, 5670, 5705, 5740, 5775, 5815, 5850, 5885, 5920, 5960, 5995],
+      source: "eeeeeeeeeeweeeeeeeweeeeeweeeeeeeweeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     },
   };
 

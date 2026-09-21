@@ -4,6 +4,7 @@
  * Favoritenliste, der Leerzustand ohne Daten.
  */
 const { test, expect } = require("@playwright/test");
+const { mitTestdaten, OHNE_DATEN } = require("./testdaten");
 
 /** Zwoelf Favoriten, also die volle Liste. */
 const FULL_LIST = [
@@ -65,8 +66,11 @@ test.describe("schmale Geräte", () => {
 
 test.describe("Leerzustand", () => {
   test.beforeEach(async ({ page }) => {
+    // Das leere Bauwerk kommt aus den Testdaten, nicht aus einer Luecke im
+    // echten Datensatz — die schliesst sich mit jeder Datenverbesserung.
+    await mitTestdaten(page);
     await page.goto("/index.html");
-    await page.selectOption("#building", "Shattered_Horizon_Siphon");
+    await page.selectOption("#building", OHNE_DATEN);
     await page.fill("#level", "20");
     await page.locator("#level").blur();
     await expect(page.locator("td.empty")).toBeVisible();

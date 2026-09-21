@@ -27,10 +27,17 @@ test("jedes Bauwerk ist vollstaendig beschrieben", () => {
     assert.ok(building.era, `${where}: era fehlt`);
     assert.ok(Number.isInteger(building.maxLevel) && building.maxLevel > 0, `${where}: maxLevel unbrauchbar`);
 
-    if (building.base != null) {
-      assert.ok(building.base > 0, `${where}: base muss positiv sein`);
+    if (building.base != null) assert.ok(building.base > 0, `${where}: base muss positiv sein`);
+
+    // Die Tabelle der Stufen 1-10 darf fehlen: stammt der Basiswert aus im
+    // Spiel abgelesenen Stufen ab 11, steht sie nirgends, und totalCost
+    // rechnet unten ersatzweise mit der Formel weiter. Ist sie da, muss sie
+    // vollstaendig und plausibel sein — und ohne Basiswert ergibt sie keinen
+    // Sinn, weil ab Stufe 11 dann nichts folgt.
+    if (building.costs != null) {
+      assert.ok(building.base != null, `${where}: Kosten ohne Basiswert`);
       assert.ok(Array.isArray(building.costs) && building.costs.length === 10,
-        `${where}: mit base muessen zehn Kostenwerte vorliegen`);
+        `${where}: die Kostentabelle braucht zehn Werte`);
       for (const cost of building.costs) {
         assert.ok(Number.isInteger(cost) && cost > 0, `${where}: unbrauchbarer Kostenwert ${cost}`);
       }

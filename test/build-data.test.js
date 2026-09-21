@@ -112,6 +112,67 @@ test("ein Bauwerk, das der Import nicht liefert, bleibt erhalten", () => {
   assert.match(stdout, /vom Import nicht geliefert/);
 });
 
+test("ein Bauwerk, das der Import leer liefert, behaelt seine Werte", () => {
+  // Der Fall des Horizontriss-Siphons: das Wiki kennt ihn nicht, seine
+  // Werte stammen aus dem Spiel. Der Import liefert den Eintrag, aber ohne
+  // Inhalt — frueher wurde damit alles mit null ueberschrieben. Gewaehlt
+  // wird ein Bauwerk, das allein in seinem Zeitalter steht: dann ist auch
+  // die Kurve nur hier zu retten.
+  const lonely = DATA.buildings.find((building) =>
+    building.base != null &&
+    DATA.buildings.filter((other) => other.era === building.era).length === 1);
+  assert.ok(lonely, "es sollte ein Bauwerk geben, das allein sein Zeitalter bildet");
+
+  const input = asImport(DATA);
+  const entry = input.lg.find((lg) => lg.id === lonely.id);
+  entry.costA = null;
+  entry.cost1to10 = null;
+  entry.p1 = [];
+  entry.p1src = "";
+
+  const { stdout, result } = convert(input);
+  const built = result.buildings.find((b) => b.id === lonely.id);
+  assert.deepEqual(built, lonely, `${lonely.name}: Werte beim Import verloren`);
+  assert.deepEqual(result.curves[lonely.curve], DATA.curves[lonely.curve],
+    `${lonely.name}: Kurve beim Import verloren`);
+
+  assert.match(stdout, /bisherige Basis übernommen/);
+  assert.match(stdout, /bisherige Kurve/);
+});
+
+test("ohne bisherige Werte bleibt ein leerer Import leer", () => {
+  // Die Rettung darf nichts erfinden: ein neues Bauwerk ohne Inhalt bleibt
+  // ohne Inhalt — und sagt es.
+  const input = asImport(DATA);
+  input.lg.push({
+    id: "Leeres_Bauwerk",
+    en: "Leeres Bauwerk",
+    de: "Leeres Bauwerk",
+    age: "Unbekanntes Zeitalter",
+    costA: null,
+    cost1to10: null,
+    maxLevel: 200,
+    p1: [],
+    p1src: "",
+    stats: {},
+    issues: []
+  });
+
+  const { stdout, result } = convert(input);
+  const added = result.buildings.find((b) => b.id === "Leeres_Bauwerk");
+  assert.deepEqual(added, {
+    id: "Leeres_Bauwerk",
+    name: "Leeres Bauwerk",
+    short: "Leeres Bauwerk",
+    era: "Unbekanntes Zeitalter",
+    base: null,
+    maxLevel: 200,
+    curve: null,
+    costs: null
+  });
+  assert.match(stdout, /keine Kostenformel im Import\./);
+});
+
 test("ein neues Bauwerk wird gemeldet und bekommt den Namen als Kurznamen", () => {
   const input = asImport(DATA);
   input.lg.push({
@@ -150,7 +211,8 @@ test("das Ergebnis besteht die Datenpruefungen", () => {
   for (const building of result.buildings) {
     assert.ok(building.id && building.name && building.short && building.era);
     assert.ok(Number.isInteger(building.maxLevel) && building.maxLevel > 0);
-    if (building.base != null) {
+    if (building.costs != null) {
+      assert.ok(building.base != null);
       assert.equal(building.costs.length, 10);
       assert.ok(building.costs.every((cost) => Number.isInteger(cost) && cost > 0));
     }

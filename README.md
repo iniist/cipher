@@ -193,6 +193,23 @@ Die Belohnungen der hinteren Plätze folgen aus P1: P2 = P1/2, P3 = P2/3,
 P4 = P3/4, P5 = P4/5 — jeweils kaufmännisch auf ein Vielfaches von 5 gerundet.
 Die Einzahlung ist `floor((Belohnung × Faktor + 50) / 100)`.
 
+**Ist P1 nur hochgerechnet, sichert cipher vorsichtiger ab.** Fünf im Spiel
+abgelesene Werte gegen die Rechnung gehalten: drei trafen genau, zwei lagen
+5 FP unter der Rechnung, keiner darüber. Ein zu hohes P1 ist die gefährliche
+Richtung — `needed = remaining − 2 × Einzahlung` fällt dann zu niedrig aus und
+der Platz bleibt überbietbar, obwohl der Plan ihn als sicher ausweist. Bei
+hochgerechnetem oder widersprüchlichem P1 bekommt `buildPlan` darum ein
+`p1Secure` (P1 − 5): die Schwellwerte entstehen aus den Einzahlungen dieses
+kleineren P1, angezeigt werden weiter Belohnung und Einzahlung des echten.
+Gezahlt wird dadurch nichts mehr — der Zuschlag verschiebt nur zwischen
+„vorher sichern“ und dem Rest, den du ohnehin selbst einzahlst.
+
+Eine Ausnahme: Würde ein kleiner Platz durch den Zuschlag rechnerisch gar
+nicht mehr in die Reststufe passen und ganz aus dem Plan fallen, gilt der
+Plan ohne Zuschlag — ein Platz ohne Zuschlag ist mehr wert als kein Platz.
+Über alle 15.285 Pläne mit hochgerechnetem P1 (alle Bauwerke, alle Stufen,
+Faktoren 1,80/1,90/2,00) trifft das auf sechs zu.
+
 Der ganze Rechenkern steckt in [`calc.js`](./calc.js) und besteht nur aus reinen
 Funktionen — ohne DOM, ohne Speicherzugriff, vollständig getestet.
 
@@ -391,7 +408,10 @@ daraus abgeleitete Datensatz in `data.js` wird unter derselben Lizenz
 weitergegeben. Stand siehe `generated` in der Datei.
 
 Wo das Wiki sich widerspricht, ist die Stufe im Datensatz als solche markiert
-(`source: "x"`) und die Anwendung weist beim Aufruf darauf hin.
+(`source: "x"`) und die Anwendung weist beim Aufruf darauf hin. Dasselbe
+Zeichen bekommen Wiki-Werte, die weiter als eine Rundungsstufe (5 FP) neben der
+Kurve ihres Zeitalters liegen: verrutschte Zeilen und doppelt abgetippte Zahlen
+steigen zwar brav an, sind aber keine Wahrheit — dort gilt der Kurvenwert.
 
 ### Datensatz erneuern
 
@@ -419,16 +439,19 @@ Wert ist. `tools/build-data.js` überführt das Ergebnis in `data.js`.
 Unterschied zur Anwendung fragt er das Wiki ab — aber erst auf Knopfdruck, beim
 Laden der Seite geht keine Anfrage hinaus.
 
-Zwei Dinge stehen nicht im Wiki und übernimmt der Konverter deshalb aus der
-bestehenden `data.js`:
+Drei Dinge stehen nicht zwingend im Wiki und übernimmt der Konverter deshalb
+aus der bestehenden `data.js`:
 
 - die **Kurznamen** für den Förderchat (`Leuchtturm von Alexandria` →
   `Leuchtturm`), die von Hand gepflegt sind — sie dürfen in `data.js` direkt
   geändert werden und überleben den nächsten Lauf
 - **Bauwerke, die der Import nicht liefert**; sie bleiben mit ihren bisherigen
   Werten stehen, statt stillschweigend zu verschwinden
+- **Kostenformel und P1-Kurve eines Bauwerks, das der Import leer liefert** —
+  etwa der Horizontriss-Siphon, den das Wiki nicht kennt und dessen Werte aus
+  im Spiel abgelesenen Stufen stammen
 
-Beides meldet der Konverter im Lauf. `test/build-data.test.js` prüft es, indem
+Alle drei meldet der Konverter im Lauf. `test/build-data.test.js` prüft es, indem
 es aus `data.js` ein Import-JSON baut, durch den Konverter schickt und das
 Ergebnis mit dem Original vergleicht.
 

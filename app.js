@@ -53,6 +53,16 @@
   /** Quellen, die keinen Hinweis ausloesen — sie gelten als belastbar. */
   var TRUSTED_SOURCES = { table: true, formula: true, manual: true };
 
+  /**
+   * Quellen, deren P1 danebenliegen kann — und zwar nur nach oben: von fuenf
+   * im Spiel abgelesenen Werten lagen zwei genau 5 FP unter der Rechnung,
+   * keiner darueber. Ein zu hohes P1 ist die gefaehrliche Richtung, weil die
+   * Absicherung dann zu niedrig ausfaellt. Darum rechnet sie bei diesen
+   * Quellen mit P1 minus P1_SLACK; angezeigt wird weiter das echte P1.
+   */
+  var UNSURE_P1_SOURCES = { derived: true, conflict: true };
+  var P1_SLACK = 5;
+
   var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // ------------------------------------------------------------------ Helfer
@@ -595,6 +605,7 @@
     var plan = Calc.buildPlan({
       total: total.value,
       p1: p1.value,
+      p1Secure: UNSURE_P1_SOURCES[p1.source] ? p1.value - P1_SLACK : null,
       factor: state.factor,
       factors: state.slotFactors,
       enabled: state.enabled
@@ -714,8 +725,14 @@
     var labels = offered.map(function (row) { return "P" + row.slot; });
     var range = labels.length > 1 ? labels[0] + " bis " + labels[labels.length - 1] : labels[0];
 
+    // Die Summe ist die Summe aller Vorleistungen, nicht eine Einzahlung:
+    // wer sie auf einen Schlag einzahlt und wartet, hat die hinteren
+    // Plaetze fuer kleines Geld offen stehen. Der Fliesstext sagt das mit
+    // "der Reihe nach"; die grosse Zahl daneben liest sich trotzdem wie
+    // eine Aufforderung. Ein Halbsatz genuegt — das Risiko ist bekannt.
     $("lumpText").innerHTML = plan.remainder > 0
-      ? "Damit sind " + range + " sicher, wenn sie der Reihe nach belegt werden. Die letzten <b>" +
+      ? "Damit sind " + range + " sicher, wenn sie der Reihe nach belegt werden; einzahlen also Platz für Platz, " +
+        "nicht die ganze Summe vorweg. Die letzten <b>" +
         formatNumber(plan.remainder) + " FP</b> zahlst du danach selbst ein und levelst damit."
       : "Achtung: Auf dieser Stufe schließt " + labels[labels.length - 1] +
         " die Stufe ab, du kannst nicht selbst leveln.";
@@ -746,16 +763,77 @@
   }
 
   /**
+   * Den Ausblendtest fuer das Zeitalter eines Bauwerks holen.
+   * @returns {{samples:number, misses:number, worst:number}|null}
+   *   null heisst: zu wenige belegte Stufen, um etwas zu behaupten.
+   */
+  function curveReliability(building) {
+    if (!building.curve) return null;
+    var curve = DATA.curves[building.curve];
+    return curve ? Calc.curveReliability(building.curve, curve) : null;
+  }
+
+  /** Das Eingabefeld fuer eine eigene P1-Belohnung. */
+  function fieldP1(p1) {
+    return '<div><label for="inputP1">P1-Belohnung</label>' +
+      '<input id="inputP1" type="number" inputmode="numeric" min="5" step="5" value="' +
+      (p1.value == null ? "" : p1.value) + '"></div>';
+  }
+
+  /**
+   * Woher ein hochgerechnetes P1 kommt und wie weit es danebenliegen kann.
+   *
+   * Die Spanne ist keine Schaetzung, sondern gemessen: curveReliability
+   * fittet die Kurve des Zeitalters auf ihrem unteren Teil und prueft sie
+   * gegen die echten Werte darueber — also genau gegen die Lage, in der
+   * diese Zahl hier steht.
+   */
+  function derivedP1Text(building) {
+    var reliability = curveReliability(building);
+    var origin = state.level > building.maxLevel
+      ? "Stufe " + state.level + " liegt über dem, was das Wiki für " + escapeHtml(building.name) +
+        " dokumentiert (bis " + building.maxLevel + "); P1 ist aus der Kurve des Zeitalters hochgerechnet."
+      : "P1 ist auf dieser Stufe aus der Kurve des Zeitalters hochgerechnet.";
+
+    return origin + " " + (reliability
+      ? "Im Rückblick traf die Kurve die belegten Stufen dieses Zeitalters bis auf " + reliability.worst + " FP genau."
+      : "Für dieses Zeitalter sind zu wenige Stufen belegt, um zu sagen, wie genau die Kurve trifft.");
+  }
+
+  /**
+   * Die ruhige Fassung des Hinweises: eine Zeile, kein Kasten.
+   *
+   * Der Plan stimmt ja — es fehlt nur die letzte Bestaetigung. Wer sie
+   * geben will, klappt sich das Feld mit dem Textknopf auf; bis dahin
+   * kostet es keine Hoehe und lenkt nichts ab.
+   */
+  function quietNote(building, p1) {
+    return '<div class="note quiet">' + derivedP1Text(building) +
+      ' <button type="button" class="link" id="noteReveal">Aus dem Spiel eintragen</button>' +
+      '<div class="in" id="noteFields" hidden>' + fieldP1(p1) +
+      '<button type="button" class="go" id="applyInput">Bestätigen</button></div></div>';
+  }
+
+  /**
    * Hinweise zu unsicheren Werten und das Eingabefeld fuer eigene Zahlen.
    *
-   * Zwei Toene, weil es zwei Lagen gibt. Fehlt ein Wert, kann ich ohne
+   * Drei Toene, weil es drei Lagen gibt. Fehlt ein Wert, kann ich ohne
    * Eintrag gar nicht rechnen — das ist eine Bitte, und der Kasten warnt.
-   * Ist ein Wert dagegen hochgerechnet oder aus widerspruechlichen
-   * Wiki-Angaben gewaehlt, steht bereits die bestbegruendete Zahl im Plan
-   * und im Feld; dann ist der Kasten eine Einladung zum Gegenlesen. Beides
-   * gleich alarmiert auszuzeichnen macht den Plan unglaubwuerdiger, als er
-   * ist: Bei einem Widerspruch waehlt der Datensatz den Wert, der zur
-   * Kurve des Zeitalters passt, und der stimmt fast immer.
+   * Ist ein Wert dagegen aus widerspruechlichen Wiki-Angaben gewaehlt oder
+   * aus einem eigenen Eintrag hochgerechnet, steht bereits die
+   * bestbegruendete Zahl im Plan und im Feld; dann ist der Kasten eine
+   * Einladung zum Gegenlesen.
+   *
+   * Der dritte Ton ist der leiseste und gilt dem haeufigsten Fall: einem
+   * P1, das aus der Kurve des Zeitalters stammt. Wie treffsicher die ist,
+   * steht nicht zur Vermutung, sondern wird gemessen (curveReliability).
+   * Zeitalter, die den Ausblendtest ohne Fehlschuss bestehen, bekommen gar
+   * keinen Hinweis — dort waere er nur Misstrauen gegen die eigene Rechnung.
+   *
+   * Ueber Kosten steht hier nichts, solange das Bauwerk einen Basiswert
+   * hat: die Formel A * 1,025^Stufe ist gegen jede Ablesung aus dem Spiel
+   * geprueft und trifft. Nur ohne Basiswert — also hochgerechnet aus einem
+   * eigenen Eintrag oder gar nicht vorhanden — ist dazu etwas zu sagen.
    */
   function renderNote(building, total, p1) {
     var needTotal = !TRUSTED_SOURCES[total.source];
@@ -773,22 +851,29 @@
       }
       if (total.source === "derived") checks.push("Gesamt ist aus deinem Eintrag auf Stufe " + total.from + " hochgerechnet.");
       if (p1.source === null) missing.push("P1 ist für diese Stufe noch unbekannt.");
-      if (p1.source === "derived") checks.push(state.level > building.maxLevel
-        ? "Stufe " + state.level + " liegt über dem, was das Wiki für " + escapeHtml(building.name) + " dokumentiert (bis " + building.maxLevel + "). Die Gesamtkosten folgen weiter der Formel, P1 ist aus der Kurve des Zeitalters hochgerechnet."
-        : "P1 ist auf dieser Stufe aus der Kurve des Zeitalters hochgerechnet und kann um 5 FP danebenliegen.");
       if (p1.source === "conflict") checks.push("Für P1 auf dieser Stufe nennt das Wiki mehr als eine Zahl. Im Plan steht die, die zur Kurve des Zeitalters passt — erfahrungsgemäß ist das die richtige.");
 
-      var urgent = missing.length > 0;
-      var lead = missing.concat(checks).join(" ") + " " + (urgent
-        ? "Bitte im Förderfenster nachsehen und eintragen, dann ist alles exakt."
-        : "Ein Blick ins Förderfenster bestätigt das in Sekunden. Stimmt die Zahl, übernimm sie einmal — dann rechne ich hier ohne Vorbehalt weiter und frage auf dieser Stufe nicht wieder.");
+      // Ein hochgerechnetes P1 ist der haeufigste und der harmloseste Fall.
+      // Steht es allein da, entscheidet der Ausblendtest des Zeitalters,
+      // wie viel Aufhebens noetig ist: gar keins, oder eine Zeile.
+      if (p1.source === "derived" && !missing.length && !checks.length) {
+        var sure = curveReliability(building);
+        if (!sure || sure.misses) html += quietNote(building, p1);
+      } else {
+        if (p1.source === "derived") checks.push(derivedP1Text(building));
 
-      html += '<div class="note' + (urgent ? "" : " chk") + '">' + lead +
-        '<div class="in">' +
-          (needTotal ? '<div><label for="inputTotal">Gesamt-FP</label><input id="inputTotal" type="number" inputmode="numeric" min="1" value="' + (total.value == null ? "" : total.value) + '"></div>' : "") +
-          (needP1 ? '<div><label for="inputP1">P1-Belohnung</label><input id="inputP1" type="number" inputmode="numeric" min="5" step="5" value="' + (p1.value == null ? "" : p1.value) + '"></div>' : "") +
-          '<button type="button" class="go" id="applyInput">' + (urgent ? "Übernehmen" : "Bestätigen") + '</button>' +
-        "</div></div>";
+        var urgent = missing.length > 0;
+        var lead = missing.concat(checks).join(" ") + " " + (urgent
+          ? "Bitte im Förderfenster nachsehen und eintragen, dann ist alles exakt."
+          : "Ein Blick ins Förderfenster bestätigt das in Sekunden. Stimmt die Zahl, übernimm sie einmal — dann rechne ich hier ohne Vorbehalt weiter und frage auf dieser Stufe nicht wieder.");
+
+        html += '<div class="note' + (urgent ? "" : " chk") + '">' + lead +
+          '<div class="in">' +
+            (needTotal ? '<div><label for="inputTotal">Gesamt-FP</label><input id="inputTotal" type="number" inputmode="numeric" min="1" value="' + (total.value == null ? "" : total.value) + '"></div>' : "") +
+            (needP1 ? fieldP1(p1) : "") +
+            '<button type="button" class="go" id="applyInput">' + (urgent ? "Übernehmen" : "Bestätigen") + '</button>' +
+          "</div></div>";
+      }
     }
 
     var manual = [total.source === "manual" && "Gesamt", p1.source === "manual" && "P1"].filter(Boolean);
@@ -1202,6 +1287,17 @@
 
     $("note").addEventListener("click", function (event) {
       var key = state.building + ":" + state.level;
+
+      // Der Textknopf der ruhigen Zeile holt das Feld hervor. Ohne render(),
+      // sonst waere es im selben Atemzug wieder zugeklappt.
+      if (event.target.id === "noteReveal") {
+        var fields = $("noteFields");
+        if (!fields) return;
+        fields.hidden = false;
+        event.target.hidden = true;
+        if ($("inputP1")) $("inputP1").focus();
+        return;
+      }
 
       if (event.target.id === "applyInput") {
         var totalInput = $("inputTotal");
