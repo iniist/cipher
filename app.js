@@ -59,6 +59,14 @@
    */
   var MAX_COLLECTED = 15;
 
+  /**
+   * Obergrenze fuer einen getippten Betrag. Die teuerste bekannte Stufe
+   * liegt bei gut 86.000 FP, ein Platz darin bei knapp 10.000 — eine
+   * Million ist reichlich Luft und faengt trotzdem ab, wenn jemand eine
+   * Stelle zu viel tippt.
+   */
+  var AMOUNT_MAX = 1000000;
+
   /** Quellen, die keinen Hinweis ausloesen — sie gelten als belastbar. */
   var TRUSTED_SOURCES = { table: true, formula: true, manual: true };
 
@@ -112,6 +120,17 @@
     if (isNaN(value)) return 0;
     // Unter 10 ist es als Dezimalzahl gemeint (1,9), darueber als Prozent (190).
     return clampFactor(value < 10 ? value * 100 : value);
+  }
+
+  /**
+   * Einen getippten Betrag lesen. Punkte, Leerzeichen und ein angehaengtes
+   * "FP" duerfen drinstehen — 10.000, 10000 und "10.000 FP" sind dasselbe.
+   * @returns {number} 0 heisst "unbrauchbar"
+   */
+  function parseAmount(text) {
+    var digits = String(text).replace(/[^0-9]/g, "");
+    var value = parseInt(digits, 10);
+    return value > 0 && value <= AMOUNT_MAX ? value : 0;
   }
 
   /** Text so einsetzen, dass er nie als HTML gelesen wird. */
@@ -198,8 +217,20 @@
     levelMode: stored.levelMode === "current" ? "current" : "next",
     // Eigener Faktor je Platz; null heisst "folgt dem Wert oben".
     slotFactors: normaliseSlotFactors(stored.slotFactors),
+    // Getippter Betrag je Platz; null heisst "aus dem Faktor gerechnet".
+    slotPays: normaliseSlotPays(stored.slotPays),
+    // In welcher Einheit die Zeilen des Blocks gelesen und getippt werden.
+    slotUnit: stored.slotUnit === "fp" ? "fp" : "factor",
     slotsOpen: stored.slotsOpen === true
   };
+
+  // Ein Platz traegt entweder einen Faktor oder einen Betrag, nie beides —
+  // es ist eine Zahl in zwei Einheiten, und zwei Quellen fuer dieselbe Zahl
+  // koennten sich widersprechen. Die Bedienung haelt das ein; hier steht es
+  // fuer alles, was aus dem Speicher kommt.
+  state.slotPays.forEach(function (pay, index) {
+    if (pay != null) state.slotFactors[index] = null;
+  });
 
   /**
    * Immer genau fuenf Eintraege: ein gueltiger Faktor oder null.
@@ -212,6 +243,62 @@
       result.push(own || null);
     }
     return result;
+  }
+
+  /**
+   * Immer genau fuenf Eintraege: ein getippter Betrag oder null.
+   * Betraege sind ganze Forge-Punkte und groesser als null; alles andere
+   * waere keine Einzahlung.
+   */
+  function normaliseSlotPays(value) {
+    var result = [];
+    for (var i = 0; i < Calc.SLOTS; i++) {
+      var own = Array.isArray(value) ? Math.floor(Number(value[i])) : 0;
+      result.push(own > 0 && isFinite(own) ? own : null);
+    }
+    return result;
+  }
+
+  /**
+   * In welcher Einheit eine Zeile gelesen wird.
+   *
+   * Ein eingestellter Platz behaelt die Einheit, in der er eingestellt
+   * wurde — sonst muesste ein Betrag beim Umschalten in einen Faktor
+   * uebersetzt werden, und 10.000 FP auf eine Belohnung von 3.200 ergeben
+   * 3,13: ausserhalb des zulaessigen Bereichs, also nicht darstellbar.
+   * Wer folgt, zeigt die Einheit des Blocks.
+   * @returns {"factor"|"fp"}
+   */
+  function slotUnitFor(index) {
+    if (state.slotPays[index] != null) return "fp";
+    if (state.slotFactors[index] != null) return "factor";
+    return state.slotUnit;
+  }
+
+  /** Ob dieser Platz einen eigenen Wert traegt, in welcher Einheit auch immer. */
+  function slotIsOwn(index) {
+    return state.slotPays[index] != null || state.slotFactors[index] != null;
+  }
+
+  /**
+   * Einen Platz auf einen eigenen Faktor stellen. Ein Betrag, der vorher
+   * dort stand, faellt damit weg: der Platz traegt eine Zahl, nicht zwei.
+   */
+  function setSlotFactor(index, factor) {
+    state.slotFactors[index] = factor;
+    state.slotPays[index] = null;
+  }
+
+  /** Dasselbe andersherum: ein Betrag verdraengt den eigenen Faktor. */
+  function setSlotPay(index, amount) {
+    state.slotPays[index] = amount;
+    state.slotFactors[index] = null;
+  }
+
+  /** Einen Platz wieder dem Wert oben folgen lassen. */
+  function clearSlot(index) {
+    state.slotFactors[index] = null;
+    state.slotPays[index] = null;
   }
 
   /** Der Faktor, der fuer jeden Platz tatsaechlich gilt. */
@@ -484,6 +571,7 @@
       var slot = index + 1;
       rows.push(
         '<li data-slot="' + index + '">' +
+          '<div class="slot-row">' +
           '<span class="tag slot-' + slot + '">P' + slot + "</span>" +
           '<div class="step mini">' +
             '<button type="button" data-slot="' + index + '" data-slot-step="-1"' +
@@ -496,6 +584,14 @@
           '<span class="slot-state"></span>' +
           '<button type="button" class="slot-reset" data-slot-reset="' + index + '" hidden' +
             ' aria-label="P' + slot + ' wieder dem Wert oben folgen lassen">×</button>' +
+          "</div>" +
+          // Die jeweils andere Einheit, leise darunter — dieselbe Idee wie
+          // bei der Stufe, wo unter "80" steht, dass 81 gefoerdert wird.
+          //
+          // Ausserhalb der Flex-Zeile, nicht als umbrechendes Glied darin:
+          // ein Umbruch greift vor dem Schrumpfen, und dann faellt bei 320
+          // Pixeln das Kreuz auf eine eigene Zeile.
+          '<span class="slot-hint"></span>' +
         "</li>"
       );
     }
@@ -503,41 +599,122 @@
   }
 
   /**
-   * Die Faktorzeilen auf den Stand bringen.
+   * Die Platzzeilen auf den Stand bringen.
    *
    * Ein Platz folgt dem Wert oben, bis jemand ihn hier anfasst — danach ist
    * er eigen, traegt das Kreuz zum Zuruecknehmen und bleibt stehen, wenn
    * der obere Wert sich bewegt. Der obere Wert zeigt damit immer etwas
    * Wahres und muss nie ausgegraut werden.
+   *
+   * Angefasst wird in einer von zwei Einheiten: als Arche-Faktor oder als
+   * Betrag in FP. Das ist dieselbe Zahl — die Einzahlung dieses Platzes —
+   * und darum ein Feld, kein zweites daneben. Der Umschalter im Block
+   * waehlt, was eine folgende Zeile zeigt und was beim Tippen gemeint ist.
    */
-  function renderSlotFactors() {
+  function renderSlots(plan) {
     var values = effectiveFactors();
     var own = 0;
+    var anyPay = false;
 
     $("slotList").querySelectorAll("li").forEach(function (item) {
       var index = Number(item.dataset.slot);
-      var pinned = state.slotFactors[index] != null;
+      var pinned = slotIsOwn(index);
+      var unit = slotUnitFor(index);
       var input = item.querySelector("input");
+      var row = plan ? plan.rows[index] : null;
       if (pinned) own++;
+      if (state.slotPays[index] != null) anyPay = true;
 
       // Waehrend des Tippens nicht dazwischenfunken.
-      if (document.activeElement !== input) input.value = formatFactor(values[index]);
+      if (document.activeElement !== input) input.value = slotFieldValue(index, plan);
+      input.setAttribute("inputmode", unit === "fp" ? "numeric" : "decimal");
+      input.setAttribute("aria-label",
+        (unit === "fp" ? "Einzahlung für P" : "Faktor für P") + (index + 1));
+
       item.classList.toggle("own", pinned);
+      // Der Stepper gehoert zum Faktor: einen abgelesenen Betrag um eine
+      // Stufe zu schieben ergibt keinen Sinn, also faellt er dort weg.
+      item.classList.toggle("fp", unit === "fp");
       item.querySelector(".slot-reset").hidden = !pinned;
       // Der Zustand steht als Wort da, nicht nur als Farbe: im Kontrastmodus
       // ist Gold schwarz, dort traegt die Faerbung nichts.
       item.querySelector(".slot-state").textContent = pinned ? "eigen" : "folgt";
+      item.querySelector(".slot-hint").textContent = slotHint(index, unit, row);
       item.querySelector('[data-slot-step="-1"]').disabled = values[index] <= FACTOR_MIN;
       item.querySelector('[data-slot-step="1"]').disabled = values[index] >= FACTOR_MAX;
     });
 
+    document.querySelectorAll("#slotUnit button").forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.dataset.slotUnit === state.slotUnit));
+    });
+
+    renderSlotsBadge(own, anyPay, values);
+    $("slotsReset").hidden = own === 0;
+  }
+
+  /**
+   * Was im Feld eines Platzes steht — in der Einheit dieser Zeile.
+   *
+   * Ohne Plan (fuer die Stufe fehlen Gesamtkosten oder P1) gibt es keinen
+   * Betrag zu zeigen. Ein getippter steht trotzdem da, er haengt an nichts;
+   * ein gerechneter bleibt leer, denn eine erfundene Zahl waere schlimmer
+   * als ein leeres Feld.
+   */
+  function slotFieldValue(index, plan) {
+    if (slotUnitFor(index) !== "fp") return formatFactor(effectiveFactors()[index]);
+    if (state.slotPays[index] != null) return formatNumber(state.slotPays[index]);
+    return plan ? formatNumber(plan.rows[index].contribution) : "";
+  }
+
+  /**
+   * Dieselbe Zahl in der anderen Einheit, als leiser Nachsatz.
+   *
+   * Steht im Feld eine andere Einheit als im Umschalter, nennt der Nachsatz
+   * auch die des Feldes: "10.000 FP ≙ Faktor 3,13". Getippt wird naemlich in
+   * der Einheit, die man gerade sieht — sonst zerschiesst ein Klick in ein
+   * Feld mit 10.000 diesen Betrag, weil er als Faktor gelesen und auf 2,00
+   * gestutzt wird. Sichtbar muss der Unterschied dafuer sein, und hier ist
+   * die Zeile breit genug; neben dem Feld waere sie es bei 320 Pixeln nicht.
+   */
+  /** Der Faktor, den eine Einzahlung auf diese Belohnung bedeutet. */
+  function impliedFactor(row) {
+    return Math.round(row.contribution / row.reward * 100);
+  }
+
+  function slotHint(index, unit, row) {
+    if (!row) return "";
+    var andere = unit === "fp"
+      ? (row.reward > 0 ? "Faktor " + formatFactor(impliedFactor(row)) : "")
+      : formatNumber(row.contribution) + " FP";
+    if (!andere) return "";
+    if (unit === state.slotUnit) return "≙ " + andere;
+    var eigene = unit === "fp"
+      ? formatNumber(state.slotPays[index]) + " FP"
+      : "Faktor " + formatFactor(effectiveFactors()[index]);
+    return eigene + " ≙ " + andere;
+  }
+
+  /**
+   * Das Abzeichen am zugeklappten Block.
+   *
+   * Sind alle eigenen Werte Faktoren, nennt es die Spanne — die ist
+   * aussagekraeftig, weil alle fuenf dieselbe Groesse messen. Betraege
+   * lassen sich so nicht zusammenfassen: 50 bis 10.000 waere die Spanne
+   * zwischen P5 und P1 und damit voellig normal. Dann steht dort, wie viele
+   * Plaetze eigene Werte tragen.
+   */
+  function renderSlotsBadge(own, anyPay, values) {
+    $("slotsBadge").hidden = own === 0;
+    if (own === 0) return;
+    if (anyPay) {
+      $("slotsBadge").textContent = own + (own === 1 ? " eigen" : " eigene");
+      return;
+    }
     var low = Math.min.apply(null, values);
     var high = Math.max.apply(null, values);
-    $("slotsBadge").hidden = own === 0;
     $("slotsBadge").textContent = low === high
       ? formatFactor(low)
       : formatFactor(low) + "–" + formatFactor(high);
-    $("slotsReset").hidden = own === 0;
   }
 
   function buildFactorChips() {
@@ -606,6 +783,13 @@
 
   var previousContributions = [];
 
+  /**
+   * Der zuletzt gerechnete Plan, oder null, wenn der Stufe Zahlen fehlen.
+   * Gebraucht beim Verlassen eines Platzfelds: dort ist der Wert wieder
+   * sauber hinzuschreiben, und in FP-Einheit steht er nur im Plan.
+   */
+  var lastPlan = null;
+
   function render() {
     var building = byId[state.building];
     state.level = Math.min(Math.max(1, Math.floor(state.level) || 1), LEVEL_MAX);
@@ -623,7 +807,6 @@
     });
     if (document.activeElement !== $("playerName")) $("playerName").value = state.name;
 
-    renderSlotFactors();
     syncFavoriteLevel();
     renderFavorites();
 
@@ -632,7 +815,9 @@
     renderNote(building, total, p1);
 
     if (total.value == null || p1.value == null) {
+      lastPlan = null;
       renderEmpty();
+      renderSlots(null);
       persistState();
       return;
     }
@@ -643,18 +828,31 @@
       p1Secure: UNSURE_P1_SOURCES[p1.source] ? p1.value - P1_SLACK : null,
       factor: state.factor,
       factors: state.slotFactors,
+      payments: state.slotPays,
       enabled: state.enabled
     });
 
+    lastPlan = plan;
+    renderSlots(plan);
     renderRows(plan);
     renderBar(plan);
     renderUpfront(plan);
     renderTotals(plan);
     renderChat(plan, building);
 
-    $("warn").innerHTML = plan.anyTooTight
-      ? '<div class="warnline">Auf dieser Stufe reichen die Gesamtkosten nicht für alle Plätze. Nicht passende Plätze sind ausgegraut.</div>'
-      : "";
+    // Die zweite Warnung kann nur aus getippten Betraegen entstehen: im
+    // Faktorbereich 1,80-2,00 ueberholt kein Platz den ueber sich, das haelt
+    // ein Einheitentest ueber den ganzen Datensatz fest.
+    var warnings = [];
+    if (plan.anyTooTight) {
+      warnings.push("Auf dieser Stufe reichen die Gesamtkosten nicht für alle Plätze. Nicht passende Plätze sind ausgegraut.");
+    }
+    if (plan.anyOutOfOrder) {
+      warnings.push("Ein Platz kostet mehr als ein besser bezahlter über ihm. Prüf die eingetragenen Beträge — so vergibt das Spiel die Plätze nicht.");
+    }
+    $("warn").innerHTML = warnings.map(function (text) {
+      return '<div class="warnline">' + escapeHtml(text) + "</div>";
+    }).join("");
 
     maybeStamp(plan);
     persistState();
@@ -1202,7 +1400,7 @@
       }
       var reset = event.target.closest("[data-slot-reset]");
       if (reset) {
-        state.slotFactors[Number(reset.dataset.slotReset)] = null;
+        clearSlot(Number(reset.dataset.slotReset));
         render();
       }
     });
@@ -1211,9 +1409,21 @@
     // dadurch wird der Platz eigen.
     $("slotList").addEventListener("input", function (event) {
       if (event.target.tagName !== "INPUT") return;
+      var index = Number(event.target.dataset.slot);
+      // Die Einheit der Zeile entscheidet, was hier ankommt. Eine folgende
+      // Zeile uebernimmt die des Blocks und ist danach eigen — in genau
+      // dieser Einheit, sie wird nicht umgerechnet.
+      if (slotUnitFor(index) === "fp") {
+        var amount = parseAmount(event.target.value);
+        if (amount) {
+          setSlotPay(index, amount);
+          render();
+        }
+        return;
+      }
       var parsed = parseFactor(event.target.value);
       if (parsed) {
-        state.slotFactors[Number(event.target.dataset.slot)] = parsed;
+        setSlotFactor(index, parsed);
         render();
       }
     });
@@ -1222,7 +1432,7 @@
     $("slotList").addEventListener("blur", function (event) {
       if (event.target.tagName !== "INPUT") return;
       var index = Number(event.target.dataset.slot);
-      event.target.value = formatFactor(effectiveFactors()[index]);
+      event.target.value = slotFieldValue(index, lastPlan);
     }, true);
 
     $("slotList").addEventListener("focus", function (event) {
@@ -1243,6 +1453,17 @@
     // einem Versehen weg.
     $("slotsReset").addEventListener("click", function () {
       state.slotFactors = normaliseSlotFactors(null);
+      state.slotPays = normaliseSlotPays(null);
+      render();
+    });
+
+    // Der Umschalter aendert keine einzige gespeicherte Zahl — nur, in
+    // welcher Einheit die folgenden Zeilen dastehen und was beim Tippen
+    // gemeint ist. Eingestellte Plaetze behalten ihre eigene Einheit.
+    $("slotUnit").addEventListener("click", function (event) {
+      var button = event.target.closest("[data-slot-unit]");
+      if (!button) return;
+      state.slotUnit = button.dataset.slotUnit === "fp" ? "fp" : "factor";
       render();
     });
 
@@ -1383,7 +1604,7 @@
     var next = clampFactor(current + delta);
     if (!next || next === current) return;
 
-    state.slotFactors[index] = next;
+    setSlotFactor(index, next);
     var input = $("slotList").querySelector('input[data-slot="' + index + '"]');
     if (input) input.value = formatFactor(next);
     render();
@@ -1558,8 +1779,9 @@
   // Aufgeklappt, wenn es etwas zu sehen gibt: entweder war der Block zuletzt
   // offen, oder ein Platz hat einen eigenen Wert. Danach gehoert der Zustand
   // dem Browser, das toggle-Ereignis schreibt ihn nur mit.
-  $("slots").open = state.slotsOpen ||
-    state.slotFactors.some(function (own) { return own != null; });
+  $("slots").open = state.slotsOpen || state.slotPays.some(function (own) {
+    return own != null;
+  }) || state.slotFactors.some(function (own) { return own != null; });
   setTheme(state.theme);
   $("dataDate").textContent = formatDate(DATA.generated);
   bindEvents();

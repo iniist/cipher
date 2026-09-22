@@ -343,16 +343,35 @@ select {
 :root[data-theme="contrast"] .slots-badge { color: #000; border-color: #000; border-width: 2px }
 
 .slots-note { color: var(--dim); font-size: .82rem; margin: 8px 0 0 }
+.slots-unit { margin-top: 8px; width: max-content }
+.slots-unit button { padding: 4px 12px; font-size: .82rem }
 
 .slot-list { list-style: none; margin: 8px 0 0; padding: 0 }
-.slot-list li { display: flex; align-items: center; gap: 8px; margin-top: 6px }
+.slot-list li { margin-top: 6px }
+.slot-row { display: flex; align-items: center; gap: 8px }
 .slot-list .tag { font-size: .95rem; flex: 0 0 34px }
 
 /* Kleiner als der grosse Stepper daruber: fuenf davon in voller Groesse
    waeren ueber 230px hoch. */
-.step.mini { flex: 0 1 148px }
+.step.mini { flex: 0 1 148px; min-width: 0 }
 .step.mini button { flex: 0 0 34px; font-size: 1.1rem }
-.step.mini input { font-size: 1rem; padding: 4px 6px }
+/* min-width, damit das Feld schrumpft statt die Zeile zu sprengen: ein
+   Textfeld haelt sonst seine Eigenbreite und schiebt bei 320 Pixeln das
+   Kreuz aus dem Bild. */
+.step.mini input { font-size: 1rem; padding: 4px 6px; min-width: 0 }
+
+/* Der Stepper misst Faktorstufen. Ein abgelesener Betrag hat keine, also
+   faellt er dort weg und das Feld bekommt die Breite. */
+.slot-list li.fp .step.mini button { display: none }
+.slot-list li.fp .step.mini input { text-align: left; padding-left: 10px }
+
+/* Die andere Einheit steht unter der Zeile, nicht daneben: auf 320 Pixeln
+   waere daneben kein Platz mehr. Sie liegt ausserhalb der Flex-Zeile, denn
+   darin wuerde sie umbrechen — und ein Umbruch greift vor dem Schrumpfen. */
+.slot-hint {
+  display: block; margin: -1px 0 0 42px;
+  color: var(--dim); font-size: .78rem; font-variant-numeric: tabular-nums;
+}
 /* Ein Platz mit eigenem Wert faellt auf — sonst sieht man nicht, welcher
    dem Wert oben noch folgt. */
 .slot-list li.own .step.mini { border-color: var(--gold) }
