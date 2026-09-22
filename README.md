@@ -107,17 +107,33 @@ nacheinander vergeben werden.
 
 **Warum der Bereich bei 1,80 endet.** Die Belohnungen werden auf 5 gerundet,
 halbieren sich von Platz zu Platz also nicht exakt. Spreizt man die Faktoren
-weit genug, kann ein tieferer Platz dadurch mehr kosten als ein höherer —
-über alle 1240 P1-Werte des Datensatzes gemessen:
+weit genug, kann ein tieferer Platz dadurch mehr kosten als ein höherer.
+Gemessen wird der schlechteste Fall — der bessere Platz zahlt mit dem
+schwächsten Faktor des Bereichs, der schlechtere mit dem stärksten — über
+alle 1256 verschiedenen P1-Werte des Datensatzes:
 
 | Bereich | Fälle mit vertauschter Reihenfolge |
 | --- | --- |
 | 1,80 – 2,00 | 0 |
 | 1,50 – 2,00 | 0 |
-| 1,00 – 2,00 | 623 |
+| 1,00 – 2,00 | 628 |
 
 Solange der Bereich bei 1,80 bleibt, kann der Fall nicht eintreten und
 braucht keine Warnung.
+
+Die Tabelle stammt aus [`tools/order-scan.js`](./tools/order-scan.js); das
+Skript nimmt auch eigene Bereiche (`node tools/order-scan.js 170-200`). Weil
+sie mit dem Datensatz altert, hält ein Einheitentest die Aussage selbst fest:
+Über den gesamten Datensatz darf im Bereich 1,80–2,00 kein Platz mit
+kleinerer Belohnung den über ihm überholen. Nach einem Import ist die Tabelle
+darum nachzuziehen, aber ein stiller Fehler kann sie nicht mehr werden.
+
+Eine Ausnahme der Ehrlichkeit halber: Gezählt werden nur Plätze mit **echt
+kleinerer** Belohnung. Bei P1 = 5 fällt auch P2 auf 5, weil auf Vielfache von
+5 gerundet wird — zwei gleich hohe Belohnungen trennt dann nur noch der
+Faktor, und P2 mit 2,00 kostet 10 FP gegen P1 mit 1,80 und 9 FP. Das betrifft
+Stufe 1 eines Bauwerks und geht um 1 FP; eine Warnung wäre dafür lauter als
+die Sache.
 
 ### Bauwerk finden
 
@@ -279,6 +295,7 @@ robots.txt        Hält /tools/ und /test/ aus dem Suchindex
 tools/serve.js    Statischer Server für Entwicklung und Tests
 tools/import.html Holt die Daten aus dem Wiki (läuft nur lokal)
 tools/build-data.js  Macht aus dem Import wieder data.js
+tools/order-scan.js  Misst die Faktor-Spreizung für die Tabelle oben
 test/             Einheitentests (node:test) und Browsertests (Playwright)
 ```
 
@@ -432,6 +449,7 @@ Schritte:
 # „Alle LGs importieren", dann „Datendatei herunterladen"
 node tools/build-data.js ~/Downloads/lg-daten.json
 npm run test:unit
+node tools/order-scan.js   # Tabelle unter „Warum der Bereich bei 1,80 endet" nachziehen
 ```
 
 Der Importer läuft absichtlich nicht über `npm run serve`: der Testserver
