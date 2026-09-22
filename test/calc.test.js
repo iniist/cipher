@@ -9,6 +9,7 @@ const assert = require("node:assert/strict");
 
 const Calc = require("../calc.js");
 const DATA = require("../data.js");
+const Scan = require("../tools/order-scan.js");
 
 const arc = DATA.buildings.find((b) => b.id === "The_Arc");
 const observatory = DATA.buildings.find((b) => b.id === "Observatory");
@@ -583,4 +584,28 @@ test("faellt kein Platz heraus, bleibt es beim Zuschlag", () => {
   const mit = Calc.buildPlan({ ...argument, p1Secure: 795 });
   assert.notDeepEqual(mit, Calc.buildPlan(argument));
   assert.ok(mit.rows.every((row) => !row.tooTight));
+});
+
+test("im zulaessigen Faktorbereich ueberholt keine kleinere Belohnung", () => {
+  // Der Grund, warum der Faktor erst bei 1,80 anfaengt: Jeder Platz hat einen
+  // eigenen Faktor, und die auf 5 gerundeten Belohnungen halbieren sich nicht
+  // exakt. Spreizt man weit genug, kostet ein tieferer Platz mehr als der
+  // ueber ihm. Der schlechteste Fall ist der bessere Platz beim schwaechsten
+  // Faktor gegen den schlechteren beim staerksten.
+  // tools/order-scan.js misst dasselbe fuer beliebige Bereiche.
+  for (const p1 of Scan.p1Values()) {
+    assert.ok(!Scan.inverts(p1, 180, 200), `P1 ${p1}: ein tieferer Platz kostet mehr`);
+  }
+});
+
+test("gleich hohe Belohnungen kehren sich sehr wohl um", () => {
+  // Die eine Stelle, an der der Bereich nicht schuetzt, und der Grund, warum
+  // der Test oben nur echt kleinere Belohnungen prueft: Bei P1 = 5 faellt
+  // auch P2 auf 5, weil auf Vielfache von 5 gerundet wird. Zwei gleiche
+  // Belohnungen trennt dann nur noch der Faktor.
+  assert.deepEqual(Calc.rewardChain(5), [5, 5, 0, 0, 0]);
+  assert.equal(Calc.contribution(5, 180), 9);
+  assert.equal(Calc.contribution(5, 200), 10);
+  // Betroffen ist damit nur Stufe 1 eines Bauwerks, und es geht um 1 FP.
+  assert.ok(DATA.curves["Bronzezeit"].p1[0] === 5);
 });
