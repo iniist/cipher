@@ -150,18 +150,28 @@ Shattered_Horizon_Siphon | Horizontriss-Siphon | Stellares Zeitalter`;
 const CHECKS = {
   Stellar_Warship: { 50: [38477, 1085], 60: [49254, 1350], 120: [216707, 3115], 212: [2101199, 6180] },
   Saturn_VI_Gate_PEGASUS: { 12: [2648, 185], 60: [8662, 1310], 63: [9328, 1390], 80: [14193, 1850] },
+  // Im Förderfenster abgelesen, Stufe 141 und 150. Beide liegen weit
+  // oberhalb der Stufe 110, bis zu der das Wiki die Virtuelle Zukunft
+  // kennt — und genau dort war die Hochrechnung bisher am unsichersten.
+  // Sie hat gehalten: 141 traf auf den Punkt, 150 lag 5 FP zu hoch.
+  Terracotta_Army: { 141: [30734, 3075], 150: [38382, 3310] },
+  // Stufe 142 der Fliegenden Insel, 22 Stufen über dem höchsten
+  // Wiki-Wert der Venus. Sie belegt nebenbei das Zeitalter: als Venus
+  // liegt die Kurve 5 FP daneben, als Virtuelle Zukunft wären es 350.
+  Flying_Island: { 142: [35147, 3455] },
   // Im Förderfenster abgelesen. Stufe 202 liegt über allem, was das Wiki
   // für die Bronzezeit kennt, und zieht deren Kurve am oberen Ende gerade.
   Statue_of_Zeus: { 111: [6176, 975], 125: [8726, 1125], 202: [58419, 2005] },
   // Die Stufen 164, 165, 174 und 175 belegen, dass die Wiki-Tabelle der
   // Jahrhundertwende dort verdorben ist: das Spiel nennt 2555, 2570, 2740
   // und 2760, das Wiki 2590, 2590, 2760 und 2780 — bis zu 35 FP daneben.
-  // Der Kurvenwert traf dreimal exakt und einmal auf 5 FP genau. 99, 169
-  // und 197 bestätigen die Tabelle ausserhalb der verdorbenen Stellen.
+  // Der Kurvenwert traf dreimal exakt und einmal auf 5 FP genau. 99, 169,
+  // 197 und 240 bestätigen die Tabelle ausserhalb der verdorbenen Stellen;
+  // 240 ist die letzte Stufe, die das Wiki kennt, und stimmt.
   Château_Frontenac: {
     99: [7474, 1390], 164: [37201, 2555], 165: [38131, 2570],
     169: [42090, 2645], 174: [47621, 2740], 175: [48811, 2760],
-    177: [51282, null], 197: [84032, 3180]
+    177: [51282, null], 197: [84032, 3180], 240: [242979, 4035]
   },
   // Im Spiel abgelesen; das Wiki kennt den Siphon gar nicht. Mit der fünften
   // Stufe ist die Schwelle erreicht, ab der finalize die Kostenbasis selbst
