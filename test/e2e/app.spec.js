@@ -4,7 +4,8 @@
  */
 const { test, expect } = require("@playwright/test");
 const DATA = require("../../data.js");
-const { mitTestdaten, OHNE_DATEN } = require("./testdaten");
+const Calc = require("../../calc.js");
+const { mitTestdaten, testDaten, OHNE_DATEN, WACKLIG, WACKLIG_STUFEN } = require("./testdaten");
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/index.html");
@@ -164,12 +165,21 @@ test("ein widerspruechlicher Wiki-Wert bittet um Bestaetigung, nicht um Rettung"
 });
 
 test("ein wackliges Zeitalter sagt, wie weit es danebenliegen kann", async ({ page }) => {
-  // Gegenstueck zur Bronzezeit: die Virtuelle Zukunft verfehlt im
-  // Ausblendtest etliche Stufen deutlich. Über der Wiki-Grenze steht darum
-  // eine Zeile — eine Zeile, kein Kasten, und die Gesamtkosten kommen nicht
-  // vor: die Kostenformel ist geprueft.
-  await page.selectOption("#building", "Terracotta_Army");
-  await page.fill("#level", "210");
+  // Gegenstueck zur Bronzezeit, wo ueber der Wiki-Grenze nichts steht: eine
+  // Kurve, die den Ausblendtest nicht besteht, bekommt eine Zeile — eine
+  // Zeile, kein Kasten, und die Gesamtkosten kommen nicht vor, denn die
+  // Kostenformel ist geprueft.
+  //
+  // Das Zeitalter kommt aus den Testdaten, nicht aus dem Wiki. Vorher stand
+  // hier die Virtuelle Zukunft; als zwei abgelesene Stufen ihre Kurve
+  // absicherten, verschwand der Hinweis und der Test fiel um — geprueft
+  // worden war die Datenlage, nicht die Anzeige.
+  await mitTestdaten(page);
+  await page.goto("/index.html");
+
+  const stufe = WACKLIG_STUFEN + 30;
+  await page.selectOption("#building", WACKLIG);
+  await page.fill("#level", String(stufe));
   await page.locator("#level").blur();
 
   const note = page.locator(".note.quiet");
@@ -178,11 +188,16 @@ test("ein wackliges Zeitalter sagt, wie weit es danebenliegen kann", async ({ pa
   await expect(note).not.toContainText("Gesamt");
   await expect(page.locator(".note.chk")).toHaveCount(0);
 
-  // Das Feld ist da, es draengt sich nur nicht auf.
+  // Das Feld ist da, es draengt sich nur nicht auf, und es steht die Zahl
+  // drin, mit der der Plan gerechnet hat.
+  const daten = testDaten();
+  const erwartet = Calc.p1Reward(daten.buildings.find((b) => b.id === WACKLIG), stufe, daten.curves);
+  expect(erwartet.source).toBe("derived");
+
   await expect(page.locator("#inputP1")).toBeHidden();
   await page.click("#noteReveal");
   await expect(page.locator("#inputP1")).toBeVisible();
-  await expect(page.locator("#inputP1")).toHaveValue("4980");
+  await expect(page.locator("#inputP1")).toHaveValue(String(erwartet.value));
   await expect(page.locator("#inputTotal")).toHaveCount(0);
 
   await page.click("#applyInput");

@@ -216,15 +216,31 @@ test("curveReliability merkt sich das Ergebnis je Kurvenobjekt", () => {
   assert.equal(Calc.curveReliability("Bronzezeit", curve), Calc.curveReliability("Bronzezeit", curve));
 });
 
-test("der Ausblendtest trennt verlaessliche von wackligen Zeitaltern", () => {
-  // Diese beiden Zeitalter traegt auch der Browsertest: in der Bronzezeit
-  // steht ueber der Wiki-Grenze kein Hinweis, in der Virtuellen Zukunft schon.
-  const bronze = Calc.curveReliability("Bronzezeit", DATA.curves["Bronzezeit"]);
-  assert.equal(bronze.misses, 0, "die Bronzezeit trifft jede ausgeblendete Stufe auf 5 FP genau");
+/** Eine Kurve aus lauter echten Werten rechnen, fuer den Ausblendtest. */
+function kurve(stufen, formel) {
+  const p1 = [];
+  for (let level = 1; level <= stufen; level++) p1.push(Calc.roundTo5(formel(level)));
+  return { p1: p1, source: "w".repeat(stufen) };
+}
 
-  const virtual = Calc.curveReliability("Virtuelle Zukunft", DATA.curves["Virtuelle Zukunft"]);
-  assert.ok(virtual.misses > 0, "die Virtuelle Zukunft tut das nicht");
-  assert.ok(virtual.worst > 5, `groesste Abweichung war nur ${virtual.worst} FP`);
+test("der Ausblendtest trennt verlaessliche von wackligen Kurven", () => {
+  // Frueher standen hier zwei echte Zeitalter als Beispiele: die Bronzezeit
+  // als verlaessliche, die Virtuelle Zukunft als wacklige. Dann trugen zwei
+  // im Spiel abgelesene Stufen die Virtuelle Zukunft so weit ab, dass sie
+  // den Test ohne Fehlschuss bestand — und der Test fiel um, obwohl der
+  // Datensatz besser geworden war. Geprueft wird darum das Verfahren, nicht
+  // der Stand des Wikis: zwei gerechnete Kurven, eine sauber, eine krumm.
+  const sauber = kurve(140, (level) => 8 * Math.pow(level, 1.206));
+  const glatt = Calc.curveReliability("sauber", sauber);
+  assert.equal(glatt.misses, 0, "eine reine Potenzkurve trifft jede ausgeblendete Stufe");
+
+  // Ein Exponentenknick bei Stufe 70: wer nur unten fittet, verfehlt oben.
+  const krumm = kurve(140, (level) => (level <= 70
+    ? 8 * Math.pow(level, 1.2)
+    : 8 * Math.pow(70, 1.2 - 1.25) * Math.pow(level, 1.25)));
+  const wacklig = Calc.curveReliability("krumm", krumm);
+  assert.ok(wacklig.misses > 0, "ein Knick in der Kurve muss auffallen");
+  assert.ok(wacklig.worst > 5, `groesste Abweichung war nur ${wacklig.worst} FP`);
 
   // Jede gepruefte Kurve nennt entweder Zahlen oder gar nichts.
   for (const [era, curve] of Object.entries(DATA.curves)) {
