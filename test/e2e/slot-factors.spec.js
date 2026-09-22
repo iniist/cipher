@@ -1,5 +1,5 @@
 /**
- * Browsertests fuer den Block "Je Platz".
+ * Browsertests fuer den Block "Faktor oder FP je Platz".
  *
  * Das Modell dahinter in zwei Saetzen: ein Platz *folgt* dem Wert oben, bis
  * jemand ihn anfasst — danach ist er *eigen* und bleibt stehen, wenn der

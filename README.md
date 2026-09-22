@@ -78,11 +78,12 @@ An der Bereichsgrenze verblasst das Zeichen, nicht der Knopf: `opacity` hätte
 auch seine Trennlinie mitgenommen. Im Kontrastmodus verschwindet das Zeichen
 stattdessen ganz, denn ein blasses Grau wäre dort genau das Falsche.
 
-### Je Platz
+### Faktor oder FP je Platz
 
 Der Arche-Bonus gehört dem Förderer, nicht dem Bauwerk: wer P3 übernimmt,
 kann eine andere Arche haben als wer P1 nimmt. Hinter dem Aufklapper
-„Je Platz“ steht darum für jeden der fünf Plätze ein eigener Wert.
+„Faktor oder FP je Platz“ steht darum für jeden der fünf Plätze ein
+eigener Wert.
 
 Das Modell in zwei Sätzen:
 
