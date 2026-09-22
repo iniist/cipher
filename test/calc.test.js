@@ -593,6 +593,11 @@ test("im zulaessigen Faktorbereich ueberholt keine kleinere Belohnung", () => {
   // ueber ihm. Der schlechteste Fall ist der bessere Platz beim schwaechsten
   // Faktor gegen den schlechteren beim staerksten.
   // tools/order-scan.js misst dasselbe fuer beliebige Bereiche.
+  //
+  // Die Aussage gilt fuer Einzahlungen, die aus einem Faktor stammen. Ein
+  // getippter Betrag (options.payments) kennt die Schranke nicht — dort
+  // meldet der Plan die Umkehr selbst, siehe "ein getippter Betrag kann die
+  // Reihenfolge kippen".
   for (const p1 of Scan.p1Values()) {
     assert.ok(!Scan.inverts(p1, 180, 200), `P1 ${p1}: ein tieferer Platz kostet mehr`);
   }
@@ -608,4 +613,116 @@ test("gleich hohe Belohnungen kehren sich sehr wohl um", () => {
   assert.equal(Calc.contribution(5, 200), 10);
   // Betroffen ist damit nur Stufe 1 eines Bauwerks, und es geht um 1 FP.
   assert.ok(DATA.curves["Bronzezeit"].p1[0] === 5);
+});
+
+// --------------------------------------------------------- Betrag je Platz
+//
+// Ein Foerderer, dessen Einzahlung du kennst statt sie zu schaetzen: er hat
+// den Platz schon genommen, oder er hat eine Summe zugesagt, die zu keinem
+// Faktor im zulaessigen Bereich passt. Dann steht der Betrag im Plan, und
+// alles darunter rechnet sich daran neu.
+
+test("ein fester Betrag ersetzt die aus dem Faktor gerechnete Einzahlung", () => {
+  const plan = Calc.buildPlan({
+    total: 10000, p1: 800, factor: 190, enabled: allOn,
+    payments: [null, null, 500, null, null]
+  });
+  assert.equal(plan.rows[2].contribution, 500);
+  assert.equal(plan.rows[2].fixed, true);
+  // Die Nachbarn bleiben, wie sie waren — der Betrag gilt nur fuer P3.
+  assert.equal(plan.rows[1].fixed, false);
+  assert.equal(plan.rows[1].contribution, Calc.contribution(plan.rows[1].reward, 190));
+});
+
+test("ein fester Betrag verschiebt die Absicherung der Plaetze darunter", () => {
+  const argument = { total: 10000, p1: 800, factor: 190, enabled: allOn };
+  const normal = Calc.buildPlan(argument);
+  const gesnipert = Calc.buildPlan({ ...argument, payments: [null, null, 500, null, null] });
+
+  // P3 zahlt mehr, muss also weniger vorgesichert werden — und laesst dafuer
+  // mehr im Topf, was P4 teurer absichert. Genau die Verschiebung, um die es
+  // geht.
+  assert.ok(gesnipert.rows[2].secure < normal.rows[2].secure);
+  assert.ok(gesnipert.rows[3].secure > normal.rows[3].secure);
+
+  // Und die Kasse stimmt weiter: jeder FP mehr vom Foerderer ist einer
+  // weniger von dir.
+  assert.equal(gesnipert.external + gesnipert.ownShare, gesnipert.total);
+  assert.equal(
+    normal.ownShare - gesnipert.ownShare,
+    gesnipert.rows[2].contribution - normal.rows[2].contribution
+  );
+});
+
+test("egal wann das Geld hereinkommt, der Eigenanteil bleibt derselbe", () => {
+  // Der Grund, warum es keinen Zustand "hat schon eingezahlt" braucht: die
+  // Kette teleskopiert. Nach einem gesicherten Platz steht immer genau
+  // dessen Einzahlung offen — ob sie vorher oder an ihrer Stelle in der
+  // Reihe eingeht, aendert nur, wann du wie viel vorstreckst.
+  const pays = [6400, 3200, 1500, 270, 50];
+  const alsZusage = Calc.buildPlan({
+    total: 86133, p1: 3200, factor: 200, enabled: allOn, payments: pays
+  });
+
+  // Dasselbe von Hand, aber P3 liegt schon im Topf und wird nicht angeboten.
+  let rest = 86133 - pays[2];
+  let vorab = 0;
+  const jeZeile = [];
+  pays.forEach((pay, index) => {
+    if (index === 2) { jeZeile.push(null); return; }
+    const noetig = Math.max(0, rest - 2 * pay);
+    jeZeile.push(noetig);
+    vorab += noetig;
+    rest -= noetig + pay;
+  });
+
+  assert.equal(alsZusage.ownShare, vorab + rest);
+  // Sogar die Summe des Vorgestreckten ist dieselbe — beides folgt daraus,
+  // dass sich die Kette zusammenschiebt.
+  assert.equal(alsZusage.upfront, vorab);
+
+  // Was sich sehr wohl unterscheidet, ist die Verteilung ueber die Zeilen:
+  // liegt das Geld schon drin, faellt sie bei P1 kleiner und bei P4 groesser
+  // aus. Das ist die Frage "wann muss ich wie viel vorstrecken", nicht die
+  // Frage "was kostet mich die Stufe".
+  assert.notDeepEqual(alsZusage.rows.map((row) => row.secure), jeZeile);
+  assert.ok(alsZusage.rows[0].secure > jeZeile[0]);
+  assert.ok(alsZusage.rows[3].secure < jeZeile[3]);
+});
+
+test("der Zuschlag fuer ein unsicheres P1 laesst feste Betraege in Ruhe", () => {
+  // Der Zuschlag gleicht aus, dass eine hergeleitete P1-Belohnung bis zu
+  // 5 FP zu hoch liegen kann. Ein abgelesener Betrag hat diese Unsicherheit
+  // nicht, also wird er auch nicht kleiner gerechnet.
+  const plan = Calc.buildPlan({
+    total: 10000, p1: 800, p1Secure: 795, factor: 190, enabled: allOn,
+    payments: [1000, null, null, null, null]
+  });
+  assert.equal(plan.rows[0].contribution, 1000);
+  assert.equal(plan.rows[0].secure, 10000 - 2 * 1000);
+});
+
+test("ein getippter Betrag kann die Reihenfolge kippen", () => {
+  const argument = { total: 10000, p1: 800, factor: 190, enabled: allOn };
+  assert.equal(Calc.buildPlan(argument).anyOutOfOrder, false);
+
+  // P4 zahlt mehr als P3, obwohl P4 weniger ausschuettet.
+  const kaputt = Calc.buildPlan({ ...argument, payments: [null, null, null, 900, null] });
+  assert.equal(kaputt.anyOutOfOrder, true);
+  assert.equal(kaputt.rows[3].outOfOrder, true);
+  assert.equal(kaputt.rows[2].outOfOrder, false, "gemeldet wird der ueberholende Platz");
+
+  // Ein hoher Betrag auf einem hohen Platz ist dagegen voellig in Ordnung.
+  const sponsor = Calc.buildPlan({ ...argument, payments: [9000, null, null, null, null] });
+  assert.equal(sponsor.anyOutOfOrder, false);
+});
+
+test("Betraege unter oder gleich null zaehlen als nicht gesetzt", () => {
+  const argument = { total: 10000, p1: 800, factor: 190, enabled: allOn };
+  const normal = Calc.buildPlan(argument);
+  [[0, null, null, null, null], [-5, null, null, null, null], []].forEach((payments) => {
+    const plan = Calc.buildPlan({ ...argument, payments });
+    assert.deepEqual(plan.rows[0].contribution, normal.rows[0].contribution);
+    assert.equal(plan.rows[0].fixed, false);
+  });
 });

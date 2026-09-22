@@ -51,8 +51,8 @@ erlaubt: ein Bauwerk, das noch gar nicht steht.
 
 ### Arche-Faktor
 
-Der Faktor läuft über einen Stepper mit eintippbarem Feld: `−`, Wert, `+`,
-darunter die Schnellwahl für die gängigen Werte. Zulässig ist 1,80 bis 2,00.
+Der obere Faktor läuft über einen Stepper mit eintippbarem Feld: `−`, Wert,
+`+`, darunter die Schnellwahl für die gängigen Werte. Zulässig ist 1,80 bis 2,00.
 Das Feld nimmt an, was man tatsächlich tippt — `1,93`, `1.93`, `1,9`, `193`
 und `193 %` führen alle zum selben Ergebnis. Pfeiltasten ändern den Wert um
 eine Stufe.
@@ -78,11 +78,11 @@ An der Bereichsgrenze verblasst das Zeichen, nicht der Knopf: `opacity` hätte
 auch seine Trennlinie mitgenommen. Im Kontrastmodus verschwindet das Zeichen
 stattdessen ganz, denn ein blasses Grau wäre dort genau das Falsche.
 
-### Faktor je Platz
+### Je Platz
 
 Der Arche-Bonus gehört dem Förderer, nicht dem Bauwerk: wer P3 übernimmt,
 kann eine andere Arche haben als wer P1 nimmt. Hinter dem Aufklapper
-„Faktor je Platz“ steht darum für jeden der fünf Plätze ein eigener Wert.
+„Je Platz“ steht darum für jeden der fünf Plätze ein eigener Wert.
 
 Das Modell in zwei Sätzen:
 
@@ -97,6 +97,40 @@ Vorgabe für jeden Platz ohne eigenen Wert und zeigt damit immer etwas
 Wahres. Ausgegraut würde er weiter „1,90“ anzeigen, während die Plätze
 längst etwas anderes sagen. Gibt es Unterschiede, nennt der Kopf des Blocks
 die Spanne (`1,85–1,95`), auch zugeklappt.
+
+#### Faktor oder Betrag
+
+Wer einen Platz wegschnappt, zahlt eine Summe, die zu keinem Faktor im
+zulässigen Bereich passt — und trotzdem verschiebt sie alles darunter. Darum
+nimmt jede Platz-Zeile ihren Wert wahlweise als Faktor oder als Betrag in FP
+entgegen; der Umschalter im Block wählt, was eine folgende Zeile anzeigt.
+
+Es ist **ein** Feld, nicht zwei nebeneinander, weil es eine Zahl ist: die
+Einzahlung dieses Platzes. Zwei Bedienelemente für dieselbe Zahl können sich
+widersprechen — dann zeigt die Tabelle den einen Wert an, während der Plan mit
+dem anderen rechnet. Unter dem Feld steht darum immer die jeweils andere
+Lesart (`≙ 6.400 FP`, `≙ Faktor 2,00`), dieselbe Idee wie bei der Stufenzahl.
+
+Getippt wird in der Einheit, die im Feld **steht**, nicht in der des
+Umschalters. Andersherum würde ein Klick in ein Feld mit `10.000` diesen
+Betrag als Faktor lesen und auf 2,00 stutzen. Weicht eine Zeile vom Umschalter
+ab, nennt ihr Nachsatz darum beide Einheiten — `10.000 FP ≙ Faktor 3,13` statt
+nur `≙ Faktor 3,13`. Neben dem Feld wäre dafür kein Platz: bei 320 Pixeln
+drängt schon ein längeres Wort das × aus der Zeile. Die Einheit wechselt ein
+Platz nur über das ×, das ihn ohnehin freigibt.
+
+Das Abzeichen am zugeklappten Block nennt die Faktorspanne nur, solange alle
+eigenen Werte Faktoren sind. Eine Betragsspanne wäre nichtssagend — 50 bis
+10.000 ist zwischen P5 und P1 der Normalfall. Dann steht dort, wie viele
+Plätze eigene Werte tragen.
+
+**Was es nicht gibt: „hat schon eingezahlt“.** Naheliegend wäre ein dritter
+Zustand für einen Platz, dessen FP bereits im Topf liegen. Er ändert am Geld
+aber nichts: die Kette schiebt sich zusammen, weil nach einem gesicherten
+Platz immer genau dessen Einzahlung offensteht. Ob sie vorab eingeht oder an
+ihrer Stelle in der Reihe, ändert weder den Eigenanteil noch die Summe des
+Vorgestreckten — nur, welche Zeile wie viel davon trägt. Ein Einheitentest
+hält das fest.
 
 **Die Absicherung trägt das ohne neue Regel.** `buildPlan` rechnet
 `needed = remaining − 2 × Einzahlung` — mit der Einzahlung *dieses* Platzes.
@@ -120,6 +154,12 @@ alle 1256 verschiedenen P1-Werte des Datensatzes:
 
 Solange der Bereich bei 1,80 bleibt, kann der Fall nicht eintreten und
 braucht keine Warnung.
+
+Für **getippte Beträge** gilt die Schranke nicht: wer P4 auf 2.000 setzt,
+während P3 bei 1.070 steht, hat eine Reihenfolge gebaut, die das Spiel so
+nicht vergibt. Verboten wird das nicht — du trägst ein, was im Förderfenster
+steht —, aber der Plan sagt es. Der Einheitentest oben prüft deshalb
+ausdrücklich nur Einzahlungen, die aus einem Faktor stammen.
 
 Die Tabelle stammt aus [`tools/order-scan.js`](./tools/order-scan.js); das
 Skript nimmt auch eigene Bereiche (`node tools/order-scan.js 170-200`). Weil
@@ -371,7 +411,8 @@ laufenden Durchgang ab, damit auf einem privaten Repo keine Minuten
 verpuffen. Schlägt ein Browsertest fehl, hängt der Playwright-Bericht sieben
 Tage als Artefakt am Lauf.
 
-Die Browsertests decken Berechnung, den Faktor je Platz, die Lesart der
+Die Browsertests decken Berechnung, den Wert je Platz in beiden Einheiten,
+die Lesart der
 Stufenzahl, Favoriten, Speicherung, Migration aus dem Vorgänger, die
 Rechtstexte, Barrierefreiheit, die Easter Eggs, die Sicherheits-Header samt
 CSP und die Zusicherung „keine externen Anfragen“ ab.

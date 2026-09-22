@@ -344,6 +344,35 @@
   }
 
   /**
+   * Plaetze markieren, die einen Platz ueber sich ueberholen: kleinere
+   * Belohnung, aber hoehere Einzahlung.
+   *
+   * Aus Faktoren im zulaessigen Bereich kann das nicht entstehen — genau das
+   * haelt der Einheitentest ueber den ganzen Datensatz fest, und deshalb
+   * braucht der Faktorbereich keine Warnung. Ein getippter Betrag kennt die
+   * Schranke aber nicht: wer P4 mit 500 eintraegt, waehrend P3 bei 300 steht,
+   * hat eine Reihenfolge gebaut, die das Spiel so nicht vergibt. Gezaehlt
+   * werden nur echt kleinere Belohnungen; zwei gleich hohe (P1 = P2 = 5 nach
+   * dem Runden) trennt ohnehin nur der Faktor.
+   *
+   * @param {Array<object>} rows
+   * @returns {boolean} ob mindestens eine Zeile ueberholt
+   */
+  function markOutOfOrder(rows) {
+    var any = false;
+    rows.forEach(function (row, index) {
+      for (var above = 0; above < index; above++) {
+        if (rows[above].reward > row.reward && rows[above].contribution < row.contribution) {
+          row.outOfOrder = true;
+          any = true;
+          return;
+        }
+      }
+    });
+    return any;
+  }
+
+  /**
    * Den Foerderplan fuer eine Stufe berechnen.
    *
    * Idee: Die Plaetze werden von P1 abwaerts vergeben. Bevor ein Platz
@@ -376,17 +405,26 @@
    *   Platz ohne eigenen Wert
    * @param {Array<number|null>} [options.factors] Faktor je Platz; null oder
    *   fehlend heisst: options.factor gilt
+   * @param {Array<number|null>} [options.payments] Fester Betrag je Platz, der
+   *   die aus dem Faktor gerechnete Einzahlung ersetzt. Gedacht fuer einen
+   *   Foerderer, dessen Einzahlung du kennst statt sie zu schaetzen — etwa
+   *   weil er den Platz schon genommen hat. Ein fester Betrag ist von
+   *   options.p1Secure unberuehrt: der Zuschlag gleicht die Unsicherheit einer
+   *   hergeleiteten P1-Belohnung aus, eine abgelesene Zahl hat sie nicht.
    * @param {boolean[]} options.enabled Welche Plaetze angeboten werden (Laenge 5)
    * @returns {{
    *   rows: Array<{slot:number, reward:number, factor:number, contribution:number,
-   *                offered:boolean, secure:number|null, tooTight:boolean}>,
+   *                offered:boolean, secure:number|null, tooTight:boolean,
+   *                fixed:boolean, outOfOrder:boolean}>,
    *   total:number, external:number, ownShare:number,
-   *   upfront:number, remainder:number, anyTooTight:boolean
+   *   upfront:number, remainder:number, anyTooTight:boolean,
+   *   anyOutOfOrder:boolean
    * }}
    */
   function buildPlan(options) {
     var total = options.total;
     var factors = options.factors || [];
+    var fixed = options.payments || [];
     var enabled = options.enabled;
 
     /** Der Faktor, der fuer diesen Platz tatsaechlich gilt. */
@@ -394,10 +432,17 @@
       return factors[index] != null ? factors[index] : options.factor;
     }
 
-    /** Die Einzahlungen aller fuenf Plaetze zu einer P1-Belohnung. */
+    /** Ob dieser Platz einen getippten Betrag hat statt eines gerechneten. */
+    function isFixed(index) { return fixed[index] > 0; }
+
+    /**
+     * Die Einzahlungen aller fuenf Plaetze zu einer P1-Belohnung.
+     * Ein fester Betrag gilt unveraendert — auch fuer die Absicherung, denn
+     * er ist abgelesen und nicht aus der Belohnung hergeleitet.
+     */
     function paymentsFor(p1) {
       return rewardChain(p1).map(function (reward, index) {
-        return contribution(reward, factorFor(index));
+        return isFixed(index) ? Math.floor(fixed[index]) : contribution(reward, factorFor(index));
       });
     }
 
@@ -423,7 +468,9 @@
           contribution: pay,
           offered: Boolean(enabled[index]) && reward > 0,
           secure: null,
-          tooTight: false
+          tooTight: false,
+          fixed: isFixed(index),
+          outOfOrder: false
         };
         if (!row.offered) return row;
 
@@ -458,7 +505,8 @@
         ownShare: upfront + remaining,
         upfront: upfront,
         remainder: remaining,
-        anyTooTight: anyTooTight
+        anyTooTight: anyTooTight,
+        anyOutOfOrder: markOutOfOrder(rows)
       };
     }
 
