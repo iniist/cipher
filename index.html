@@ -175,7 +175,7 @@
     </div>
 
     <table>
-      <thead><tr><th scope="col">Platz</th><th scope="col">Belohnung</th><th scope="col">Einzahlen</th><th scope="col">Vorher sichern</th></tr></thead>
+      <thead><tr><th scope="col">Platz</th><th scope="col">Belohnung</th><th scope="col">Einzahlen</th><th scope="col" class="th-pre"><button type="button" id="secureMode"><span id="secureModeLabel">Vorher sichern</span><span class="th-caret" aria-hidden="true">▾</span></button></th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
 
@@ -219,7 +219,11 @@
   </section>
 
   <div class="foot">
-    <p>„Vorher sichern“ ist, was du selbst einzahlen musst, bevor der Platz vergeben wird, damit ihn niemand mehr überbieten kann. Häkchen weg = Platz wird nicht angeboten.</p>
+    <!-- Zwei Zeilen, nicht drei: quer auf einem iPhone SE kostet jede weitere
+     Zeile hier ein Zwanzigstel Bildschirm, und der Test daneben haelt die
+     Seite unter 4,5 Bildschirmen. Wann genau eingezahlt wird, erklaert der
+     Kasten ueber der Tabelle ohnehin genauer. -->
+  <p>„Vorher sichern“ ist, was du vorab einzahlen musst, damit der Platz nicht überboten werden kann. Der Spaltenkopf schaltet auf die laufende Summe um. Häkchen weg = Platz wird nicht angeboten.</p>
     <p>Daten: <a href="https://forgeofempires.fandom.com/de/wiki/" target="_blank" rel="noopener noreferrer">Forge of Empires Wiki</a> (Fandom, <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.de" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a>), Stand <span id="dataDate"></span>. Kosten per Formel, P2–P5 aus P1 berechnet.</p>
   </div>
 
