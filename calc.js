@@ -9,7 +9,7 @@
  *   P1..P5         Die fuenf Maezen-Plaetze. P1 zahlt am meisten Belohnung aus.
  *   Faktor         Arche-Bonus als Ganzzahl in Prozent (190 = 1,90).
  *   Einzahlen      Was ein Foerderer zahlen muss, um den Platz zu bekommen.
- *   Vorher sichern Was du selbst vorab einzahlst, damit der Platz nicht
+ *   Sichern        Was du selbst vorab einzahlst, damit der Platz nicht
  *                  ueberboten werden kann.
  */
 (function (root, factory) {
