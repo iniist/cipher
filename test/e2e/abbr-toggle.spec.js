@@ -2,7 +2,7 @@
  * Browsertests fuer den Schalter "Kuerzel".
  *
  * Mit dem Schalter nennt cipher jedes Bauwerk mit seinem Kuerzel aus
- * abbr.js ("AO" statt "Orangerie") — ueberall, wo es kurz genannt wird.
+ * abbr.js ("AO" statt "Arktische Orangerie") — ueberall, wo es kurz genannt wird.
  * Ein selbst vergebenes Kuerzel gilt in beiden Stellungen.
  */
 const { test, expect } = require("@playwright/test");
@@ -22,10 +22,10 @@ async function orangerie(page) {
 }
 
 test.describe("Der Schalter", () => {
-  test("ist anfangs aus, und alles bleibt beim Kurznamen", async ({ page }) => {
+  test("ist anfangs aus, und alles steht beim vollen Namen", async ({ page }) => {
     await orangerie(page);
     await expect(schalter(page)).not.toBeChecked();
-    await expect(chat(page)).toContainText("Dani Orangerie");
+    await expect(chat(page)).toContainText("Dani Arktische Orangerie");
   });
 
   test("setzt das Kuerzel in Chat-Zeilen, Merken-Knopf und Platzhalter", async ({ page }) => {
@@ -47,7 +47,7 @@ test.describe("Der Schalter", () => {
   test("wirkt auf die Favoriten-Chips", async ({ page }) => {
     await orangerie(page);
     await page.click("#favSave");
-    await expect(page.locator("#favList .fav-n").first()).toHaveText("Orangerie");
+    await expect(page.locator("#favList .fav-n").first()).toHaveText("Arktische Orangerie");
 
     await schalter(page).check();
     await expect(page.locator("#favList .fav-n").first()).toHaveText("AO");
@@ -91,7 +91,7 @@ test.describe("Die Sammlung zieht mit", () => {
     await page.click('[data-copy="chatPlain"]');
 
     const zeilen = page.locator("#collList .coll-t");
-    await expect(zeilen.nth(0)).toContainText("Dani Orangerie P");
+    await expect(zeilen.nth(0)).toContainText("Dani Arktische Orangerie P");
     await expect(zeilen.nth(1)).toContainText("Dani Terrakotta-Armee P");
 
     await schalter(page).check();
@@ -105,7 +105,7 @@ test.describe("Die Sammlung zieht mit", () => {
     expect(gespeichert[1]).toMatch(/^Dani TA P/);
 
     await schalter(page).uncheck();
-    await expect(zeilen.nth(0)).toContainText("Dani Orangerie P");
+    await expect(zeilen.nth(0)).toContainText("Dani Arktische Orangerie P");
   });
 
   test("gilt auch ohne Spielernamen", async ({ page }) => {
@@ -124,6 +124,15 @@ test.describe("Die Sammlung zieht mit", () => {
     await page.reload();
     await schalter(page).check();
     await expect(page.locator("#collList .coll-t").first()).toHaveText("Dani Orangerie P5 P4");
+  });
+
+  test("bringt Zeilen mit dem frueheren Kurznamen auf den vollen Namen", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.evaluate(() => localStorage.setItem("cipher:collection", JSON.stringify([
+      { id: "Arctic_Orangery", text: "Dani Orangerie P5", label: "Orangerie", at: 5 }
+    ])));
+    await page.reload();
+    await expect(page.locator("#collList .coll-t").first()).toHaveText("Dani Arktische Orangerie P5");
   });
 
   test("verwirft eine Stelle, die nicht zur Zeile passt", async ({ page }) => {

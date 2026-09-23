@@ -5,12 +5,10 @@
  *   node tools/build-data.js lg-daten.json --dry          (nur berichten)
  *   node tools/build-data.js lg-daten.json --out tmp.js   (woanders hinschreiben)
  *
- * Der Importer liest das Wiki und kennt darum nur, was dort steht. Drei
+ * Der Importer liest das Wiki und kennt darum nur, was dort steht. Zwei
  * Dinge stehen nicht zwingend im Wiki und werden deshalb aus dem bestehenden
  * data.js uebernommen:
  *
- *   - die Kurznamen fuer den Foerderchat ("Leuchtturm von Alexandria" ->
- *     "Leuchtturm"), die von Hand gepflegt sind
  *   - Bauwerke, die der Import nicht laden konnte; sie bleiben mit ihren
  *     bisherigen Werten stehen, statt stillschweigend zu verschwinden
  *   - Kostenformel und P1-Kurve eines Bauwerks, das der Import zwar liefert,
@@ -32,7 +30,7 @@ const SOURCE = path.join(ROOT, "data.js");
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry");
 
-// --out schreibt woandershin; die Kurznamen kommen weiterhin aus data.js.
+// --out schreibt woandershin; gerettet wird weiterhin aus data.js.
 const outFlag = args.indexOf("--out");
 const TARGET = outFlag >= 0 && args[outFlag + 1]
   ? path.resolve(args[outFlag + 1])
@@ -60,12 +58,12 @@ if (!Array.isArray(imported.lg) || !imported.lg.length) {
   process.exit(1);
 }
 
-/** Bisheriger Datensatz, sofern vorhanden — Quelle für Kurznamen und Rettung. */
+/** Bisheriger Datensatz, sofern vorhanden — Quelle für die Rettung. */
 let previous = { buildings: [], curves: {} };
 try {
   previous = require(SOURCE);
 } catch (error) {
-  warn("Kein bestehendes data.js gefunden — Kurznamen werden aus den Namen abgeleitet.");
+  warn("Kein bestehendes data.js gefunden — es wird nichts gerettet.");
 }
 const previousById = new Map(previous.buildings.map((building) => [building.id, building]));
 
@@ -84,7 +82,6 @@ for (const entry of imported.lg) {
   buildings.push({
     id: entry.id,
     name: entry.de,
-    short: known ? known.short : entry.de,
     era: entry.age,
     base: cost.base,
     maxLevel: entry.maxLevel,
@@ -92,7 +89,7 @@ for (const entry of imported.lg) {
     costs: cost.costs
   });
 
-  if (!known) warn(`${entry.de}: neu im Datensatz — bitte einen Kurznamen prüfen.`);
+  if (!known) warn(`${entry.de}: neu im Datensatz — bitte ein Kürzel in abbr.js ergänzen.`);
 }
 
 /**
@@ -189,7 +186,6 @@ let out = `/*!
  *   buildings[]           Ein Eintrag je Legendärem Bauwerk
  *     .id                 Stabiler Schlüssel (Wiki-Seitenname)
  *     .name               Anzeigename (deutsch)
- *     .short              Kurzname für den Förderchat
  *     .era                Zeitalter, dient als Gruppe im Auswahlfeld
  *     .base               Basiswert A der Kostenformel (null = unbekannt)
  *     .costs[0..9]        Gesamtkosten der Stufen 1-10 laut Wiki (null = unbekannt)
@@ -204,10 +200,9 @@ let out = `/*!
  *
  * Diese Datei wird erzeugt von tools/build-data.js aus dem JSON, das
  * tools/import.html herunterlädt. Handische Änderungen gehen beim nächsten
- * Lauf verloren — mit drei Ausnahmen, die der Lauf aus der bestehenden
+ * Lauf verloren — mit zwei Ausnahmen, die der Lauf aus der bestehenden
  * Datei übernimmt und jeweils als Hinweis meldet:
  *
- *   - die Kurznamen (.short); sie sind von Hand gepflegt
  *   - Bauwerke, die der Import gar nicht geliefert hat
  *   - .base/.costs und die Kurve eines Bauwerks, für das der Import nichts
  *     mitbringt; sie stammen dann aus im Spiel abgelesenen Stufen
@@ -222,7 +217,7 @@ let out = `/*!
 `;
 
 for (const building of buildings) {
-  out += `    { id: ${quote(building.id)}, name: ${quote(building.name)}, short: ${quote(building.short)},` +
+  out += `    { id: ${quote(building.id)}, name: ${quote(building.name)},` +
     ` era: ${quote(building.era)}, base: ${building.base === null ? "null" : building.base},` +
     ` maxLevel: ${building.maxLevel}, curve: ${building.curve === null ? "null" : quote(building.curve)},` +
     ` costs: ${building.costs === null ? "null" : "[" + building.costs.join(", ") + "]"} },\n`;
@@ -248,8 +243,7 @@ out += `  };
 const report = [
   `Bauwerke:   ${buildings.length}`,
   `Zeitalter:  ${Object.keys(curves).length}`,
-  `Stand:      ${generated}`,
-  `Kurznamen:  ${buildings.filter((b) => b.short !== b.name).length} abweichend übernommen`
+  `Stand:      ${generated}`
 ];
 
 process.stdout.write(report.join("\n") + "\n");

@@ -299,8 +299,8 @@ test.describe("Bauwerkssuche", () => {
     expect(lower).toMatch(/^3 Bauwerke/);
   });
 
-  test("auch der Kurzname trifft", async ({ page }) => {
-    // "Leuchtturm" ist der Kurzname, der volle Name lautet anders.
+  test("auch ein Teil des Namens trifft", async ({ page }) => {
+    // "Leuchtturm" ist nur der Anfang, der volle Name lautet anders.
     await page.fill("#buildingFilter", "leuchtturm");
     await expect(hits(page)).toHaveText(["Leuchtturm von Alexandria"]);
   });

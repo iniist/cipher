@@ -24,7 +24,6 @@ const colosseum = DATA.buildings.find((b) => b.id === "Colosseum");
 const ohneDaten = {
   id: "Leeres_Bauwerk",
   name: "Leeres Bauwerk",
-  short: "Leer",
   era: "Ohne Daten",
   base: null,
   maxLevel: 200,
