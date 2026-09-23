@@ -223,6 +223,9 @@
     // Wie die Zahl im Stufenfeld zu lesen ist. "next" ist die Vorgabe und
     // das, was cipher vorher ohne Wahl getan hat.
     levelMode: stored.levelMode === "current" ? "current" : "next",
+    // Wie die Spalte "Vorher sichern" zu lesen ist: als Schritt je Platz
+    // oder als laufende Summe. "step" ist die Vorgabe.
+    secureMode: stored.secureMode === "total" ? "total" : "step",
     // Eigener Faktor je Platz; null heisst "folgt dem Wert oben".
     slotFactors: normaliseSlotFactors(stored.slotFactors),
     // Getippter Betrag je Platz; null heisst "aus dem Faktor gerechnet".
@@ -972,13 +975,13 @@
     var previous = previousContributions;
     previousContributions = plan.rows.map(function (row) { return row.contribution; });
 
+    renderSecureHead();
+    var running = 0;
+
     $("rows").innerHTML = plan.rows.map(function (row, index) {
       var changed = previous.length && previous[index] !== row.contribution;
-      var secureCell = !row.offered
-        ? (row.tooTight ? "passt nicht" : "–")
-        : row.secure === 0
-          ? '<span class="safe">Sicher</span>'
-          : "+" + formatNumber(row.secure);
+      if (row.offered) running += row.secure;
+      var secureCell = secureText(row, running);
 
       return '<tr class="' + (row.offered ? "" : "off") + '">' +
         '<td><label class="pl">' +
@@ -995,6 +998,44 @@
     }).join("");
 
     restoreFocusToSlot(focusedSlot);
+  }
+
+  /**
+   * Was in der Spalte "Vorher sichern" steht.
+   *
+   * Zwei Lesarten derselben Zahl: der Schritt, den dieser Platz kostet, oder
+   * der Stand, den du erreicht hast, wenn er sicher ist. Manche rechnen so,
+   * manche so — dieselbe Lage wie bei der Stufenzahl.
+   *
+   * "Sicher" gilt in beiden: wo nichts nachzulegen ist, bewegt sich auch die
+   * Summe nicht, und das Wort sagt es deutlicher als eine wiederholte Zahl.
+   * Eine Sonderregel fuer P2 braucht es dafuer nicht — der Platz ist nach P1
+   * fast immer von selbst sicher, und wo eigene Faktoren oder Betraege doch
+   * etwas noetig machen, soll die Zahl ja gerade erscheinen.
+   *
+   * @param {object} row Zeile aus dem Plan
+   * @param {number} running Summe der Absicherungen bis hier einschliesslich
+   */
+  function secureText(row, running) {
+    if (!row.offered) return row.tooTight ? "passt nicht" : "–";
+    if (row.secure === 0) return '<span class="safe">Sicher</span>';
+    return state.secureMode === "total"
+      ? formatNumber(running)
+      : "+" + formatNumber(row.secure);
+  }
+
+  /**
+   * Den Spaltenkopf auf die aktive Lesart stellen.
+   *
+   * Er traegt sie als Wort, nicht als stillen Zustand: an einer nackten Zahl
+   * stuende sonst nicht, welche der beiden man gerade liest.
+   */
+  function renderSecureHead() {
+    var total = state.secureMode === "total";
+    $("secureModeLabel").textContent = total ? "Vorher zusammen" : "Vorher sichern";
+    $("secureMode").setAttribute("aria-label", total
+      ? "Vorher zusammen — umschalten auf den Schritt je Platz"
+      : "Vorher sichern — umschalten auf die laufende Summe");
   }
 
   /** Den Platz nennen, dessen Checkbox gerade den Fokus hat — sonst null. */
@@ -1577,6 +1618,20 @@
     // Leerzeichen tippt, hat nichts vergeben.
     $("buildingShort").addEventListener("blur", function (event) {
       event.target.value = ownShorts[state.building] || "";
+    });
+
+    // Der Kopf traegt die Handhabe, die Zellen nehmen den Klick trotzdem an:
+    // wer die Zahl antippt, meint sie auch. Die Haekchen bleiben davon
+    // unberuehrt, die liegen in der ersten Spalte.
+    function toggleSecureMode() {
+      state.secureMode = state.secureMode === "total" ? "step" : "total";
+      render();
+    }
+
+    $("secureMode").addEventListener("click", toggleSecureMode);
+
+    $("rows").addEventListener("click", function (event) {
+      if (event.target.closest("td.pre")) toggleSecureMode();
     });
 
     $("rows").addEventListener("change", function (event) {

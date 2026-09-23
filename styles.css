@@ -345,6 +345,21 @@ select {
 }
 :root[data-theme="contrast"] .slots-badge { color: #000; border-color: #000; border-width: 2px }
 
+/* Der Kopf der Absicherungsspalte ist ein Schalter zwischen zwei Lesarten.
+   Er sieht aus wie die anderen Koepfe — ein Knopf, der sich als Knopf
+   auffuehrt, waere lauter als die Zahlen, um die es geht. Das Zeichen
+   daneben ist die ganze Handhabe. */
+.th-pre { padding: 0 }
+.th-pre button {
+  display: block; width: 100%;
+  background: none; border: 0; padding: inherit; cursor: pointer;
+  font: inherit; color: inherit; text-align: inherit;
+}
+/* Im Textfluss, nicht daneben: als Flex-Glied landete das Zeichen beim
+   Umbruch hinter "Vorher" statt hinter "sichern". */
+.th-caret { margin-left: 4px; font-size: .7em; opacity: .7 }
+:root[data-theme="contrast"] .th-caret { opacity: 1 }
+
 .slots-note { color: var(--dim); font-size: .82rem; margin: 8px 0 0 }
 .slots-unit { margin-top: 8px; width: max-content }
 .slots-unit button { padding: 4px 12px; font-size: .82rem }
@@ -558,7 +573,8 @@ td { padding: 9px 4px; border-top: 1px solid var(--grid); text-align: right }
 :root[data-theme="contrast"] td { border-top: 1px solid #000 }
 td:first-child { text-align: left; white-space: nowrap }
 td.pay { font-weight: 700; font-size: 1.15rem }
-td.pre { font-weight: 600; color: var(--warn) }
+/* Die Zahl schaltet die Lesart mit um — wer sie antippt, meint sie. */
+td.pre { font-weight: 600; color: var(--warn); cursor: pointer }
 td.empty { padding: 14px 0; color: var(--dim); white-space: normal; text-align: left; border-top: 0 }
 table.none thead { display: none }
 

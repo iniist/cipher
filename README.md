@@ -25,13 +25,52 @@ dir dann für jeden der fünf Mäzen-Plätze:
 | --- | --- |
 | **Belohnung** | Was der Platz auszahlt (P1 aus dem Datensatz, P2–P5 daraus abgeleitet) |
 | **Einzahlen** | Was ein Förderer für diesen Platz zahlen muss, inklusive Arche-Bonus |
-| **Vorher sichern** | Was *du* vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann |
+| **Vorher sichern** | Was *du* vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann — auf Tipp auch als laufende Summe |
 
 Dazu die Aufteilung in Eigenanteil und Fremdkapital, den Betrag, den du vorab
 einzahlen solltest, und zwei fertige Zeilen zum Kopieren in den Förderchat —
 samt einer Sammlung, die mehrere davon aufhebt.
 
 Häkchen weg = der Platz wird nicht angeboten und fällt in deinen Eigenanteil.
+
+### Schritt oder Summe
+
+Dieselbe Spalte, zwei verbreitete Lesarten. Manche wollen wissen, was
+*dieser* Platz sie noch kostet (`+1.060`), andere, wo sie stehen, wenn er
+sicher ist (`74.393`). Ein Tipp auf den Spaltenkopf — oder auf eine der
+Zahlen — schaltet um, und die Überschrift nennt die aktive Lesart:
+„Vorher sichern“ gegen „Vorher zusammen“.
+
+Es ist dieselbe Lage wie bei der Stufenzahl, und darum dieselbe Antwort:
+umschalten statt entscheiden, und die Beschriftung sagt, was dasteht. Eine
+fünfte Spalte wäre der naheliegende Weg gewesen — bei 320 Pixeln ist die
+vorhandene aber 68 Pixel breit, eine weitere passt schlicht nicht.
+
+Die Summe endet beim Betrag aus dem Kasten darunter, nicht beim Eigenanteil:
+die letzten FP zahlst du ein, wenn alle Plätze vergeben sind.
+
+Der Hinweis dazu im Fußtext hat den Satz über den Zeitpunkt verdrängt
+(„bevor der Platz vergeben wird“). Das war gemessen nötig: quer auf einem
+iPhone SE kostet dort jede Zeile ein Zwanzigstel Bildschirm, und der Test
+daneben hält die Seite unter 4,5 davon — mit beidem waren es 4,52. Verloren
+ist nichts, der Kasten über der Tabelle erklärt den Zeitpunkt genauer.
+
+**„Sicher“ gilt in beiden.** Wo nichts nachzulegen ist, bewegt sich auch die
+Summe nicht, und das Wort sagt das deutlicher als eine wiederholte Zahl. Eine
+Sonderregel für P2 braucht es dafür nicht: nach P1 ist P2 fast immer von
+selbst sicher, und wo ein eigener Faktor oder Betrag doch etwas nötig macht,
+erscheint die Zahl von allein.
+
+„Fast immer“ ist gemessen. Über alle 1256 P1-Werte des Datensatzes, alle
+Faktoren von 1,80 bis 2,00 und fünf Größenordnungen von Gesamtkosten —
+71.097 Pläne, in denen beide Plätze angeboten werden — braucht P2 nach P1 in
+9,1 % der Fälle doch etwas, und dann **immer genau 1 FP**, nie mehr. Bei 1,80,
+1,90 und 2,00 tritt der Fall überhaupt nicht auf; er entsteht nur bei krummen
+Faktoren, wo die Abrundung der Einzahlung um einen Punkt danebenfällt.
+
+Zwei Einheitentests halten beides fest — die Obergrenze von 1 FP und die
+Sicherheit bei den drei Werten der Schnellwahl —, damit die Aussage nicht
+still altert, wenn der Datensatz sich ändert.
 
 ### Aktuelle oder nächste Stufe
 
@@ -448,7 +487,7 @@ verpuffen. Schlägt ein Browsertest fehl, hängt der Playwright-Bericht sieben
 Tage als Artefakt am Lauf.
 
 Die Browsertests decken Berechnung, den Wert je Platz in beiden Einheiten,
-eigene Kürzel, die Lesart der
+die Lesart der Absicherungsspalte, eigene Kürzel, die Lesart der
 Stufenzahl, Favoriten, Speicherung, Migration aus dem Vorgänger, die
 Rechtstexte, Barrierefreiheit, die Easter Eggs, die Sicherheits-Header samt
 CSP und die Zusicherung „keine externen Anfragen“ ab.

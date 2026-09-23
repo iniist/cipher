@@ -726,3 +726,50 @@ test("Betraege unter oder gleich null zaehlen als nicht gesetzt", () => {
     assert.equal(plan.rows[0].fixed, false);
   });
 });
+
+// --------------------------------------------- Wie sicher P2 nach P1 ist
+//
+// Die Anzeige verlaesst sich darauf: in der Summen-Lesart steht bei P2
+// normalerweise das Wort "Sicher" statt einer Zahl, weil nach P1 nichts
+// nachzulegen ist. Der README-Abschnitt "Schritt oder Summe" nennt dazu eine
+// gemessene Zahl — und die soll nicht still altern, wenn der Datensatz sich
+// aendert.
+
+test("nach einem angebotenen P1 braucht P2 hoechstens 1 FP", () => {
+  const allOn = [true, true, true, true, true];
+  let faelle = 0;
+  let geprueft = 0;
+
+  for (const p1 of Scan.p1Values()) {
+    if (!(p1 > 0)) continue;
+    for (let factor = 180; factor <= 200; factor++) {
+      // Gesamtkosten breit streuen, damit alle Lagen vorkommen.
+      for (const total of [500, 2000, 10000, 86133, 300000]) {
+        const plan = Calc.buildPlan({ total, p1, factor, enabled: allOn });
+        if (!plan.rows[0].offered || !plan.rows[1].offered) continue;
+        geprueft++;
+        assert.ok(plan.rows[1].secure <= 1,
+          `P1 ${p1}, Faktor ${factor}, Gesamt ${total}: P2 braucht ${plan.rows[1].secure}`);
+        if (plan.rows[1].secure > 0) faelle++;
+      }
+    }
+  }
+
+  // Gezaehlt werden nur Plaene, in denen beide Plaetze auch angeboten werden.
+  assert.ok(geprueft > 50000, `der Durchlauf deckt nur ${geprueft} Plaene ab`);
+  // Es kommt vor, aber in der Minderheit — das ist die Aussage im README.
+  assert.ok(faelle / geprueft < 0.2, `P2 brauchte in ${faelle} von ${geprueft} Faellen etwas`);
+});
+
+test("bei 1,80, 1,90 und 2,00 ist P2 nach P1 immer sicher", () => {
+  // Die drei Werte der Schnellwahl — dort tritt der Rundungsfall nie auf.
+  const allOn = [true, true, true, true, true];
+  for (const p1 of Scan.p1Values()) {
+    if (!(p1 > 0)) continue;
+    for (const factor of [180, 190, 200]) {
+      const plan = Calc.buildPlan({ total: 300000, p1, factor, enabled: allOn });
+      if (!plan.rows[0].offered || !plan.rows[1].offered) continue;
+      assert.equal(plan.rows[1].secure, 0, `P1 ${p1} bei Faktor ${factor}`);
+    }
+  }
+});
