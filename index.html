@@ -22,8 +22,11 @@
 <meta name="twitter:title" content="cipher — Förder-Dashboard für Legendäre Bauwerke">
 <meta name="twitter:description" content="Mäzen-Plätze sicher belegen, FP-Einsatz planen und die Zeile für den Förderchat gleich mitnehmen. Rechnet im Browser, ohne Konto und ohne Tracking.">
 
-<!-- Favicon als Daten-URI: keine zusätzliche Anfrage, kein externer Host. -->
+<!-- Favicon als Daten-URI: keine zusätzliche Anfrage, kein externer Host.
+     favicon.ico und apple-touch-icon.png liegen trotzdem im Wurzelverzeichnis:
+     Crawler, Link-Vorschauen und iOS fragen diese Pfade auf Verdacht ab. -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231f4a7a'/%3E%3Cpath d='M22 10.5a7.5 7.5 0 1 0 0 11' fill='none' stroke='%23f0c24f' stroke-width='3.2' stroke-linecap='square'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 <!-- Theme vor dem ersten Frame setzen, damit es nicht kurz aufblitzt. -->
 <script>

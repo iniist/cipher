@@ -219,3 +219,30 @@ test.describe("404", () => {
     await expect(page.locator('a[href="/"]').first()).toBeVisible();
   });
 });
+
+test.describe("Icons auf Verdacht", () => {
+  // Browser nehmen das Favicon aus der Daten-URI im HTML. Crawler,
+  // Link-Vorschauen und iOS fragen die klassischen Pfade trotzdem ab —
+  // die Netlify-Statistik führte sie als "Top resources not found".
+  const ICONS = {
+    "/favicon.ico": "image/x-icon",
+    "/apple-touch-icon.png": "image/png",
+    "/apple-touch-icon-precomposed.png": "image/png"
+  };
+
+  for (const [icon, type] of Object.entries(ICONS)) {
+    test(`${icon} ist vorhanden`, async ({ request }) => {
+      const response = await request.get(icon);
+      expect(response.status()).toBe(200);
+      expect(response.headers()["content-type"]).toBe(type);
+      expect((await response.body()).length).toBeGreaterThan(500);
+    });
+  }
+
+  test("jede Seite verweist auf das Apple-Touch-Icon", async ({ page }) => {
+    for (const path of PAGES.concat(["/404.html"])) {
+      await page.goto(path);
+      await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/apple-touch-icon.png");
+    }
+  });
+});
