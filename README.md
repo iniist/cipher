@@ -249,7 +249,7 @@ mit seinem Kurznamen aus dem Datensatz; an, mit seinem Kürzel aus
 
 Der Schalter wirkt überall, wo cipher ein Bauwerk kurz nennt: in beiden
 Chat-Zeilen, in der Sammlung, am Merken-Knopf, auf den Favoriten-Chips und
-als Platzhalter im Feld „Kürzel“. Das Auswahlfeld bleibt beim vollen Namen,
+als Platzhalter im Feld „Im Chat als“. Das Auswahlfeld bleibt beim vollen Namen,
 dort wird gesucht und nicht getippt. Die Suche kennt die Kürzel in beiden
 Stellungen: „obsi“ findet das Observatorium.
 
@@ -270,16 +270,16 @@ sind.
 und beim Umschalten würden alle Reihen neu umbrechen. Der Name behält darum
 auf dem Chip mindestens fünf Zeichen Platz.
 
-### Eigenes Kürzel
+### Eigener Name im Chat
 
 Der Datensatz bringt je Bauwerk einen Kurznamen mit, von Hand gepflegt und
 unstrittig verkürzt: aus „Leuchtturm von Alexandria“ wird „Leuchtturm“. Was
 eine Gilde daraus macht, ist er nicht — „AO“ für die Arktische Orangerie
 versteht die eine Runde sofort und die nächste gar nicht.
 
-Das Feld **Kürzel** unter „Dein Name“ setzt darum je Bauwerk einen eigenen
+Das Feld **Im Chat als** unter „Dein Name“ setzt darum je Bauwerk einen eigenen
 Namen. Die beiden stehen zusammen, weil sie zusammen eine Zeile ergeben:
-`[Dein Name] [Kürzel] P5 P4 P3`. Der Platzhalter zeigt immer den Namen aus
+`[Dein Name] [Bauwerk] P5 P4 P3`. Der Platzhalter zeigt immer den Namen aus
 dem Datensatz, leer lassen heißt also „den nehmen“ — es braucht kein
 Zurücksetzen, und es wird auch nichts gespeichert, solange niemand etwas
 vergeben hat.
