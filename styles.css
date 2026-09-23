@@ -208,6 +208,18 @@ select {
    die Beschriftung am Feld darueber. */
 .lbl-short { margin-top: 10px }
 
+/* Beschriftung links, Schalter "Kuerzel" rechts auf derselben Linie — er
+   sitzt beim Bauwerk, weil er dessen Namen betrifft, und kostet so keine
+   eigene Zeile. */
+.sel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px }
+.abbr-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .9rem; color: var(--dim); cursor: pointer;
+  margin: 0 0 4px; white-space: nowrap;
+}
+.abbr-toggle input { width: 16px; height: 16px; margin: 0; padding: 0; accent-color: var(--gold); cursor: pointer }
+.abbr-toggle:has(input:checked) { color: var(--ink) }
+
 /* Dieselbe Zahl heisst fuer die einen "steht auf 80", fuer die anderen
    "wird auf 81 gezogen". Umschalter und erklaerende Zeile stehen zusammen
    unter dem Feld: neben der Beschriftung waere fuer beides kein Platz, und
@@ -528,6 +540,15 @@ select {
   border: 0; cursor: pointer;
 }
 .fav-go { font-weight: 600; font-size: .92rem; padding: 4px 8px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+/* Mit Kuerzeln schrumpft ein Chip auf "KI 12" und die Reihe springt beim
+   Umschalten. Der Name behaelt darum mindestens fuenf Zeichen Platz;
+   lange Namen kuerzt er selbst, weil eine Ellipse am Knopf nicht in ein
+   inline-block hineinreicht. */
+.fav-n {
+  display: inline-block; vertical-align: bottom;
+  min-width: 5ch; max-width: 17ch; text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .fav-go b { color: var(--gold); font-weight: 700 }
 .fav-list li[aria-current="true"] .fav-go { background: var(--gold); color: var(--on-accent) }
 .fav-list li[aria-current="true"] .fav-go b { color: inherit }

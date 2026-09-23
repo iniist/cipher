@@ -78,7 +78,13 @@
       <ul class="fav-list" id="favList" aria-labelledby="favsLabel"></ul>
     </div>
 
-    <label class="l" for="building">Legendäres Bauwerk</label>
+    <!-- Der Schalter gilt überall, wo cipher ein Bauwerk kurz nennt: Chat-
+         Zeilen, Sammlung, Merken-Knopf, Favoriten. Das Auswahlfeld selbst
+         bleibt beim vollen Namen — dort wird gesucht, nicht getippt. -->
+    <div class="sel-head">
+      <label class="l" for="building">Legendäres Bauwerk</label>
+      <label class="abbr-toggle" title="Im Chat „AO“ statt „Orangerie“ schreiben"><input type="checkbox" id="useAbbr"> Kürzel<span class="sr-only"> statt Namen verwenden</span></label>
+    </div>
     <select id="building"></select>
 
     <div class="filter">
@@ -244,6 +250,7 @@
 </footer>
 
 <script src="./data.js"></script>
+<script src="./abbr.js"></script>
 <script src="./calc.js"></script>
 <script src="./app.js"></script>
 </body>

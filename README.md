@@ -239,6 +239,37 @@ Namen kein „ho" steht — er liegt im Hochmittelalter. Zwei Dinge machen das
 lesbar: Namenstreffer stehen vor Zeitalter-Treffern, und in jedem Eintrag
 wird genau die Stelle hervorgehoben, die getroffen hat.
 
+### Kürzel statt Namen
+
+Im Förderchat schreibt kaum jemand „Arktische Orangerie“ aus — die einen
+schreiben „Orangerie“, die anderen „AO“. Der Schalter **Kürzel** rechts über
+dem Auswahlfeld wechselt zwischen beidem: aus, heißt ein Bauwerk wie bisher
+mit seinem Kurznamen aus dem Datensatz; an, mit seinem Kürzel aus
+[`abbr.js`](./abbr.js) — `Obsi`, `AO`, `TA`, `Inno`. Die Wahl wird gemerkt.
+
+Der Schalter wirkt überall, wo cipher ein Bauwerk kurz nennt: in beiden
+Chat-Zeilen, in der Sammlung, am Merken-Knopf, auf den Favoriten-Chips und
+als Platzhalter im Feld „Kürzel“. Das Auswahlfeld bleibt beim vollen Namen,
+dort wird gesucht und nicht getippt. Die Suche kennt die Kürzel in beiden
+Stellungen: „obsi“ findet das Observatorium.
+
+**Die Kürzel pflegen.** `abbr.js` ist von Hand gepflegt und wird von keinem
+Import angefasst — eine Zeile je Bauwerk, links der Schlüssel aus `data.js`,
+rechts das Kürzel. Ein Kürzel ändern heißt, den Text rechts zu ändern.
+`test/abbr.test.js` prüft, dass jedes Bauwerk eines hat, keines doppelt
+vorkommt und keines länger als zwölf Zeichen ist.
+
+**Die Sammlung zieht mit.** Sie speichert zu jeder Zeile, an welcher Stelle
+der Name des Bauwerks steht. Wird danach umgeschaltet oder ein eigenes Kürzel
+vergeben, tauscht sie ihn dort aus — sonst stünde in einer Nachricht „AO“
+neben „Terrakotta-Armee“, je nachdem, wann kopiert wurde. Zeilen, die vor dem
+Schalter gesammelt wurden, tragen diese Stelle nicht und bleiben, wie sie
+sind.
+
+**Die Chips springen nicht.** Mit Kürzeln schrumpft ein Favorit auf „KI 12“,
+und beim Umschalten würden alle Reihen neu umbrechen. Der Name behält darum
+auf dem Chip mindestens fünf Zeichen Platz.
+
 ### Eigenes Kürzel
 
 Der Datensatz bringt je Bauwerk einen Kurznamen mit, von Hand gepflegt und
@@ -254,7 +285,9 @@ Zurücksetzen, und es wird auch nichts gespeichert, solange niemand etwas
 vergeben hat.
 
 Das Kürzel gilt überall, wo cipher ein Bauwerk kurz nennt: in der Chat-Zeile,
-in der Sammlung, am Merken-Knopf und auf den Favoriten-Chips. Im Quelltext
+in der Sammlung, am Merken-Knopf und auf den Favoriten-Chips — und zwar in
+beiden Stellungen des Schalters „Kürzel“, denn wer es vergibt, meint es
+ausdrücklich. Der Platzhalter zeigt, was ohne eigenes gälte. Im Quelltext
 ist das eine Funktion, `shortName(building)`, und sechs Aufrufstellen.
 
 Gespeichert wird unter `cipher:shorts`, nach dem Schlüssel des Bauwerks. Weil
@@ -407,6 +440,7 @@ datenschutz.html  Datenschutzerklärung
 styles.css        Darstellung, drei Themes über data-theme
 fonts.css         @font-face für die lokal ausgelieferte Schrift
 data.js           Datensatz der Legendären Bauwerke (generiert)
+abbr.js           Kürzel je Bauwerk für den Förderchat (von Hand gepflegt)
 calc.js           Rechenkern, reine Funktionen
 app.js            Oberfläche: DOM, Ereignisse, Easter Eggs
 legal.js          Kleines Skript für die beiden Rechtsseiten
