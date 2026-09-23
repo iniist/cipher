@@ -13,7 +13,7 @@
 (function () {
   try {
     var saved = JSON.parse(localStorage.getItem("cipher:state") || "{}");
-    if (["light", "dark", "contrast", "writer", "space"].indexOf(saved.theme) >= 0) {
+    if (["light", "dark", "contrast", "writer", "space", "forge"].indexOf(saved.theme) >= 0) {
       document.documentElement.dataset.theme = saved.theme;
     }
   } catch (e) { /* Speicher gesperrt — das Standard-Theme bleibt stehen. */ }

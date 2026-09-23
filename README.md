@@ -437,7 +437,7 @@ index.html        Die Anwendung
 impressum.html    Impressum
 datenschutz.html  Datenschutzerklärung
 404.html          Fehlerseite
-styles.css        Darstellung, fünf Themes über data-theme
+styles.css        Darstellung, sechs Themes über data-theme
 fonts.css         @font-face für die lokal ausgelieferte Schrift
 data.js           Datensatz der Legendären Bauwerke (generiert)
 abbr.js           Kürzel je Bauwerk für den Förderchat (von Hand gepflegt)
@@ -533,9 +533,10 @@ CSP und die Zusicherung „keine externen Anfragen“ ab.
 
 ## Barrierefreiheit
 
-- Fünf Darstellungen: Blaupause (dunkel), Weißpause (hell), ein
-  Kontrastmodus in Schwarz auf Weiß, Papier (warmes, liniertes Schreibpapier)
-  und Weltall (Neon auf Sternenhimmel).
+- Sechs Darstellungen: Blaupause (dunkel), Weißpause (hell), ein
+  Kontrastmodus in Schwarz auf Weiß, Papier (warmes, liniertes Schreibpapier),
+  Weltall (Neon auf Sternenhimmel) und Schmiede (Holz und Messing in den
+  Farben des Spiels).
 - Alle Bedienelemente sind beschriftet und per Tastatur erreichbar, mit
   deutlich sichtbarem Fokusring.
 - `prefers-reduced-motion` schaltet sämtliche Animationen ab — auch die

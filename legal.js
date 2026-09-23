@@ -12,7 +12,7 @@
   var CIPHER_KEYS = ["cipher:state", "cipher:favorites", "cipher:totals", "cipher:p1",
                      "cipher:collection", "cipher:shorts"];
   var LEGACY_KEYS = ["lgr-state", "lgr-t", "lgr-p1"];
-  var THEMES = ["light", "dark", "contrast", "writer", "space"];
+  var THEMES = ["light", "dark", "contrast", "writer", "space", "forge"];
 
   /** Das Theme anzeigen. */
   function showTheme(theme) {
