@@ -204,6 +204,9 @@ select {
    statt beide Felder starr nebeneinander zu quetschen. */
 .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px }
 .row > div { flex: 1 1 150px; min-width: 0 }
+/* Das zweite Feld einer Spalte braucht Abstand zum ersten; ohne ihn klebt
+   die Beschriftung am Feld darueber. */
+.lbl-short { margin-top: 10px }
 
 /* Dieselbe Zahl heisst fuer die einen "steht auf 80", fuer die anderen
    "wird auf 81 gezogen". Umschalter und erklaerende Zeile stehen zusammen
