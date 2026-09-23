@@ -51,7 +51,7 @@
    */
   var LEVEL_MAX = 1000;
 
-  var THEMES = ["light", "dark", "contrast", "writer", "space"];
+  var THEMES = ["light", "dark", "contrast", "writer", "space", "forge"];
   var DEFAULT_BUILDING = "The_Arc";
   var MAX_FAVORITES = 12;
 

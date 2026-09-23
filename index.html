@@ -33,7 +33,7 @@
 (function () {
   try {
     var saved = JSON.parse(localStorage.getItem("cipher:state") || "{}");
-    if (["light", "dark", "contrast", "writer", "space"].indexOf(saved.theme) >= 0) {
+    if (["light", "dark", "contrast", "writer", "space", "forge"].indexOf(saved.theme) >= 0) {
       document.documentElement.dataset.theme = saved.theme;
     }
   } catch (e) { /* Speicher gesperrt — das Standard-Theme bleibt stehen. */ }
@@ -57,6 +57,7 @@
       <button type="button" data-mode="contrast" aria-label="Kontrast" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button>
       <button type="button" data-mode="writer" aria-label="Papier" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4C11 4 6 10 6 18M6 18l-3 3M6 18c6 0 11-4 12-9M9.5 13H15"/></svg></button>
       <button type="button" data-mode="space" aria-label="Weltall" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3l1.8 5.7L17.5 10.5l-5.7 1.8L10 18l-1.8-5.7L2.5 10.5l5.7-1.8z"/><path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></button>
+      <button type="button" data-mode="forge" aria-label="Schmiede" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 2.8l7.6 7.6-2.8 2.8-7.6-7.6z"/><path d="M11.4 8.1l4.5 4.5-9.2 9.2a1.6 1.6 0 0 1-2.3 0l-2.2-2.2a1.6 1.6 0 0 1 0-2.3z"/></svg></button>
     </div>
   </header>
 
