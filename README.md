@@ -195,6 +195,41 @@ Namen kein „ho" steht — er liegt im Hochmittelalter. Zwei Dinge machen das
 lesbar: Namenstreffer stehen vor Zeitalter-Treffern, und in jedem Eintrag
 wird genau die Stelle hervorgehoben, die getroffen hat.
 
+### Eigenes Kürzel
+
+Der Datensatz bringt je Bauwerk einen Kurznamen mit, von Hand gepflegt und
+unstrittig verkürzt: aus „Leuchtturm von Alexandria“ wird „Leuchtturm“. Was
+eine Gilde daraus macht, ist er nicht — „AO“ für die Arktische Orangerie
+versteht die eine Runde sofort und die nächste gar nicht.
+
+Das Feld **Kürzel** unter „Dein Name“ setzt darum je Bauwerk einen eigenen
+Namen. Die beiden stehen zusammen, weil sie zusammen eine Zeile ergeben:
+`[Dein Name] [Kürzel] P5 P4 P3`. Der Platzhalter zeigt immer den Namen aus
+dem Datensatz, leer lassen heißt also „den nehmen“ — es braucht kein
+Zurücksetzen, und es wird auch nichts gespeichert, solange niemand etwas
+vergeben hat.
+
+Das Kürzel gilt überall, wo cipher ein Bauwerk kurz nennt: in der Chat-Zeile,
+in der Sammlung, am Merken-Knopf und auf den Favoriten-Chips. Im Quelltext
+ist das eine Funktion, `shortName(building)`, und sechs Aufrufstellen.
+
+Gespeichert wird unter `cipher:shorts`, nach dem Schlüssel des Bauwerks. Weil
+der stabil ist, überlebt ein Kürzel jede Erneuerung des Datensatzes — im
+Unterschied zu einer Änderung direkt in `data.js`, die zwar auch überlebt,
+aber für alle gilt und einen Import braucht.
+
+**Die Suche kennt es.** Wer sein Bauwerk „AO“ nennt, findet es auch so. Damit
+entsteht allerdings ein Treffer der Sorte, gegen die der Abschnitt oben
+argumentiert: „AO“ steht in „Arktische Orangerie“ nirgends, es gäbe also
+nichts hervorzuheben. Ein Kurzname *aus dem Datensatz* hat das Problem nicht,
+er ist immer ein Stück des Namens. Darum nennt so ein Treffer sein Kürzel
+ausdrücklich — `Arktische Zukunft · AO` — und die Hervorhebung sitzt dort.
+
+**Was es kostet.** Ein zweites Feld in der Spalte: 25 Pixel Höhe, sobald
+Stufe und Name nebeneinander stehen (ab 390 Pixel Breite), und 78 Pixel
+darunter, wo sie untereinander stehen. Dafür sind die beiden Spalten ab 390
+Pixel erstmals gleich hoch — vorher endete die rechte auf halber Strecke.
+
 ### Favoriten
 
 Ein Favorit ist ein Bauwerk (bis zu zwölf), und seine Stufe ist die, auf der
@@ -413,7 +448,7 @@ verpuffen. Schlägt ein Browsertest fehl, hängt der Playwright-Bericht sieben
 Tage als Artefakt am Lauf.
 
 Die Browsertests decken Berechnung, den Wert je Platz in beiden Einheiten,
-die Lesart der
+eigene Kürzel, die Lesart der
 Stufenzahl, Favoriten, Speicherung, Migration aus dem Vorgänger, die
 Rechtstexte, Barrierefreiheit, die Easter Eggs, die Sicherheits-Header samt
 CSP und die Zusicherung „keine externen Anfragen“ ab.
@@ -434,8 +469,13 @@ CSP und die Zusicherung „keine externen Anfragen“ ab.
 
 Quer ist Höhe das knappe Gut und Breite im Überfluss da. Dort stehen die
 Einstellungen links und der Förderplan rechts — einstellen und ablesen ohne
-Scrollen. Das kürzt die Seite auf einem iPhone 14 quer von **1856 auf 1141
-Pixel**, also von knapp fünf auf knapp drei Bildschirme.
+Scrollen. Das kürzt die Seite auf einem iPhone 14 quer von **1856 auf 1202
+Pixel**, also von knapp fünf auf gut drei Bildschirme.
+
+Die zweite Zahl ist nachgemessen: hier stand lange 1141, und dazwischen ist
+die Seite gewachsen. Eine dokumentierte Messung altert mit dem, was über ihr
+liegt — anders als bei der Faktor-Spreizung hält hier kein Test sie fest, sie
+ist also nach Änderungen an den Panels nachzuziehen.
 
 Aus demselben Grund zeigt der Streifen mit dem Gemerkten quer zwei Reihen
 statt drei — das gibt rund 36 Pixel an den Rest zurück, ohne dass ein

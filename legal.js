@@ -9,7 +9,8 @@
   "use strict";
 
   var STATE_KEY = "cipher:state";
-  var CIPHER_KEYS = ["cipher:state", "cipher:favorites", "cipher:totals", "cipher:p1", "cipher:collection"];
+  var CIPHER_KEYS = ["cipher:state", "cipher:favorites", "cipher:totals", "cipher:p1",
+                     "cipher:collection", "cipher:shorts"];
   var LEGACY_KEYS = ["lgr-state", "lgr-t", "lgr-p1"];
   var THEMES = ["light", "dark", "contrast"];
 

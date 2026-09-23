@@ -21,7 +21,8 @@
     favorites: "cipher:favorites",   // Gemerkte Bauwerk/Stufe-Paare
     totals: "cipher:totals",         // Selbst eingetragene Gesamtkosten
     p1: "cipher:p1",                 // Selbst eingetragene P1-Belohnungen
-    collection: "cipher:collection"  // Gesammelte Chat-Zeilen mehrerer Bauwerke
+    collection: "cipher:collection", // Gesammelte Chat-Zeilen mehrerer Bauwerke
+    shorts: "cipher:shorts"          // Selbst vergebene Kuerzel je Bauwerk
   };
 
   /** Aeltere Schluessel aus dem Vorgaenger, werden einmalig uebernommen. */
@@ -66,6 +67,13 @@
    * Stelle zu viel tippt.
    */
   var AMOUNT_MAX = 1000000;
+
+  /**
+   * Hoechstlaenge eines selbst vergebenen Kuerzels. Der laengste Name im
+   * Datensatz ist "Basilius-Kathedrale" mit 19 Zeichen; 24 laesst Luft und
+   * haelt die Chat-Zeile trotzdem kurz — darum geht es bei einem Kuerzel.
+   */
+  var SHORT_MAX = 24;
 
   /** Quellen, die keinen Hinweis ausloesen — sie gelten als belastbar. */
   var TRUSTED_SOURCES = { table: true, formula: true, manual: true };
@@ -336,6 +344,44 @@
   var collection = normaliseCollection(read(KEY.collection, []));
 
   /**
+   * Selbst vergebene Kuerzel, nach Bauwerk-Schluessel.
+   *
+   * Der Datensatz bringt fuer jedes Bauwerk ein `short` mit, von Hand
+   * gepflegt und unstrittig verkuerzt ("Leuchtturm von Alexandria" ->
+   * "Leuchtturm"). Was eine Gilde daraus macht, ist es nicht: "AO" fuer die
+   * Arktische Orangerie versteht die eine Runde sofort und die naechste gar
+   * nicht. Darum steht das hier und nicht in data.js — und weil es am
+   * stabilen Schluessel haengt, ueberlebt es jede Erneuerung des Datensatzes.
+   */
+  var ownShorts = normaliseShorts(read(KEY.shorts, {}));
+
+  /** Nur Eintraege behalten, deren Bauwerk es gibt und die etwas enthalten. */
+  function normaliseShorts(value) {
+    var result = {};
+    if (!value || typeof value !== "object") return result;
+    Object.keys(value).forEach(function (id) {
+      if (!byId[id]) return;
+      var text = cleanShort(value[id]);
+      if (text) result[id] = text;
+    });
+    return result;
+  }
+
+  /** Ein getipptes Kuerzel auf das bringen, was gespeichert wird. */
+  function cleanShort(text) {
+    return typeof text === "string" ? text.trim().slice(0, SHORT_MAX) : "";
+  }
+
+  /**
+   * Wie ein Bauwerk genannt wird — ueberall, wo cipher es kurz nennt: in der
+   * Chat-Zeile, in der Sammlung, am Merken-Knopf, auf den Favoriten-Chips
+   * und in der Suche. Ein eigenes Kuerzel gilt, sonst das aus dem Datensatz.
+   */
+  function shortName(building) {
+    return ownShorts[building.id] || building.short;
+  }
+
+  /**
    * Nur Eintraege behalten, die wirklich eine Zeile enthalten, und je
    * Bauwerk nur einen. Das Bauwerk steht nur zum Wiedererkennen dabei;
    * gezeigt wird immer der gespeicherte Text, damit eine gesammelte Zeile
@@ -509,9 +555,15 @@
     var byName = [];
     var byEra = [];
     DATA.buildings.forEach(function (building) {
-      if (normalise(building.name).indexOf(needle) >= 0 ||
-          normalise(building.short).indexOf(needle) >= 0) {
+      if (normalise(building.name).indexOf(needle) >= 0) {
         byName.push({ building: building, where: "name" });
+      } else if (normalise(shortName(building)).indexOf(needle) >= 0) {
+        // Ein Kuerzel aus dem Datensatz steckt immer im Namen ("Orangerie"
+        // in "Arktische Orangerie"), ein selbst vergebenes muss das nicht:
+        // "AO" kommt dort nirgends vor. Der Treffer bleibt bei den
+        // Namenstreffern, bekommt aber eine eigene Kennung, damit die Liste
+        // ihn erklaeren kann.
+        byName.push({ building: building, where: "short" });
       } else if (normalise(building.era).indexOf(needle) >= 0) {
         byEra.push({ building: building, where: "era" });
       }
@@ -538,7 +590,11 @@
       return '<li><button type="button" class="filter-hit" data-pick="' + escapeHtml(building.id) + '"' +
         (building.id === state.building ? ' aria-current="true"' : "") + ">" +
         "<b>" + (match.where === "name" ? highlight(building.name, needle) : escapeHtml(building.name)) + "</b>" +
-        "<span>" + (match.where === "era" ? highlight(building.era, needle) : escapeHtml(building.era)) + "</span>" +
+        "<span>" + (match.where === "era" ? highlight(building.era, needle) : escapeHtml(building.era)) +
+          // Getroffen hat das Kuerzel, im Namen steht es nicht — dann nennt
+          // die Zeile es, sonst stuende der Treffer ohne Begruendung da.
+          (match.where === "short" ? " · " + highlight(shortName(building), needle) : "") +
+        "</span>" +
       "</button></li>";
     }).join("");
   }
@@ -781,6 +837,31 @@
     });
   }
 
+  /** Welches Bauwerk gerade im Kuerzelfeld steht. */
+  var shortFieldFor = null;
+
+  /**
+   * Das Kuerzelfeld auf das gewaehlte Bauwerk stellen.
+   *
+   * Im Feld steht nur ein eigenes Kuerzel; der Platzhalter traegt den Namen
+   * aus dem Datensatz. Leer heisst damit nicht "kein Name", sondern "der aus
+   * dem Datensatz" — und das steht als Wort da, nicht als Regel, die man
+   * kennen muss.
+   */
+  function renderShortField(building) {
+    var input = $("buildingShort");
+    input.placeholder = building.short;
+
+    // Waehrend des Tippens nicht dazwischenfunken — aber ein Wechsel des
+    // Bauwerks ist kein Tippen. Stuende die Regel nur auf dem Fokus, bliebe
+    // nach einem Wechsel das Kuerzel des vorigen Bauwerks im Feld stehen,
+    // waehrend der Platzhalter daneben schon das neue nennt.
+    if (document.activeElement !== input || shortFieldFor !== building.id) {
+      input.value = ownShorts[building.id] || "";
+    }
+    shortFieldFor = building.id;
+  }
+
   var previousContributions = [];
 
   /**
@@ -806,6 +887,7 @@
       chip.classList.toggle("on", Number(chip.dataset.factor) === state.factor);
     });
     if (document.activeElement !== $("playerName")) $("playerName").value = state.name;
+    renderShortField(building);
 
     syncFavoriteLevel();
     renderFavorites();
@@ -979,7 +1061,7 @@
   }
 
   function renderChat(plan, building) {
-    var heading = [state.name.trim(), building.short].filter(Boolean).join(" ");
+    var heading = [state.name.trim(), shortName(building)].filter(Boolean).join(" ");
     setChatLine("chatPlain", Calc.chatLine(plan, heading, false));
     setChatLine("chatPoints", Calc.chatLine(plan, heading, true));
   }
@@ -1054,7 +1136,7 @@
 
     $("collList").innerHTML = collection.map(function (entry, index) {
       var building = byId[entry.id];
-      var what = building ? building.short : entry.text;
+      var what = building ? shortName(building) : entry.text;
       return '<li' + (index === fresh ? ' class="fresh"' : "") + ">" +
         '<span class="coll-t">' + escapeHtml(entry.text) + "</span>" +
         '<button type="button" class="coll-del" data-drop="' + index + '" aria-label="' +
@@ -1248,7 +1330,7 @@
     var chosen = byId[state.building];
 
     saveButton.setAttribute("aria-pressed", String(current >= 0));
-    $("favSaveText").textContent = chosen.short + " · Stufe " + (state.level - offset) +
+    $("favSaveText").textContent = shortName(chosen) + " · Stufe " + (state.level - offset) +
       (current >= 0 ? " gemerkt" : " merken");
     saveButton.title = current >= 0
       ? "Diese Kombination aus den Favoriten entfernen"
@@ -1260,10 +1342,10 @@
       return '<li' + (index === current ? ' aria-current="true"' : "") + ">" +
         '<button type="button" class="fav-go" data-load="' + index + '" title="' +
           escapeHtml(building.name + ", Stufe " + shown) + '">' +
-          escapeHtml(building.short) + " <b>" + shown + "</b>" +
+          escapeHtml(shortName(building)) + " <b>" + shown + "</b>" +
         "</button>" +
         '<button type="button" class="fav-del" data-delete="' + index + '" aria-label="' +
-          escapeHtml(building.short + " Stufe " + shown) + ' aus den Favoriten entfernen">×</button>' +
+          escapeHtml(shortName(building) + " Stufe " + shown) + ' aus den Favoriten entfernen">×</button>' +
       "</li>";
     }).join("");
 
@@ -1475,6 +1557,26 @@
     $("playerName").addEventListener("input", function (event) {
       state.name = event.target.value;
       render();
+    });
+
+    // Leer heisst "den Namen aus dem Datensatz nehmen", also faellt der
+    // Eintrag dann ganz weg. Ist danach nichts mehr eigen, verschwindet auch
+    // der Schluessel — einen leeren Speicher anzulegen waere dasselbe wie
+    // eine Vorgabe zu speichern, die niemand gewaehlt hat.
+    $("buildingShort").addEventListener("input", function (event) {
+      var text = cleanShort(event.target.value);
+      if (text) ownShorts[state.building] = text;
+      else delete ownShorts[state.building];
+
+      if (Object.keys(ownShorts).length) write(KEY.shorts, ownShorts);
+      else remove(KEY.shorts);
+      render();
+    });
+
+    // Beim Verlassen zeigt das Feld, was wirklich gespeichert ist: wer nur
+    // Leerzeichen tippt, hat nichts vergeben.
+    $("buildingShort").addEventListener("blur", function (event) {
+      event.target.value = ownShorts[state.building] || "";
     });
 
     $("rows").addEventListener("change", function (event) {
