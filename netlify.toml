@@ -23,6 +23,8 @@
     #                       Klassen, Balkenbreiten setzt JS über element.style —
     #                       das zählt für den CSP nicht als Inline-Stil
     #   img-src data:       für das Favicon, das als Daten-URI im HTML steckt
+    #                       (favicon.ico und apple-touch-icon.png kommen über
+    #                       'self' — sie liegen für Crawler und iOS bereit)
     Content-Security-Policy = "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; script-src 'self' 'sha256-3QMoY62OYSqj7gs5h8iE3SQNjTnlNm9qrfN3tdsEejo='; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'"
     # Netlify erzwingt HTTPS nur per Weiterleitung. HSTS lässt den Browser gar
     # nicht erst über http anfragen — ein Jahr lang, samt Unterdomänen.
@@ -63,3 +65,13 @@
   to = "/404.html"
   status = 404
   force = true
+
+# ------------------------------------------------------ Icons auf Verdacht
+
+# iOS fragt neben /apple-touch-icon.png auch die "precomposed"-Variante ab.
+# Eine zweite, identische Datei braucht es dafür nicht: Status 200 liefert
+# dieselbe PNG unter dem alten Namen aus, ohne Weiterleitung.
+[[redirects]]
+  from = "/apple-touch-icon-precomposed.png"
+  to = "/apple-touch-icon.png"
+  status = 200
