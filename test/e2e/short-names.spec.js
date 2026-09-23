@@ -193,6 +193,6 @@ test.describe("Die Suche kennt das Kuerzel", () => {
 test("das Feld traegt eine Beschriftung", async ({ page }) => {
   await page.goto("/index.html");
   // Sichtbar kurz, fuer Screenreader vollstaendig.
-  await expect(page.locator('label[for="buildingShort"]')).toContainText("Im Chat als");
-  await expect(feld(page)).toHaveAccessibleName(/eigener Name für das gewählte Bauwerk/);
+  await expect(page.locator('label[for="buildingShort"]')).toContainText("Eigenes Kürzel");
+  await expect(feld(page)).toHaveAccessibleName(/Eigenes Kürzel für das gewählte Bauwerk/);
 });
