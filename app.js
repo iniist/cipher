@@ -12,6 +12,9 @@
 
   var DATA = window.CIPHER_DATA;
   var Calc = window.CipherCalc;
+  // Kuerzel je Bauwerk, von Hand gepflegt in abbr.js. Fehlt die Datei oder
+  // ein Eintrag, gilt der Kurzname aus dem Datensatz.
+  var ABBR = window.CIPHER_ABBR || {};
 
   // ---------------------------------------------------------------- Konstanten
 
@@ -232,7 +235,11 @@
     slotPays: normaliseSlotPays(stored.slotPays),
     // In welcher Einheit die Zeilen des Blocks gelesen und getippt werden.
     slotUnit: stored.slotUnit === "fp" ? "fp" : "factor",
-    slotsOpen: stored.slotsOpen === true
+    slotsOpen: stored.slotsOpen === true,
+    // Ob Bauwerke mit ihrem Kuerzel aus abbr.js genannt werden ("AO") oder
+    // mit dem Kurznamen aus dem Datensatz ("Orangerie"). Aus ist die
+    // Vorgabe und das, was cipher vorher ohne Wahl getan hat.
+    useAbbr: stored.useAbbr === true
   };
 
   // Ein Platz traegt entweder einen Faktor oder einen Betrag, nie beides —
@@ -375,13 +382,29 @@
     return typeof text === "string" ? text.trim().slice(0, SHORT_MAX) : "";
   }
 
+  /** Das Kuerzel aus abbr.js, oder "" wenn es keins gibt. */
+  function abbrOf(building) {
+    var abbr = ABBR[building.id];
+    return typeof abbr === "string" ? abbr.trim() : "";
+  }
+
+  /**
+   * Wie ein Bauwerk ohne eigenes Kuerzel heisst: mit dem Schalter "Kuerzel"
+   * das aus abbr.js ("AO"), sonst der Kurzname aus dem Datensatz
+   * ("Orangerie").
+   */
+  function defaultShort(building) {
+    return (state.useAbbr && abbrOf(building)) || building.short;
+  }
+
   /**
    * Wie ein Bauwerk genannt wird — ueberall, wo cipher es kurz nennt: in der
    * Chat-Zeile, in der Sammlung, am Merken-Knopf, auf den Favoriten-Chips
-   * und in der Suche. Ein eigenes Kuerzel gilt, sonst das aus dem Datensatz.
+   * und in der Suche. Ein eigenes Kuerzel gilt in beiden Stellungen des
+   * Schalters — wer es vergibt, meint es ausdruecklich.
    */
   function shortName(building) {
-    return ownShorts[building.id] || building.short;
+    return ownShorts[building.id] || defaultShort(building);
   }
 
   /**
@@ -401,8 +424,24 @@
       seen[id] = true;
       return true;
     }).slice(-MAX_COLLECTED).map(function (entry) {
-      return { id: String(entry.id), text: entry.text };
+      var result = { id: String(entry.id), text: entry.text };
+      if (labelFits(entry.text, entry.label, entry.at)) {
+        result.label = entry.label;
+        result.at = entry.at;
+      }
+      return result;
     });
+  }
+
+  /**
+   * Ob an Stelle `at` der Zeile wirklich `label` steht. Nur dann laesst sich
+   * der Name des Bauwerks darin austauschen; Zeilen aus der Zeit vor dem
+   * Schalter tragen keine Stelle und bleiben, wie sie sind.
+   */
+  function labelFits(text, label, at) {
+    return typeof label === "string" && label !== "" &&
+      Number.isInteger(at) && at >= 0 &&
+      text.substr(at, label.length) === label;
   }
 
   /**
@@ -566,7 +605,11 @@
         // "AO" kommt dort nirgends vor. Der Treffer bleibt bei den
         // Namenstreffern, bekommt aber eine eigene Kennung, damit die Liste
         // ihn erklaeren kann.
-        byName.push({ building: building, where: "short" });
+        byName.push({ building: building, where: "short", alias: shortName(building) });
+      } else if (abbrOf(building) && normalise(abbrOf(building)).indexOf(needle) >= 0) {
+        // Das Kuerzel aus abbr.js findet sein Bauwerk auch bei
+        // ausgeschaltetem Schalter: wer "TA" tippt, meint die Armee.
+        byName.push({ building: building, where: "short", alias: abbrOf(building) });
       } else if (normalise(building.era).indexOf(needle) >= 0) {
         byEra.push({ building: building, where: "era" });
       }
@@ -596,7 +639,7 @@
         "<span>" + (match.where === "era" ? highlight(building.era, needle) : escapeHtml(building.era)) +
           // Getroffen hat das Kuerzel, im Namen steht es nicht — dann nennt
           // die Zeile es, sonst stuende der Treffer ohne Begruendung da.
-          (match.where === "short" ? " · " + highlight(shortName(building), needle) : "") +
+          (match.where === "short" ? " · " + highlight(match.alias, needle) : "") +
         "</span>" +
       "</button></li>";
     }).join("");
@@ -853,7 +896,7 @@
    */
   function renderShortField(building) {
     var input = $("buildingShort");
-    input.placeholder = building.short;
+    input.placeholder = defaultShort(building);
 
     // Waehrend des Tippens nicht dazwischenfunken — aber ein Wechsel des
     // Bauwerks ist kein Tippen. Stuende die Regel nur auf dem Fokus, bliebe
@@ -891,6 +934,8 @@
     });
     if (document.activeElement !== $("playerName")) $("playerName").value = state.name;
     renderShortField(building);
+    $("useAbbr").checked = state.useAbbr;
+    if (relabelCollection()) renderCollection();
 
     syncFavoriteLevel();
     renderFavorites();
@@ -1134,22 +1179,61 @@
    * in der Zwischenablage landet.
    */
 
-  /** Die Zeile eines Bauwerks in die Sammlung legen. */
+  /**
+   * Die Zeile eines Bauwerks in die Sammlung legen.
+   *
+   * Mitgemerkt wird, wo in der Zeile der Name des Bauwerks steht. Stellt
+   * jemand danach den Schalter "Kuerzel" um oder vergibt ein eigenes, zieht
+   * die Zeile mit — sonst staende in einer Nachricht "AO" neben
+   * "Terrakotta-Armee", je nachdem, wann kopiert wurde.
+   */
   function collect(id, text) {
     if (!text) return;
+
+    var entry = { id: id, text: text };
+    var building = byId[id];
+    if (building) {
+      var name = state.name.trim();
+      var label = shortName(building);
+      var at = name ? name.length + 1 : 0;
+      if (labelFits(text, label, at)) {
+        entry.label = label;
+        entry.at = at;
+      }
+    }
 
     // Je Bauwerk eine Zeile: wer nach einer Korrektur erneut kopiert,
     // meint dieselbe Foerderung noch einmal, nicht eine zweite. Die neue
     // Zeile ersetzt die alte an deren Platz, damit die Reihenfolge der
     // Sammlung die Reihenfolge des Sammelns bleibt.
     var at = collectionIndex(id);
-    if (at >= 0) collection[at] = { id: id, text: text };
-    else collection.push({ id: id, text: text });
+    if (at >= 0) collection[at] = entry;
+    else collection.push(entry);
 
     if (collection.length > MAX_COLLECTED) collection.shift();
 
     write(KEY.collection, collection);
     renderCollection(at >= 0 ? at : collection.length - 1);
+  }
+
+  /**
+   * Den Namen in gesammelten Zeilen auf den Stand bringen, den das Bauwerk
+   * gerade traegt. Geschrieben wird nur, wenn sich etwas geaendert hat.
+   * @returns {boolean} ob sich etwas geaendert hat
+   */
+  function relabelCollection() {
+    var changed = false;
+    collection.forEach(function (entry) {
+      var building = byId[entry.id];
+      if (!building || entry.label == null) return;
+      var label = shortName(building);
+      if (label === entry.label) return;
+      entry.text = entry.text.slice(0, entry.at) + label + entry.text.slice(entry.at + entry.label.length);
+      entry.label = label;
+      changed = true;
+    });
+    if (changed) write(KEY.collection, collection);
+    return changed;
   }
 
   function collectionIndex(id) {
@@ -1383,7 +1467,7 @@
       return '<li' + (index === current ? ' aria-current="true"' : "") + ">" +
         '<button type="button" class="fav-go" data-load="' + index + '" title="' +
           escapeHtml(building.name + ", Stufe " + shown) + '">' +
-          escapeHtml(shortName(building)) + " <b>" + shown + "</b>" +
+          '<span class="fav-n">' + escapeHtml(shortName(building)) + "</span> <b>" + shown + "</b>" +
         "</button>" +
         '<button type="button" class="fav-del" data-delete="' + index + '" aria-label="' +
           escapeHtml(shortName(building) + " Stufe " + shown) + ' aus den Favoriten entfernen">×</button>' +
@@ -1593,6 +1677,11 @@
     $("slots").addEventListener("toggle", function (event) {
       state.slotsOpen = event.target.open;
       persistState();
+    });
+
+    $("useAbbr").addEventListener("change", function (event) {
+      state.useAbbr = event.target.checked;
+      render();
     });
 
     $("playerName").addEventListener("input", function (event) {
