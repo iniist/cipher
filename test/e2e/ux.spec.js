@@ -123,7 +123,7 @@ test.describe("Favoritenliste", () => {
     await page.setViewportSize({ width: 430, height: 900 });
     await seedFavorites(page, FULL_LIST);
 
-    for (const theme of ["dark", "light", "contrast"]) {
+    for (const theme of ["dark", "light", "contrast", "writer", "space"]) {
       await page.click(`.modes button[data-mode="${theme}"]`);
 
       const fit = await page.locator("#favList").evaluate((list) => {
