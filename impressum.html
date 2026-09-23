@@ -13,7 +13,7 @@
 (function () {
   try {
     var saved = JSON.parse(localStorage.getItem("cipher:state") || "{}");
-    if (["light", "dark", "contrast"].indexOf(saved.theme) >= 0) {
+    if (["light", "dark", "contrast", "writer", "space"].indexOf(saved.theme) >= 0) {
       document.documentElement.dataset.theme = saved.theme;
     }
   } catch (e) { /* Speicher gesperrt — das Standard-Theme bleibt stehen. */ }
@@ -34,6 +34,8 @@
       <button type="button" data-mode="light" aria-label="Hell" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
       <button type="button" data-mode="dark" aria-label="Dunkel" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
       <button type="button" data-mode="contrast" aria-label="Kontrast" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button>
+      <button type="button" data-mode="writer" aria-label="Papier" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4C11 4 6 10 6 18M6 18l-3 3M6 18c6 0 11-4 12-9M9.5 13H15"/></svg></button>
+      <button type="button" data-mode="space" aria-label="Weltall" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3l1.8 5.7L17.5 10.5l-5.7 1.8L10 18l-1.8-5.7L2.5 10.5l5.7-1.8z"/><path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></button>
     </div>
   </header>
 
