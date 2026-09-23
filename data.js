@@ -8,7 +8,6 @@
  *   buildings[]           Ein Eintrag je Legendärem Bauwerk
  *     .id                 Stabiler Schlüssel (Wiki-Seitenname)
  *     .name               Anzeigename (deutsch)
- *     .short              Kurzname für den Förderchat
  *     .era                Zeitalter, dient als Gruppe im Auswahlfeld
  *     .base               Basiswert A der Kostenformel (null = unbekannt)
  *     .costs[0..9]        Gesamtkosten der Stufen 1-10 laut Wiki (null = unbekannt)
@@ -23,10 +22,9 @@
  *
  * Diese Datei wird erzeugt von tools/build-data.js aus dem JSON, das
  * tools/import.html herunterlädt. Handische Änderungen gehen beim nächsten
- * Lauf verloren — mit drei Ausnahmen, die der Lauf aus der bestehenden
+ * Lauf verloren — mit zwei Ausnahmen, die der Lauf aus der bestehenden
  * Datei übernimmt und jeweils als Hinweis meldet:
  *
- *   - die Kurznamen (.short); sie sind von Hand gepflegt
  *   - Bauwerke, die der Import gar nicht geliefert hat
  *   - .base/.costs und die Kurve eines Bauwerks, für das der Import nichts
  *     mitbringt; sie stammen dann aus im Spiel abgelesenen Stufen
@@ -38,55 +36,55 @@
   "use strict";
 
   var buildings = [
-    { id: "Observatory", name: "Observatorium", short: "Observatorium", era: "Ohne Zeitalter", base: 507.778903369, maxLevel: 207, curve: "Ohne Zeitalter", costs: [50, 70, 130, 200, 270, 330, 420, 490, 570, 650] },
-    { id: "Temple_of_Relics", name: "Relikttempel", short: "Relikttempel", era: "Ohne Zeitalter", base: 507.778903369, maxLevel: 207, curve: "Ohne Zeitalter", costs: [50, 70, 130, 200, 270, 330, 420, 490, 570, 650] },
-    { id: "Oracle_of_Delphi", name: "Orakel von Delphi", short: "Orakel", era: "Ohne Zeitalter", base: 507.778903369, maxLevel: 207, curve: "Ohne Zeitalter", costs: [50, 70, 130, 200, 270, 330, 420, 490, 570, 650] },
-    { id: "Tower_of_Babel", name: "Turm zu Babel", short: "Turm zu Babel", era: "Bronzezeit", base: 398.41125782, maxLevel: 202, curve: "Bronzezeit", costs: [40, 60, 100, 150, 210, 270, 330, 380, 450, 510] },
-    { id: "Statue_of_Zeus", name: "Zeusstatue", short: "Zeusstatue", era: "Bronzezeit", base: 398.41125782, maxLevel: 202, curve: "Bronzezeit", costs: [40, 60, 100, 150, 210, 270, 330, 380, 450, 510] },
-    { id: "Colosseum", name: "Kolosseum", short: "Kolosseum", era: "Eisenzeit", base: 429.659284956, maxLevel: 200, curve: "Eisenzeit", costs: [40, 60, 120, 170, 220, 290, 360, 420, 490, 550] },
-    { id: "Lighthouse_of_Alexandria", name: "Leuchtturm von Alexandria", short: "Leuchtturm", era: "Eisenzeit", base: 429.659284956, maxLevel: 200, curve: "Eisenzeit", costs: [40, 60, 120, 170, 220, 290, 360, 420, 490, 550] },
-    { id: "Hagia_Sophia", name: "Hagia Sophia", short: "Hagia Sophia", era: "Frühes Mittelalter", base: 468.718394076, maxLevel: 200, curve: "Frühes Mittelalter", costs: [50, 60, 120, 190, 240, 320, 380, 460, 530, 600] },
-    { id: "Cathedral_of_Aachen", name: "Aachener Dom", short: "Aachener Dom", era: "Frühes Mittelalter", base: 468.718394076, maxLevel: 200, curve: "Frühes Mittelalter", costs: [50, 60, 120, 190, 240, 320, 380, 460, 530, 600] },
-    { id: "Galata_Tower", name: "Galataturm", short: "Galataturm", era: "Frühes Mittelalter", base: 507.778903369, maxLevel: 200, curve: "Frühes Mittelalter", costs: [20, 40, 60, 130, 210, 290, 370, 460, 550, 650] },
-    { id: "St._Mark's_Basilica", name: "Markusdom", short: "Markusdom", era: "Hochmittelalter", base: 507.778903369, maxLevel: 200, curve: "Hochmittelalter", costs: [50, 70, 130, 200, 270, 330, 420, 490, 570, 650] },
-    { id: "Notre_Dame", name: "Notre Dame", short: "Notre Dame", era: "Hochmittelalter", base: 507.778903369, maxLevel: 200, curve: "Hochmittelalter", costs: [50, 70, 130, 200, 270, 330, 420, 490, 570, 650] },
-    { id: "Saint_Basil's_Cathedral", name: "Basilius-Kathedrale", short: "Basilius-Kathedrale", era: "Spätes Mittelalter", base: 546.839308583, maxLevel: 200, curve: "Spätes Mittelalter", costs: [50, 80, 140, 210, 290, 360, 440, 530, 610, 700] },
-    { id: "Castel_del_Monte", name: "Castel del Monte", short: "Castel del Monte", era: "Spätes Mittelalter", base: 546.839308583, maxLevel: 200, curve: "Spätes Mittelalter", costs: [50, 80, 140, 210, 290, 360, 440, 530, 610, 700] },
-    { id: "Frauenkirche_of_Dresden", name: "Dresdner Frauenkirche", short: "Frauenkirche", era: "Kolonialzeit", base: 578.087177723, maxLevel: 200, curve: "Kolonialzeit", costs: [50, 90, 150, 220, 310, 380, 480, 560, 650, 740] },
-    { id: "Deal_Castle", name: "Deal Castle", short: "Deal Castle", era: "Kolonialzeit", base: 578.087177723, maxLevel: 200, curve: "Kolonialzeit", costs: [50, 90, 150, 220, 310, 380, 480, 560, 650, 740] },
-    { id: "Royal_Albert_Hall", name: "Royal Albert Hall", short: "Royal Albert Hall", era: "Industriezeitalter", base: 617.147859765, maxLevel: 200, curve: "Industriezeitalter", costs: [60, 90, 150, 240, 330, 410, 500, 600, 690, 790] },
-    { id: "Capitol", name: "Kapitol", short: "Kapitol", era: "Industriezeitalter", base: 617.147859765, maxLevel: 200, curve: "Industriezeitalter", costs: [60, 90, 150, 240, 330, 410, 500, 600, 690, 790] },
-    { id: "Château_Frontenac", name: "Château Frontenac", short: "Château Frontenac", era: "Jahrhundertwende", base: 648.394673303, maxLevel: 400, curve: "Jahrhundertwende", costs: [60, 90, 170, 260, 340, 440, 530, 630, 740, 830] },
-    { id: "Alcatraz", name: "Alcatraz", short: "Alcatraz", era: "Jahrhundertwende", base: 648.394673303, maxLevel: 400, curve: "Jahrhundertwende", costs: [60, 90, 170, 260, 340, 440, 530, 630, 740, 830] },
-    { id: "Space_Needle", name: "Space Needle", short: "Space Needle", era: "Moderne", base: 687.454513105, maxLevel: 200, curve: "Moderne", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
-    { id: "Atomium", name: "Atomium", short: "Atomium", era: "Moderne", base: 687.454513105, maxLevel: 200, curve: "Moderne", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
-    { id: "Cape_Canaveral", name: "Cape Canaveral", short: "Cape Canaveral", era: "Postmoderne", base: 687.454513105, maxLevel: 200, curve: "Postmoderne", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
-    { id: "The_Habitat", name: "Das Habitat", short: "Das Habitat", era: "Postmoderne", base: 687.454513105, maxLevel: 200, curve: "Postmoderne", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
-    { id: "Lotus_Temple", name: "Lotustempel", short: "Lotustempel", era: "Gegenwart", base: 687.454513105, maxLevel: 200, curve: "Gegenwart", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
-    { id: "Innovation_Tower", name: "Innovation Tower", short: "Innovation Tower", era: "Gegenwart", base: 687.454513105, maxLevel: 200, curve: "Gegenwart", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
-    { id: "Voyager_V1", name: "Voyager V1", short: "Voyager V1", era: "Morgen", base: 726.515230812, maxLevel: 200, curve: "Morgen", costs: [70, 100, 190, 280, 380, 480, 590, 710, 810, 930] },
-    { id: "Truce_Tower", name: "Friedensturm", short: "Friedensturm", era: "Morgen", base: 726.515230812, maxLevel: 200, curve: "Morgen", costs: [70, 100, 190, 280, 380, 480, 590, 710, 810, 930] },
-    { id: "The_Arc", name: "Die Arche", short: "Die Arche", era: "Zukunft", base: 757.762263173, maxLevel: 203, curve: "Zukunft", costs: [70, 110, 200, 290, 400, 510, 620, 740, 860, 970] },
-    { id: "Rain_Forest_Project", name: "Regenwald-Projekt", short: "Regenwald-Projekt", era: "Zukunft", base: 757.762263173, maxLevel: 203, curve: "Zukunft", costs: [70, 110, 200, 290, 400, 510, 620, 740, 860, 970] },
-    { id: "Gaea_Statue", name: "Gaea-Statue", short: "Gaea-Statue", era: "Arktische Zukunft", base: 867.130221144, maxLevel: 341, curve: "Arktische Zukunft", costs: [80, 120, 230, 340, 450, 580, 710, 850, 980, 1110] },
-    { id: "Seed_Vault", name: "Saatgut-Tresor", short: "Saatgut-Tresor", era: "Arktische Zukunft", base: 867.130221144, maxLevel: 341, curve: "Arktische Zukunft", costs: [80, 120, 230, 340, 450, 580, 710, 850, 980, 1110] },
-    { id: "Arctic_Orangery", name: "Arktische Orangerie", short: "Orangerie", era: "Arktische Zukunft", base: 867.130221144, maxLevel: 341, curve: "Arktische Zukunft", costs: [80, 120, 230, 340, 450, 580, 710, 850, 980, 1110] },
-    { id: "Atlantis_Museum", name: "Atlantis-Museum", short: "Atlantis-Museum", era: "Ozeanische Zukunft", base: 906.190098444, maxLevel: 200, curve: "Ozeanische Zukunft", costs: [80, 130, 240, 350, 470, 610, 740, 880, 1020, 1160] },
-    { id: "The_Kraken", name: "Der Kraken", short: "Der Kraken", era: "Ozeanische Zukunft", base: 906.190098444, maxLevel: 200, curve: "Ozeanische Zukunft", costs: [80, 130, 240, 350, 470, 610, 740, 880, 1020, 1160] },
-    { id: "The_Blue_Galaxy", name: "Die blaue Galaxie", short: "Die blaue Galaxie", era: "Ozeanische Zukunft", base: 906.190098444, maxLevel: 200, curve: "Ozeanische Zukunft", costs: [80, 130, 240, 350, 470, 610, 740, 880, 1020, 1160] },
-    { id: "Terracotta_Army", name: "Terrakotta-Armee", short: "Terrakotta-Armee", era: "Virtuelle Zukunft", base: 945.250067083, maxLevel: 205, curve: "Virtuelle Zukunft", costs: [90, 130, 240, 370, 490, 630, 770, 910, 1060, 1210] },
-    { id: "Himeji_Castle", name: "Burg Himeji", short: "Burg Himeji", era: "Virtuelle Zukunft", base: 945.250067083, maxLevel: 205, curve: "Virtuelle Zukunft", costs: [90, 130, 240, 370, 490, 630, 770, 910, 1060, 1210] },
-    { id: "Star_Gazer", name: "Star Gazer", short: "Star Gazer", era: "Mars", base: 976.497877813, maxLevel: 202, curve: "Mars", costs: [90, 140, 250, 380, 520, 650, 800, 940, 1110, 1250] },
-    { id: "The_Virgo_Project", name: "Das Virgo-Projekt", short: "Das Virgo-Projekt", era: "Mars", base: 976.497877813, maxLevel: 202, curve: "Mars", costs: [90, 140, 250, 380, 520, 650, 800, 940, 1110, 1250] },
-    { id: "Space_Carrier", name: "Weltraumfrachter", short: "Weltraumfrachter", era: "Asteroidengürtel", base: 1015.557833408, maxLevel: 260, curve: "Asteroidengürtel", costs: [90, 150, 260, 390, 540, 670, 830, 990, 1140, 1300] },
-    { id: "Flying_Island", name: "Fliegende Insel", short: "Fliegende Insel", era: "Venus", base: 1054.617997675, maxLevel: 201, curve: "Venus", costs: [100, 140, 280, 400, 560, 700, 850, 1020, 1180, 1350] },
-    { id: "A.I._Core", name: "KI-Kern", short: "KI-Kern", era: "Jupitermond", base: 1085.865770788, maxLevel: 200, curve: "Jupitermond", costs: [100, 150, 280, 430, 570, 720, 890, 1050, 1230, 1390] },
-    { id: "Saturn_VI_Gate_PEGASUS", name: "Saturn VI Tor PEGASUS", short: "PEGASUS", era: "Titan", base: 1968.619635026, maxLevel: 200, curve: "Titan", costs: [180, 270, 510, 780, 1030, 1300, 1610, 1900, 2230, 2520] },
-    { id: "Saturn_VI_Gate_CENTAURUS", name: "Saturn VI Tor CENTAURUS", short: "CENTAURUS", era: "Titan", base: 2538.894170735, maxLevel: 200, curve: "Titan", costs: [230, 350, 660, 1010, 1330, 1680, 2080, 2460, 2880, 3250] },
-    { id: "Saturn_VI_Gate_HYDRA", name: "Saturn VI Tor HYDRA", short: "HYDRA", era: "Titan", base: 3109.169154893, maxLevel: 200, curve: "Titan", costs: [290, 430, 800, 1230, 1630, 2060, 2550, 3000, 3520, 3980] },
-    { id: "Stellar_Warship", name: "Stellares Kriegsschiff", short: "Kriegsschiff", era: "Raumfahrt-Hub", base: 11194.57333207, maxLevel: 212, curve: "Raumfahrt-Hub", costs: [1040, 1550, 2880, 4430, 5870, 7420, 9180, 10800, 12670, 14330] },
-    { id: "Cosmic_Catalyst", name: "Kosmischer Katalysator", short: "Katalysator", era: "Raumfahrt-Hub", base: 9015.029466917, maxLevel: 212, curve: "Raumfahrt-Hub", costs: [840, 1250, 2320, 3570, 4730, 5970, 7400, 8700, 10210, 11540] },
-    { id: "Shattered_Horizon_Siphon", name: "Horizontriss-Siphon", short: "Siphon", era: "Stellares Zeitalter", base: 11350.724091612, maxLevel: 200, curve: "Stellares Zeitalter", costs: null },
+    { id: "Observatory", name: "Observatorium", era: "Ohne Zeitalter", base: 507.778903369, maxLevel: 207, curve: "Ohne Zeitalter", costs: [50, 70, 130, 200, 270, 330, 420, 490, 570, 650] },
+    { id: "Temple_of_Relics", name: "Relikttempel", era: "Ohne Zeitalter", base: 507.778903369, maxLevel: 207, curve: "Ohne Zeitalter", costs: [50, 70, 130, 200, 270, 330, 420, 490, 570, 650] },
+    { id: "Oracle_of_Delphi", name: "Orakel von Delphi", era: "Ohne Zeitalter", base: 507.778903369, maxLevel: 207, curve: "Ohne Zeitalter", costs: [50, 70, 130, 200, 270, 330, 420, 490, 570, 650] },
+    { id: "Tower_of_Babel", name: "Turm zu Babel", era: "Bronzezeit", base: 398.41125782, maxLevel: 202, curve: "Bronzezeit", costs: [40, 60, 100, 150, 210, 270, 330, 380, 450, 510] },
+    { id: "Statue_of_Zeus", name: "Zeusstatue", era: "Bronzezeit", base: 398.41125782, maxLevel: 202, curve: "Bronzezeit", costs: [40, 60, 100, 150, 210, 270, 330, 380, 450, 510] },
+    { id: "Colosseum", name: "Kolosseum", era: "Eisenzeit", base: 429.659284956, maxLevel: 200, curve: "Eisenzeit", costs: [40, 60, 120, 170, 220, 290, 360, 420, 490, 550] },
+    { id: "Lighthouse_of_Alexandria", name: "Leuchtturm von Alexandria", era: "Eisenzeit", base: 429.659284956, maxLevel: 200, curve: "Eisenzeit", costs: [40, 60, 120, 170, 220, 290, 360, 420, 490, 550] },
+    { id: "Hagia_Sophia", name: "Hagia Sophia", era: "Frühes Mittelalter", base: 468.718394076, maxLevel: 200, curve: "Frühes Mittelalter", costs: [50, 60, 120, 190, 240, 320, 380, 460, 530, 600] },
+    { id: "Cathedral_of_Aachen", name: "Aachener Dom", era: "Frühes Mittelalter", base: 468.718394076, maxLevel: 200, curve: "Frühes Mittelalter", costs: [50, 60, 120, 190, 240, 320, 380, 460, 530, 600] },
+    { id: "Galata_Tower", name: "Galataturm", era: "Frühes Mittelalter", base: 507.778903369, maxLevel: 200, curve: "Frühes Mittelalter", costs: [20, 40, 60, 130, 210, 290, 370, 460, 550, 650] },
+    { id: "St._Mark's_Basilica", name: "Markusdom", era: "Hochmittelalter", base: 507.778903369, maxLevel: 200, curve: "Hochmittelalter", costs: [50, 70, 130, 200, 270, 330, 420, 490, 570, 650] },
+    { id: "Notre_Dame", name: "Notre Dame", era: "Hochmittelalter", base: 507.778903369, maxLevel: 200, curve: "Hochmittelalter", costs: [50, 70, 130, 200, 270, 330, 420, 490, 570, 650] },
+    { id: "Saint_Basil's_Cathedral", name: "Basilius-Kathedrale", era: "Spätes Mittelalter", base: 546.839308583, maxLevel: 200, curve: "Spätes Mittelalter", costs: [50, 80, 140, 210, 290, 360, 440, 530, 610, 700] },
+    { id: "Castel_del_Monte", name: "Castel del Monte", era: "Spätes Mittelalter", base: 546.839308583, maxLevel: 200, curve: "Spätes Mittelalter", costs: [50, 80, 140, 210, 290, 360, 440, 530, 610, 700] },
+    { id: "Frauenkirche_of_Dresden", name: "Dresdner Frauenkirche", era: "Kolonialzeit", base: 578.087177723, maxLevel: 200, curve: "Kolonialzeit", costs: [50, 90, 150, 220, 310, 380, 480, 560, 650, 740] },
+    { id: "Deal_Castle", name: "Deal Castle", era: "Kolonialzeit", base: 578.087177723, maxLevel: 200, curve: "Kolonialzeit", costs: [50, 90, 150, 220, 310, 380, 480, 560, 650, 740] },
+    { id: "Royal_Albert_Hall", name: "Royal Albert Hall", era: "Industriezeitalter", base: 617.147859765, maxLevel: 200, curve: "Industriezeitalter", costs: [60, 90, 150, 240, 330, 410, 500, 600, 690, 790] },
+    { id: "Capitol", name: "Kapitol", era: "Industriezeitalter", base: 617.147859765, maxLevel: 200, curve: "Industriezeitalter", costs: [60, 90, 150, 240, 330, 410, 500, 600, 690, 790] },
+    { id: "Château_Frontenac", name: "Château Frontenac", era: "Jahrhundertwende", base: 648.394673303, maxLevel: 400, curve: "Jahrhundertwende", costs: [60, 90, 170, 260, 340, 440, 530, 630, 740, 830] },
+    { id: "Alcatraz", name: "Alcatraz", era: "Jahrhundertwende", base: 648.394673303, maxLevel: 400, curve: "Jahrhundertwende", costs: [60, 90, 170, 260, 340, 440, 530, 630, 740, 830] },
+    { id: "Space_Needle", name: "Space Needle", era: "Moderne", base: 687.454513105, maxLevel: 200, curve: "Moderne", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
+    { id: "Atomium", name: "Atomium", era: "Moderne", base: 687.454513105, maxLevel: 200, curve: "Moderne", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
+    { id: "Cape_Canaveral", name: "Cape Canaveral", era: "Postmoderne", base: 687.454513105, maxLevel: 200, curve: "Postmoderne", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
+    { id: "The_Habitat", name: "Das Habitat", era: "Postmoderne", base: 687.454513105, maxLevel: 200, curve: "Postmoderne", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
+    { id: "Lotus_Temple", name: "Lotustempel", era: "Gegenwart", base: 687.454513105, maxLevel: 200, curve: "Gegenwart", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
+    { id: "Innovation_Tower", name: "Innovation Tower", era: "Gegenwart", base: 687.454513105, maxLevel: 200, curve: "Gegenwart", costs: [60, 100, 180, 270, 360, 460, 560, 670, 770, 880] },
+    { id: "Voyager_V1", name: "Voyager V1", era: "Morgen", base: 726.515230812, maxLevel: 200, curve: "Morgen", costs: [70, 100, 190, 280, 380, 480, 590, 710, 810, 930] },
+    { id: "Truce_Tower", name: "Friedensturm", era: "Morgen", base: 726.515230812, maxLevel: 200, curve: "Morgen", costs: [70, 100, 190, 280, 380, 480, 590, 710, 810, 930] },
+    { id: "The_Arc", name: "Die Arche", era: "Zukunft", base: 757.762263173, maxLevel: 203, curve: "Zukunft", costs: [70, 110, 200, 290, 400, 510, 620, 740, 860, 970] },
+    { id: "Rain_Forest_Project", name: "Regenwald-Projekt", era: "Zukunft", base: 757.762263173, maxLevel: 203, curve: "Zukunft", costs: [70, 110, 200, 290, 400, 510, 620, 740, 860, 970] },
+    { id: "Gaea_Statue", name: "Gaea-Statue", era: "Arktische Zukunft", base: 867.130221144, maxLevel: 341, curve: "Arktische Zukunft", costs: [80, 120, 230, 340, 450, 580, 710, 850, 980, 1110] },
+    { id: "Seed_Vault", name: "Saatgut-Tresor", era: "Arktische Zukunft", base: 867.130221144, maxLevel: 341, curve: "Arktische Zukunft", costs: [80, 120, 230, 340, 450, 580, 710, 850, 980, 1110] },
+    { id: "Arctic_Orangery", name: "Arktische Orangerie", era: "Arktische Zukunft", base: 867.130221144, maxLevel: 341, curve: "Arktische Zukunft", costs: [80, 120, 230, 340, 450, 580, 710, 850, 980, 1110] },
+    { id: "Atlantis_Museum", name: "Atlantis-Museum", era: "Ozeanische Zukunft", base: 906.190098444, maxLevel: 200, curve: "Ozeanische Zukunft", costs: [80, 130, 240, 350, 470, 610, 740, 880, 1020, 1160] },
+    { id: "The_Kraken", name: "Der Kraken", era: "Ozeanische Zukunft", base: 906.190098444, maxLevel: 200, curve: "Ozeanische Zukunft", costs: [80, 130, 240, 350, 470, 610, 740, 880, 1020, 1160] },
+    { id: "The_Blue_Galaxy", name: "Die blaue Galaxie", era: "Ozeanische Zukunft", base: 906.190098444, maxLevel: 200, curve: "Ozeanische Zukunft", costs: [80, 130, 240, 350, 470, 610, 740, 880, 1020, 1160] },
+    { id: "Terracotta_Army", name: "Terrakotta-Armee", era: "Virtuelle Zukunft", base: 945.250067083, maxLevel: 205, curve: "Virtuelle Zukunft", costs: [90, 130, 240, 370, 490, 630, 770, 910, 1060, 1210] },
+    { id: "Himeji_Castle", name: "Burg Himeji", era: "Virtuelle Zukunft", base: 945.250067083, maxLevel: 205, curve: "Virtuelle Zukunft", costs: [90, 130, 240, 370, 490, 630, 770, 910, 1060, 1210] },
+    { id: "Star_Gazer", name: "Star Gazer", era: "Mars", base: 976.497877813, maxLevel: 202, curve: "Mars", costs: [90, 140, 250, 380, 520, 650, 800, 940, 1110, 1250] },
+    { id: "The_Virgo_Project", name: "Das Virgo-Projekt", era: "Mars", base: 976.497877813, maxLevel: 202, curve: "Mars", costs: [90, 140, 250, 380, 520, 650, 800, 940, 1110, 1250] },
+    { id: "Space_Carrier", name: "Weltraumfrachter", era: "Asteroidengürtel", base: 1015.557833408, maxLevel: 260, curve: "Asteroidengürtel", costs: [90, 150, 260, 390, 540, 670, 830, 990, 1140, 1300] },
+    { id: "Flying_Island", name: "Fliegende Insel", era: "Venus", base: 1054.617997675, maxLevel: 201, curve: "Venus", costs: [100, 140, 280, 400, 560, 700, 850, 1020, 1180, 1350] },
+    { id: "A.I._Core", name: "KI-Kern", era: "Jupitermond", base: 1085.865770788, maxLevel: 200, curve: "Jupitermond", costs: [100, 150, 280, 430, 570, 720, 890, 1050, 1230, 1390] },
+    { id: "Saturn_VI_Gate_PEGASUS", name: "Saturn VI Tor PEGASUS", era: "Titan", base: 1968.619635026, maxLevel: 200, curve: "Titan", costs: [180, 270, 510, 780, 1030, 1300, 1610, 1900, 2230, 2520] },
+    { id: "Saturn_VI_Gate_CENTAURUS", name: "Saturn VI Tor CENTAURUS", era: "Titan", base: 2538.894170735, maxLevel: 200, curve: "Titan", costs: [230, 350, 660, 1010, 1330, 1680, 2080, 2460, 2880, 3250] },
+    { id: "Saturn_VI_Gate_HYDRA", name: "Saturn VI Tor HYDRA", era: "Titan", base: 3109.169154893, maxLevel: 200, curve: "Titan", costs: [290, 430, 800, 1230, 1630, 2060, 2550, 3000, 3520, 3980] },
+    { id: "Stellar_Warship", name: "Stellares Kriegsschiff", era: "Raumfahrt-Hub", base: 11194.57333207, maxLevel: 212, curve: "Raumfahrt-Hub", costs: [1040, 1550, 2880, 4430, 5870, 7420, 9180, 10800, 12670, 14330] },
+    { id: "Cosmic_Catalyst", name: "Kosmischer Katalysator", era: "Raumfahrt-Hub", base: 9015.029466917, maxLevel: 212, curve: "Raumfahrt-Hub", costs: [840, 1250, 2320, 3570, 4730, 5970, 7400, 8700, 10210, 11540] },
+    { id: "Shattered_Horizon_Siphon", name: "Horizontriss-Siphon", era: "Stellares Zeitalter", base: 11350.724091612, maxLevel: 200, curve: "Stellares Zeitalter", costs: null },
   ];
 
   var curves = {

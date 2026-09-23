@@ -23,7 +23,6 @@ test("jedes Bauwerk ist vollstaendig beschrieben", () => {
     const where = building.id;
     assert.equal(typeof building.id, "string", `${where}: id fehlt`);
     assert.ok(building.name, `${where}: name fehlt`);
-    assert.ok(building.short, `${where}: short fehlt`);
     assert.ok(building.era, `${where}: era fehlt`);
     assert.ok(Number.isInteger(building.maxLevel) && building.maxLevel > 0, `${where}: maxLevel unbrauchbar`);
 

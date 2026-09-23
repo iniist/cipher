@@ -1,11 +1,10 @@
 /**
  * Browsertests fuer selbst vergebene Kuerzel.
  *
- * Der Datensatz bringt je Bauwerk ein `short` mit, unstrittig verkuerzt:
- * "Leuchtturm von Alexandria" wird zu "Leuchtturm". Was eine Gilde daraus
- * macht, ist es nicht — "AO" fuer die Arktische Orangerie versteht die eine
- * Runde sofort und die naechste gar nicht. Darum laesst sich das Kuerzel je
- * Bauwerk selbst setzen; leer heisst "das aus dem Datensatz".
+ * Ohne Schalter nennt cipher ein Bauwerk beim vollen Namen, mit Schalter
+ * beim Kuerzel aus abbr.js. Was eine Gilde schreibt, ist oft keins von
+ * beiden — die eine "Orangerie", die naechste "AO". Darum laesst sich das
+ * Kuerzel je Bauwerk selbst setzen; leer heisst "die Vorgabe".
  */
 const { test, expect } = require("@playwright/test");
 
@@ -23,16 +22,16 @@ async function orangerie(page) {
 }
 
 test.describe("Ohne eigenes Kuerzel", () => {
-  test("gilt ueberall der Name aus dem Datensatz", async ({ page }) => {
+  test("gilt ueberall der volle Name", async ({ page }) => {
     await orangerie(page);
-    await expect(chat(page)).toContainText("Dani Orangerie");
-    await expect(merken(page)).toContainText("Orangerie · Stufe");
+    await expect(chat(page)).toContainText("Dani Arktische Orangerie");
+    await expect(merken(page)).toContainText("Arktische Orangerie · Stufe");
   });
 
   test("steht die Vorgabe als Platzhalter im leeren Feld", async ({ page }) => {
     await orangerie(page);
     await expect(feld(page)).toHaveValue("");
-    await expect(feld(page)).toHaveAttribute("placeholder", "Orangerie");
+    await expect(feld(page)).toHaveAttribute("placeholder", "Arktische Orangerie");
   });
 
   test("legt der blosse Aufruf keinen Speicher an", async ({ page }) => {
@@ -101,8 +100,8 @@ test.describe("Zuruecknehmen", () => {
     await feld(page).fill("AO");
     await feld(page).fill("");
 
-    await expect(feld(page)).toHaveAttribute("placeholder", "Orangerie");
-    await expect(chat(page)).toContainText("Dani Orangerie");
+    await expect(feld(page)).toHaveAttribute("placeholder", "Arktische Orangerie");
+    await expect(chat(page)).toContainText("Dani Arktische Orangerie");
     // Kein leerer Schluessel bleibt stehen.
     expect(await gespeichert(page)).toBe(null);
   });
@@ -111,7 +110,7 @@ test.describe("Zuruecknehmen", () => {
     await orangerie(page);
     await feld(page).fill("   ");
 
-    await expect(chat(page)).toContainText("Dani Orangerie");
+    await expect(chat(page)).toContainText("Dani Arktische Orangerie");
     expect(await gespeichert(page)).toBe(null);
     // Und beim Verlassen steht wieder da, was wirklich gespeichert ist.
     await feld(page).blur();

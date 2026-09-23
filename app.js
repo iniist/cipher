@@ -13,7 +13,7 @@
   var DATA = window.CIPHER_DATA;
   var Calc = window.CipherCalc;
   // Kuerzel je Bauwerk, von Hand gepflegt in abbr.js. Fehlt die Datei oder
-  // ein Eintrag, gilt der Kurzname aus dem Datensatz.
+  // ein Eintrag, gilt der volle Name.
   var ABBR = window.CIPHER_ABBR || {};
 
   // ---------------------------------------------------------------- Konstanten
@@ -237,8 +237,7 @@
     slotUnit: stored.slotUnit === "fp" ? "fp" : "factor",
     slotsOpen: stored.slotsOpen === true,
     // Ob Bauwerke mit ihrem Kuerzel aus abbr.js genannt werden ("AO") oder
-    // mit dem Kurznamen aus dem Datensatz ("Orangerie"). Aus ist die
-    // Vorgabe und das, was cipher vorher ohne Wahl getan hat.
+    // mit vollem Namen ("Arktische Orangerie"). Aus ist die Vorgabe.
     useAbbr: stored.useAbbr === true
   };
 
@@ -356,11 +355,10 @@
   /**
    * Selbst vergebene Kuerzel, nach Bauwerk-Schluessel.
    *
-   * Der Datensatz bringt fuer jedes Bauwerk ein `short` mit, von Hand
-   * gepflegt und unstrittig verkuerzt ("Leuchtturm von Alexandria" ->
-   * "Leuchtturm"). Was eine Gilde daraus macht, ist es nicht: "AO" fuer die
-   * Arktische Orangerie versteht die eine Runde sofort und die naechste gar
-   * nicht. Darum steht das hier und nicht in data.js — und weil es am
+   * Ohne Schalter heisst ein Bauwerk mit vollem Namen, mit Schalter mit
+   * seinem Kuerzel aus abbr.js. Was eine Gilde daraus macht, ist beides
+   * nicht: die eine schreibt "Orangerie", die naechste "Orang". Das eigene
+   * Kuerzel ueberschreibt darum beide Stellungen. Darum steht das hier und nicht in data.js — und weil es am
    * stabilen Schluessel haengt, ueberlebt es jede Erneuerung des Datensatzes.
    */
   var ownShorts = normaliseShorts(read(KEY.shorts, {}));
@@ -390,11 +388,10 @@
 
   /**
    * Wie ein Bauwerk ohne eigenes Kuerzel heisst: mit dem Schalter "Kuerzel"
-   * das aus abbr.js ("AO"), sonst der Kurzname aus dem Datensatz
-   * ("Orangerie").
+   * das aus abbr.js ("AO"), sonst der volle Name ("Arktische Orangerie").
    */
   function defaultShort(building) {
-    return (state.useAbbr && abbrOf(building)) || building.short;
+    return (state.useAbbr && abbrOf(building)) || building.name;
   }
 
   /**
@@ -600,10 +597,9 @@
       if (normalise(building.name).indexOf(needle) >= 0) {
         byName.push({ building: building, where: "name" });
       } else if (normalise(shortName(building)).indexOf(needle) >= 0) {
-        // Ein Kuerzel aus dem Datensatz steckt immer im Namen ("Orangerie"
-        // in "Arktische Orangerie"), ein selbst vergebenes muss das nicht:
-        // "AO" kommt dort nirgends vor. Der Treffer bleibt bei den
-        // Namenstreffern, bekommt aber eine eigene Kennung, damit die Liste
+        // Ein selbst vergebenes Kuerzel muss nicht im Namen stecken: "AO"
+        // kommt in "Arktische Orangerie" nirgends vor. Der Treffer bleibt bei
+        // den Namenstreffern, bekommt aber eine eigene Kennung, damit die Liste
         // ihn erklaeren kann.
         byName.push({ building: building, where: "short", alias: shortName(building) });
       } else if (abbrOf(building) && normalise(abbrOf(building)).indexOf(needle) >= 0) {

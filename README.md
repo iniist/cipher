@@ -223,7 +223,7 @@ die Sache.
 ### Bauwerk finden
 
 49 Bauwerke in 24 Zeitaltern sind viel zum Scrollen. Das Suchfeld unter der
-Auswahl findet sie nach Name, Kurzname und Zeitalter — Groß- und
+Auswahl findet sie nach Name, Kürzel und Zeitalter — Groß- und
 Kleinschreibung sowie Umlaute spielen keine Rolle. Die Treffer erscheinen als
 eigene Liste darunter, ein Tipp darauf wählt das Bauwerk aus, Enter nimmt den
 ersten.
@@ -243,8 +243,8 @@ wird genau die Stelle hervorgehoben, die getroffen hat.
 
 Im Förderchat schreibt kaum jemand „Arktische Orangerie“ aus — die einen
 schreiben „Orangerie“, die anderen „AO“. Der Schalter **Kürzel** rechts über
-dem Auswahlfeld wechselt zwischen beidem: aus, heißt ein Bauwerk wie bisher
-mit seinem Kurznamen aus dem Datensatz; an, mit seinem Kürzel aus
+dem Auswahlfeld wechselt zwischen vollem Namen und Kürzel: aus, heißt ein
+Bauwerk wie im Spiel („Arktische Orangerie“); an, mit seinem Kürzel aus
 [`abbr.js`](./abbr.js) — `Obsi`, `AO`, `TA`, `Inno`. Die Wahl wird gemerkt.
 
 Der Schalter wirkt überall, wo cipher ein Bauwerk kurz nennt: in beiden
@@ -268,19 +268,28 @@ sind.
 
 **Die Chips springen nicht.** Mit Kürzeln schrumpft ein Favorit auf „KI 12“,
 und beim Umschalten würden alle Reihen neu umbrechen. Der Name behält darum
-auf dem Chip mindestens fünf Zeichen Platz.
+auf dem Chip mindestens fünf Zeichen Platz. Nach oben ist er auf 17 Zeichen
+begrenzt, „Saturn VI Tor CENTAURUS“ endet dort mit „…“. Das gilt nur für den
+Chip, in der Chat-Zeile steht der Name ganz.
+
+**Warum es keinen Kurznamen mehr gibt.** Früher kannte der Datensatz eine
+dritte Form: „Orangerie“, „Kriegsschiff“, „PEGASUS“. Aus war dann weder der
+volle Name noch das Kürzel, und den vollen Namen bekam nur, wer ihn als
+eigenes Kürzel eintippte. Ein technischer Grund stand nie dahinter. Wer
+„Orangerie“ schreiben will, trägt das als eigenes Kürzel ein. Zeilen in der
+Sammlung, die noch den alten Kurznamen tragen, bekommen beim nächsten Laden
+den vollen Namen.
 
 ### Eigenes Kürzel
 
-Der Datensatz bringt je Bauwerk einen Kurznamen mit, von Hand gepflegt und
-unstrittig verkürzt: aus „Leuchtturm von Alexandria“ wird „Leuchtturm“. Was
-eine Gilde daraus macht, ist er nicht — „AO“ für die Arktische Orangerie
-versteht die eine Runde sofort und die nächste gar nicht.
+Voller Name und Kürzel aus `abbr.js` treffen nicht jede Runde: „AO“ für die
+Arktische Orangerie versteht die eine sofort und die nächste gar nicht, die
+dritte schreibt „Orangerie“.
 
 Das Feld **Eigenes Kürzel** unter „Dein Name“ setzt darum je Bauwerk einen eigenen
 Namen. Die beiden stehen zusammen, weil sie zusammen eine Zeile ergeben:
-`[Dein Name] [Bauwerk] P5 P4 P3`. Der Platzhalter zeigt immer den Namen aus
-dem Datensatz, leer lassen heißt also „den nehmen“ — es braucht kein
+`[Dein Name] [Bauwerk] P5 P4 P3`. Der Platzhalter zeigt immer, was ohne
+eigenes gilt, leer lassen heißt also „das nehmen“ — es braucht kein
 Zurücksetzen, und es wird auch nichts gespeichert, solange niemand etwas
 vergeben hat.
 
@@ -292,14 +301,13 @@ ist das eine Funktion, `shortName(building)`, und sechs Aufrufstellen.
 
 Gespeichert wird unter `cipher:shorts`, nach dem Schlüssel des Bauwerks. Weil
 der stabil ist, überlebt ein Kürzel jede Erneuerung des Datensatzes — im
-Unterschied zu einer Änderung direkt in `data.js`, die zwar auch überlebt,
-aber für alle gilt und einen Import braucht.
+Unterschied zu einer Änderung in `abbr.js`, die für alle gilt und einen
+Deploy braucht.
 
 **Die Suche kennt es.** Wer sein Bauwerk „AO“ nennt, findet es auch so. Damit
 entsteht allerdings ein Treffer der Sorte, gegen die der Abschnitt oben
 argumentiert: „AO“ steht in „Arktische Orangerie“ nirgends, es gäbe also
-nichts hervorzuheben. Ein Kurzname *aus dem Datensatz* hat das Problem nicht,
-er ist immer ein Stück des Namens. Darum nennt so ein Treffer sein Kürzel
+nichts hervorzuheben. Darum nennt so ein Treffer sein Kürzel
 ausdrücklich — `Arktische Zukunft · AO` — und die Hervorhebung sitzt dort.
 
 **Was es kostet.** Ein zweites Feld in der Spalte: 25 Pixel Höhe, sobald
@@ -628,19 +636,17 @@ Wert ist. `tools/build-data.js` überführt das Ergebnis in `data.js`.
 Unterschied zur Anwendung fragt er das Wiki ab — aber erst auf Knopfdruck, beim
 Laden der Seite geht keine Anfrage hinaus.
 
-Drei Dinge stehen nicht zwingend im Wiki und übernimmt der Konverter deshalb
+Zwei Dinge stehen nicht zwingend im Wiki und übernimmt der Konverter deshalb
 aus der bestehenden `data.js`:
 
-- die **Kurznamen** für den Förderchat (`Leuchtturm von Alexandria` →
-  `Leuchtturm`), die von Hand gepflegt sind — sie dürfen in `data.js` direkt
-  geändert werden und überleben den nächsten Lauf
 - **Bauwerke, die der Import nicht liefert**; sie bleiben mit ihren bisherigen
   Werten stehen, statt stillschweigend zu verschwinden
 - **Kostenformel und P1-Kurve eines Bauwerks, das der Import leer liefert** —
   etwa der Horizontriss-Siphon, den das Wiki nicht kennt und dessen Werte aus
   im Spiel abgelesenen Stufen stammen
 
-Alle drei meldet der Konverter im Lauf. `test/build-data.test.js` prüft es, indem
+Beides meldet der Konverter im Lauf. Ein neues Bauwerk meldet er ebenfalls,
+denn es braucht ein Kürzel in `abbr.js`. `test/build-data.test.js` prüft es, indem
 es aus `data.js` ein Import-JSON baut, durch den Konverter schickt und das
 Ergebnis mit dem Original vergleicht.
 

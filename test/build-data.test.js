@@ -89,19 +89,6 @@ test("der Rundlauf erzeugt denselben Datensatz", () => {
   }
 });
 
-test("Kurznamen bleiben erhalten, auch wenn der Import sie nicht kennt", () => {
-  // Der Importer liefert nur den vollen Namen; die Kurznamen sind von Hand
-  // gepflegt und muessen aus dem bestehenden data.js uebernommen werden.
-  const curated = DATA.buildings.filter((b) => b.short !== b.name);
-  assert.ok(curated.length >= 5, "der Datensatz sollte kuratierte Kurznamen haben");
-
-  const { result } = convert(asImport(DATA));
-  for (const original of curated) {
-    const built = result.buildings.find((b) => b.id === original.id);
-    assert.equal(built.short, original.short, `${original.name}: Kurzname verloren`);
-  }
-});
-
 test("ein Bauwerk, das der Import nicht liefert, bleibt erhalten", () => {
   const dropped = DATA.buildings[3];
   const { stdout, result } = convert(asImport(DATA, { skip: [dropped.id] }));
@@ -163,7 +150,6 @@ test("ohne bisherige Werte bleibt ein leerer Import leer", () => {
   assert.deepEqual(added, {
     id: "Leeres_Bauwerk",
     name: "Leeres Bauwerk",
-    short: "Leeres Bauwerk",
     era: "Unbekanntes Zeitalter",
     base: null,
     maxLevel: 200,
@@ -173,7 +159,7 @@ test("ohne bisherige Werte bleibt ein leerer Import leer", () => {
   assert.match(stdout, /keine Kostenformel im Import\./);
 });
 
-test("ein neues Bauwerk wird gemeldet und bekommt den Namen als Kurznamen", () => {
+test("ein neues Bauwerk wird gemeldet", () => {
   const input = asImport(DATA);
   input.lg.push({
     id: "Brandneues_Bauwerk",
@@ -192,24 +178,15 @@ test("ein neues Bauwerk wird gemeldet und bekommt den Namen als Kurznamen", () =
   const { stdout, result } = convert(input);
   const added = result.buildings.find((b) => b.id === "Brandneues_Bauwerk");
   assert.ok(added);
-  assert.equal(added.short, "Brandneues Bauwerk");
+  assert.equal(added.name, "Brandneues Bauwerk");
   assert.match(stdout, /neu im Datensatz/);
-});
-
-test("ein umbenanntes Bauwerk behaelt seinen gepflegten Kurznamen", () => {
-  const arc = DATA.buildings.find((b) => b.id === "The_Arc");
-  const { result } = convert(asImport(DATA, { rename: { The_Arc: "Die Arche (neu)" } }));
-
-  const built = result.buildings.find((b) => b.id === "The_Arc");
-  assert.equal(built.name, "Die Arche (neu)");
-  assert.equal(built.short, arc.short);
 });
 
 test("das Ergebnis besteht die Datenpruefungen", () => {
   const { result } = convert(asImport(DATA));
 
   for (const building of result.buildings) {
-    assert.ok(building.id && building.name && building.short && building.era);
+    assert.ok(building.id && building.name && building.era);
     assert.ok(Number.isInteger(building.maxLevel) && building.maxLevel > 0);
     if (building.costs != null) {
       assert.ok(building.base != null);
