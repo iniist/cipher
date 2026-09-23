@@ -25,7 +25,7 @@ dir dann für jeden der fünf Mäzen-Plätze:
 | --- | --- |
 | **Belohnung** | Was der Platz auszahlt (P1 aus dem Datensatz, P2–P5 daraus abgeleitet) |
 | **Einzahlen** | Was ein Förderer für diesen Platz zahlen muss, inklusive Arche-Bonus |
-| **Vorher sichern** | Was *du* vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann — auf Tipp auch als laufende Summe |
+| **Sichern** | Was *du* vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann — auf Tipp auch als laufende Summe |
 
 Dazu die Aufteilung in Eigenanteil und Fremdkapital, den Betrag, den du vorab
 einzahlen solltest, und zwei fertige Zeilen zum Kopieren in den Förderchat —
@@ -39,7 +39,12 @@ Dieselbe Spalte, zwei verbreitete Lesarten. Manche wollen wissen, was
 *dieser* Platz sie noch kostet (`+1.060`), andere, wo sie stehen, wenn er
 sicher ist (`74.393`). Ein Tipp auf den Spaltenkopf — oder auf eine der
 Zahlen — schaltet um, und die Überschrift nennt die aktive Lesart:
-„Vorher sichern“ gegen „Vorher zusammen“.
+„Sichern“ gegen „Summe“.
+
+Zwei Worte, nicht „Vorher sichern“ gegen „Vorher zusammen“: als Paar lesen
+sie sich schneller, und die Spalte ist bei 320 Pixeln 68 Pixel breit — dort
+zählt jedes Wort, das wegfällt. Dass das „vorher“ gemeint ist, steht im
+Fußtext und im Kasten über der Tabelle.
 
 Es ist dieselbe Lage wie bei der Stufenzahl, und darum dieselbe Antwort:
 umschalten statt entscheiden, und die Beschriftung sagt, was dasteht. Eine

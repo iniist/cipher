@@ -23,7 +23,7 @@ async function frontenac(page) {
 test.describe("Die Vorgabe", () => {
   test("ist der Schritt je Platz", async ({ page }) => {
     await frontenac(page);
-    await expect(kopf(page)).toHaveText("Vorher sichern");
+    await expect(kopf(page)).toHaveText("Sichern");
     expect(await werte(page)).toEqual(["+73.333", "Sicher", "+1.060", "+530", "+170"]);
   });
 });
@@ -33,17 +33,17 @@ test.describe("Umschalten", () => {
     await frontenac(page);
     await page.click("#secureMode");
 
-    await expect(kopf(page)).toHaveText("Vorher zusammen");
+    await expect(kopf(page)).toHaveText("Summe");
     expect(await werte(page)).toEqual(["73.333", "Sicher", "74.393", "74.923", "75.093"]);
   });
 
   test("schaltet auch ein Klick auf die Zahl", async ({ page }) => {
     await frontenac(page);
     await spalte(page).nth(2).click();
-    await expect(kopf(page)).toHaveText("Vorher zusammen");
+    await expect(kopf(page)).toHaveText("Summe");
 
     await spalte(page).nth(2).click();
-    await expect(kopf(page)).toHaveText("Vorher sichern");
+    await expect(kopf(page)).toHaveText("Sichern");
   });
 
   test("schaltet ein Klick auf das Häkchen gerade nicht", async ({ page }) => {
@@ -52,7 +52,7 @@ test.describe("Umschalten", () => {
     await frontenac(page);
     await page.uncheck('#rows input[data-slot="2"]');
 
-    await expect(kopf(page)).toHaveText("Vorher sichern");
+    await expect(kopf(page)).toHaveText("Sichern");
   });
 
   test("ueberdauert die Wahl das Neuladen", async ({ page }) => {
@@ -60,7 +60,7 @@ test.describe("Umschalten", () => {
     await page.click("#secureMode");
     await page.reload();
 
-    await expect(kopf(page)).toHaveText("Vorher zusammen");
+    await expect(kopf(page)).toHaveText("Summe");
   });
 
   test("bleibt der Plan darunter unveraendert", async ({ page }) => {
@@ -160,10 +160,24 @@ test.describe("Nicht angebotene Plaetze", () => {
 test.describe("Bedienbarkeit", () => {
   test("traegt der Kopf eine Beschriftung, die die Lesart nennt", async ({ page }) => {
     await frontenac(page);
-    await expect(page.locator("#secureMode")).toHaveAttribute("aria-label", /umschalten auf die laufende Summe/);
+    await expect(page.locator("#secureMode"))
+      .toHaveAttribute("aria-label", /^Sichern — umschalten auf die laufende Summe$/);
 
     await page.click("#secureMode");
-    await expect(page.locator("#secureMode")).toHaveAttribute("aria-label", /umschalten auf den Schritt/);
+    await expect(page.locator("#secureMode"))
+      .toHaveAttribute("aria-label", /^Summe — umschalten auf das, was dieser Platz kostet$/);
+  });
+
+  test("steht der Kopf auf derselben Hoehe wie die uebrigen", async ({ page }) => {
+    // Er ist ein Knopf, die anderen sind blosser Text. Zuerst trug der Knopf
+    // das Polster und die Zelle keins — dadurch sass die Beschriftung drei
+    // Pixel tiefer als "Platz", "Belohnung" und "Einzahlen" daneben.
+    await frontenac(page);
+    const oben = await page.locator("thead th").evaluateAll((zellen) =>
+      zellen.map((th) => Math.round(
+        (th.querySelector("button") || th).getBoundingClientRect().top)));
+
+    expect(new Set(oben).size, `Oberkanten: ${oben.join(", ")}`).toBe(1);
   });
 
   test("ist der Kopf mit der Tastatur erreichbar", async ({ page }) => {
@@ -171,6 +185,6 @@ test.describe("Bedienbarkeit", () => {
     await page.locator("#secureMode").focus();
     await page.keyboard.press("Enter");
 
-    await expect(kopf(page)).toHaveText("Vorher zusammen");
+    await expect(kopf(page)).toHaveText("Summe");
   });
 });

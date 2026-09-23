@@ -223,7 +223,7 @@
     // Wie die Zahl im Stufenfeld zu lesen ist. "next" ist die Vorgabe und
     // das, was cipher vorher ohne Wahl getan hat.
     levelMode: stored.levelMode === "current" ? "current" : "next",
-    // Wie die Spalte "Vorher sichern" zu lesen ist: als Schritt je Platz
+    // Wie die Spalte "Sichern" zu lesen ist: als Schritt je Platz
     // oder als laufende Summe. "step" ist die Vorgabe.
     secureMode: stored.secureMode === "total" ? "total" : "step",
     // Eigener Faktor je Platz; null heisst "folgt dem Wert oben".
@@ -1001,7 +1001,7 @@
   }
 
   /**
-   * Was in der Spalte "Vorher sichern" steht.
+   * Was in der Spalte "Sichern" steht.
    *
    * Zwei Lesarten derselben Zahl: der Schritt, den dieser Platz kostet, oder
    * der Stand, den du erreicht hast, wenn er sicher ist. Manche rechnen so,
@@ -1032,10 +1032,10 @@
    */
   function renderSecureHead() {
     var total = state.secureMode === "total";
-    $("secureModeLabel").textContent = total ? "Vorher zusammen" : "Vorher sichern";
+    $("secureModeLabel").textContent = total ? "Summe" : "Sichern";
     $("secureMode").setAttribute("aria-label", total
-      ? "Vorher zusammen — umschalten auf den Schritt je Platz"
-      : "Vorher sichern — umschalten auf die laufende Summe");
+      ? "Summe — umschalten auf das, was dieser Platz kostet"
+      : "Sichern — umschalten auf die laufende Summe");
   }
 
   /** Den Platz nennen, dessen Checkbox gerade den Fokus hat — sonst null. */
