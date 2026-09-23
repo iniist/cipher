@@ -33,6 +33,12 @@
   --ok: #7fe0ad;
   --warn: #ffd36e;
   --field-border: var(--grid);
+  /* Form: runde Ecken und ein weicher Schatten. Jedes Theme stimmt den
+     Schatten auf seinen Hintergrund ab; der Kontrastmodus kommt ohne aus. */
+  --r: 8px;
+  --r-sm: 5px;
+  --shadow: inset 0 1px 0 rgba(242, 246, 251, .08), 0 8px 22px rgba(8, 26, 48, .35);
+  --shadow-sm: 0 2px 6px rgba(8, 26, 48, .3);
 
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
@@ -61,6 +67,8 @@
   --ok: #1f8a55;
   --warn: #a86a00;
   --field-border: rgba(31, 74, 122, .3);
+  --shadow: 0 1px 2px rgba(19, 51, 86, .06), 0 8px 20px rgba(19, 51, 86, .08);
+  --shadow-sm: 0 1px 3px rgba(19, 51, 86, .15);
   color-scheme: light;
 }
 
@@ -84,6 +92,10 @@
   --ok: #000;
   --warn: #000;
   --field-border: #000;
+  --r: 4px;
+  --r-sm: 3px;
+  --shadow: none;
+  --shadow-sm: none;
   color-scheme: light;
 }
 
@@ -108,6 +120,8 @@
   --ok: #3d6b37;
   --warn: #875600;
   --field-border: rgba(90, 70, 50, .35);
+  --shadow: 0 1px 2px rgba(90, 60, 30, .08), 0 8px 20px rgba(90, 60, 30, .10);
+  --shadow-sm: 0 1px 3px rgba(90, 60, 30, .18);
   color-scheme: light;
 }
 
@@ -132,6 +146,8 @@
   --ok: #39ff9f;
   --warn: #ffb63d;
   --field-border: rgba(0, 229, 255, .35);
+  --shadow: 0 0 18px rgba(0, 229, 255, .18), inset 0 0 24px rgba(160, 60, 255, .08);
+  --shadow-sm: 0 0 10px rgba(0, 229, 255, .3);
   color-scheme: dark;
 }
 
@@ -159,6 +175,8 @@
   --ok: #a8cc3c;
   --warn: #ffc94a;
   --field-border: #6c3c18;
+  --shadow: inset 0 1px 0 rgba(255, 200, 120, .25), 0 4px 0 #1e0f02, 0 8px 18px rgba(0, 0, 0, .35);
+  --shadow-sm: 0 2px 0 #1e0f02;
   color-scheme: dark;
 }
 
@@ -227,12 +245,9 @@ body {
 }
 :root[data-theme="forge"] h1 { color: var(--gold); text-shadow: 0 2px 0 #1e0f02, 0 0 14px rgba(0, 0, 0, .4) }
 :root[data-theme="forge"] .panel {
-  border-radius: 8px;
   border-width: 2px;
   background-image: linear-gradient(rgba(255, 200, 120, .06), transparent 40%);
-  box-shadow: inset 0 1px 0 rgba(255, 200, 120, .25), 0 4px 0 #1e0f02, 0 8px 18px rgba(0, 0, 0, .35);
 }
-:root[data-theme="forge"] .modes { border-radius: 6px; overflow: hidden; box-shadow: 0 3px 0 #1e0f02 }
 
 main { max-width: 560px; margin: 0 auto; padding: 16px 14px 24px }
 
@@ -279,7 +294,6 @@ h1 {
 }
 .modes button + button { border-left: 1.5px solid var(--frame) }
 .modes button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink) }
-:root[data-theme="space"] .modes { box-shadow: 0 0 12px rgba(0, 229, 255, .35) }
 .modes svg { width: 18px; height: 18px }
 
 /* ---------------------------------------------------------------- Panels */
@@ -290,7 +304,6 @@ h1 {
   padding: 14px;
   margin-bottom: 14px;
 }
-:root[data-theme="space"] .panel { box-shadow: 0 0 18px rgba(0, 229, 255, .18), inset 0 0 24px rgba(160, 60, 255, .08) }
 :root[data-theme="contrast"] .panel { border-width: 2px }
 .panel h2 { font-size: 1.15rem; margin: 0 0 10px; font-weight: 600 }
 
@@ -779,7 +792,7 @@ tr.off td.pay { text-decoration: line-through }
 :root[data-theme="light"] .lump { background: rgba(31, 138, 85, .06) }
 :root[data-theme="writer"] .lump { background: rgba(61, 107, 55, .07) }
 :root[data-theme="space"] .lump { background: rgba(57, 255, 159, .07); box-shadow: 0 0 14px rgba(57, 255, 159, .2) }
-:root[data-theme="forge"] .lump { background: rgba(168, 204, 60, .08); border-radius: 6px }
+:root[data-theme="forge"] .lump { background: rgba(168, 204, 60, .08) }
 :root[data-theme="contrast"] .lump { border-width: 2px; border-color: #000; background: none }
 .lump[hidden] { display: none }
 .lump-n { flex-shrink: 0; text-align: center; min-width: 6.5ch }
@@ -1074,6 +1087,46 @@ tr.off td.pay { text-decoration: line-through }
   .site-foot { max-width: 1000px }
 }
 
+/* ------------------------------------------------------------ Feinschliff */
+
+/* Runde Ecken und ein leiser Schatten fuer alles, was man anfasst oder
+   liest. Die Werte kommen aus den Theme-Variablen --r, --r-sm, --shadow
+   und --shadow-sm; hier steht nur, wer sie bekommt. */
+.panel, .card { border-radius: var(--r); box-shadow: var(--shadow) }
+
+select, input, .seg, .step, .modes,
+.chips button, .fav-save, .fav-list li, .filter-hit, .slot-reset,
+.copy .t, .copy button, .coll-copy, .coll-list li,
+.lump, .note, .note .go, .highlight, .bar, .fac-gauge,
+.safe, .coll-badge, .slots-badge { border-radius: var(--r-sm) }
+
+/* Zusammengesetzte Felder: die inneren Flaechen (aktiver Knopf, gewaehlter
+   Favorit, Balkenstuecke) sollen die runde Ecke nicht ueberragen. */
+.seg, .modes, .fav-list li, .bar, .fac-gauge, .coll-list li { overflow: hidden }
+.step input { border-radius: 0 }
+
+/* Suchfeld und Loeschknopf bilden eine Einheit, sobald der Knopf da ist. */
+.filter:has(button:not([hidden])) input { border-top-right-radius: 0; border-bottom-right-radius: 0 }
+.filter button { border-radius: 0 var(--r-sm) var(--r-sm) 0 }
+
+/* Gefuellte Flaechen heben sich ein wenig ab. */
+.modes, .chips button.on, .copy button, .coll-copy, .note .go,
+.fav-list li[aria-current="true"] { box-shadow: var(--shadow-sm) }
+
+/* Weiche Uebergaenge und ein kleines Nachgeben beim Druecken. Die Stepper-
+   Knoepfe bleiben aussen vor: an der Grenze soll ihr Zeichen sofort
+   verblassen, nicht erst nach einer Blende. */
+.modes button, .seg button, .chips button, .fav-save, .fav-go, .filter-hit,
+.copy button, .coll-copy, .note .go, .slot-reset, select, input {
+  transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s, transform .1s;
+}
+.chips button:active, .fav-save:active, .copy button:active:not(:disabled),
+.coll-copy:active, .note .go:active, .modes button:active { transform: translateY(1px) }
+.chips button:hover:not(.on), .fav-save:hover { border-color: var(--frame) }
+.copy button:hover:not(:disabled), .coll-copy:hover, .note .go:hover { filter: brightness(1.07) }
+select:hover, input:hover:not(:focus) { border-color: var(--frame) }
+.step input:hover { border-color: transparent }
+
 /* ------------------------------------------------------------- Animation */
 
 @keyframes pop { from { transform: scale(.6); opacity: 0 } }
@@ -1096,6 +1149,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .bar i { transition: none }
   .safe, td.chg, .stamp, .scan, .wordmark.plotting > span, .toast { animation: none }
   .coll-list li.fresh { animation: none }
+  .modes button, .seg button, .chips button, .fav-save, .fav-go, .filter-hit,
+  .copy button, .coll-copy, .note .go, .slot-reset, select, input { transition: none }
+  .chips button:active, .fav-save:active, .copy button:active,
+  .coll-copy:active, .note .go:active, .modes button:active { transform: none }
   /* Der Stempel wuerde sonst dauerhaft stehen bleiben — er wird in diesem
      Modus gar nicht erst eingeblendet (siehe app.js). */
 }
