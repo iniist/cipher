@@ -25,65 +25,65 @@
     "Oracle_of_Delphi": "Orakel",
 
     // Bronzezeit
-    "Tower_of_Babel": "Babel",
+    "Tower_of_Babel": "TzB",
     "Statue_of_Zeus": "Zeus",
 
     // Eisenzeit
-    "Colosseum": "Kolo",
-    "Lighthouse_of_Alexandria": "LT",
+    "Colosseum": "Kolosseum",
+    "Lighthouse_of_Alexandria": "Leuchti",
 
     // Frühes Mittelalter
     "Hagia_Sophia": "Hagia",
-    "Cathedral_of_Aachen": "Aachen",
-    "Galata_Tower": "Galata",
+    "Cathedral_of_Aachen": "AD",
+    "Galata_Tower": "Gala",
 
     // Hochmittelalter
-    "St._Mark's_Basilica": "Markus",
+    "St._Mark's_Basilica": "MD",
     "Notre_Dame": "ND",
 
     // Spätes Mittelalter
-    "Saint_Basil's_Cathedral": "Basi",
+    "Saint_Basil's_Cathedral": "Basilius",
     "Castel_del_Monte": "CdM",
 
     // Kolonialzeit
-    "Frauenkirche_of_Dresden": "FK",
-    "Deal_Castle": "Deal",
+    "Frauenkirche_of_Dresden": "DF",
+    "Deal_Castle": "DC",
 
     // Industriezeitalter
     "Royal_Albert_Hall": "RAH",
-    "Capitol": "Kapi",
+    "Capitol": "Kapitol",
 
     // Jahrhundertwende
-    "Château_Frontenac": "CF",
+    "Château_Frontenac": "Château",
     "Alcatraz": "Alca",
 
     // Moderne
-    "Space_Needle": "SN",
+    "Space_Needle": "Needle",
     "Atomium": "Atom",
 
     // Postmoderne
     "Cape_Canaveral": "CC",
-    "The_Habitat": "Habi",
+    "The_Habitat": "Habitat",
 
     // Gegenwart
     "Lotus_Temple": "Lotus",
     "Innovation_Tower": "Inno",
 
     // Morgen
-    "Voyager_V1": "Voy",
+    "Voyager_V1": "Voyager",
     "Truce_Tower": "FT",
 
     // Zukunft
     "The_Arc": "Arche",
-    "Rain_Forest_Project": "RWP",
+    "Rain_Forest_Project": "Regen",
 
     // Arktische Zukunft
     "Gaea_Statue": "Gaea",
-    "Seed_Vault": "Tresor",
+    "Seed_Vault": "ST",
     "Arctic_Orangery": "AO",
 
     // Ozeanische Zukunft
-    "Atlantis_Museum": "AM",
+    "Atlantis_Museum": "Atlantis",
     "The_Kraken": "Kraken",
     "The_Blue_Galaxy": "BG",
 
@@ -92,22 +92,22 @@
     "Himeji_Castle": "Himeji",
 
     // Mars
-    "Star_Gazer": "SG",
+    "Star_Gazer": "Gazer",
     "The_Virgo_Project": "Virgo",
 
     // Asteroidengürtel
     "Space_Carrier": "WF",
 
     // Venus
-    "Flying_Island": "FI",
+    "Flying_Island": "Insel",
 
     // Jupitermond
     "A.I._Core": "KI",
 
     // Titan
-    "Saturn_VI_Gate_PEGASUS": "Pegasus",
-    "Saturn_VI_Gate_CENTAURUS": "Centaurus",
-    "Saturn_VI_Gate_HYDRA": "Hydra",
+    "Saturn_VI_Gate_PEGASUS": "PEGASUS",
+    "Saturn_VI_Gate_CENTAURUS": "CENTAURUS",
+    "Saturn_VI_Gate_HYDRA": "HYDRA",
 
     // Raumfahrt-Hub
     "Stellar_Warship": "Stellares",
