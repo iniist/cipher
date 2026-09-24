@@ -488,14 +488,47 @@
 
   // -------------------------------------------------------------------- Theme
 
-  function setTheme(theme) {
+  /**
+   * Das Theme einstellen. Mit `origin` (dem gedrueckten Knopf) wird der
+   * Wechsel sichtbar ueberblendet; gemerkt wird sofort, nicht erst am Ende
+   * des Uebergangs.
+   */
+  function setTheme(theme, origin) {
     if (THEMES.indexOf(theme) < 0) return;
+    var changed = theme !== document.documentElement.dataset.theme;
     state.theme = theme;
-    document.documentElement.dataset.theme = theme;
-    document.querySelectorAll(".modes button").forEach(function (button) {
-      button.setAttribute("aria-pressed", String(button.dataset.mode === theme));
-    });
     persistState();
+    revealTheme(function () {
+      document.documentElement.dataset.theme = theme;
+      document.querySelectorAll(".modes button").forEach(function (button) {
+        button.setAttribute("aria-pressed", String(button.dataset.mode === theme));
+      });
+    }, changed ? origin : null);
+  }
+
+  /**
+   * Den Wechsel als Kreis zeigen, der sich vom gedrueckten Knopf aus ueber
+   * die Seite legt. Die View Transitions API fotografiert dafuer die alte
+   * Seite, `apply` stellt die neue ein, und der Kreis gibt sie frei. Ohne
+   * die API oder bei reduzierter Bewegung wird sofort umgeschaltet.
+   */
+  function revealTheme(apply, origin) {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!document.startViewTransition || reduce || !origin) {
+      apply();
+      return;
+    }
+    var box = origin.getBoundingClientRect();
+    var x = box.left + box.width / 2;
+    var y = box.top + box.height / 2;
+    var radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    var transition = document.startViewTransition(apply);
+    transition.ready.then(function () {
+      document.documentElement.animate(
+        { clipPath: ["circle(0 at " + x + "px " + y + "px)", "circle(" + radius + "px at " + x + "px " + y + "px)"] },
+        { duration: 700, easing: "cubic-bezier(.65, 0, .35, 1)", pseudoElement: "::view-transition-new(root)" }
+      );
+    }).catch(function () { /* Uebergang abgebrochen — das Theme steht trotzdem. */ });
   }
 
   // ----------------------------------------------------------- Aufbau statisch
@@ -1899,7 +1932,7 @@
   function bindEvents() {
     document.querySelector(".modes").addEventListener("click", function (event) {
       var button = event.target.closest("button");
-      if (button) setTheme(button.dataset.mode);
+      if (button) setTheme(button.dataset.mode, button);
     });
 
     bindPicker();

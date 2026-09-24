@@ -24,14 +24,40 @@
   }
 
   /**
+   * Den Wechsel als Kreis zeigen, der sich vom gedrueckten Knopf aus ueber
+   * die Seite legt. Die View Transitions API fotografiert dafuer die alte
+   * Seite, `apply` stellt die neue ein, und der Kreis gibt sie frei. Ohne
+   * die API oder bei reduzierter Bewegung wird sofort umgeschaltet.
+   */
+  function revealTheme(apply, origin) {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!document.startViewTransition || reduce || !origin) {
+      apply();
+      return;
+    }
+    var box = origin.getBoundingClientRect();
+    var x = box.left + box.width / 2;
+    var y = box.top + box.height / 2;
+    var radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    var transition = document.startViewTransition(apply);
+    transition.ready.then(function () {
+      document.documentElement.animate(
+        { clipPath: ["circle(0 at " + x + "px " + y + "px)", "circle(" + radius + "px at " + x + "px " + y + "px)"] },
+        { duration: 700, easing: "cubic-bezier(.65, 0, .35, 1)", pseudoElement: "::view-transition-new(root)" }
+      );
+    }).catch(function () { /* Uebergang abgebrochen — das Theme steht trotzdem. */ });
+  }
+
+  /**
    * Das Theme anzeigen und merken. Gespeichert wird nur auf Klick: beim
    * Laden das Standard-Theme zurueckzuschreiben legte `cipher:state` schon
    * an, wenn jemand nur die Datenschutzerklaerung lesen wollte — und genau
    * die begruendet die Speicherung damit, dass sie gewuenscht ist.
    */
-  function chooseTheme(theme) {
+  function chooseTheme(theme, origin) {
     if (THEMES.indexOf(theme) < 0) return;
-    showTheme(theme);
+    var changed = theme !== document.documentElement.dataset.theme;
+    revealTheme(function () { showTheme(theme); }, changed ? origin : null);
     try {
       var state = JSON.parse(window.localStorage.getItem(STATE_KEY) || "{}");
       state.theme = theme;
@@ -43,7 +69,7 @@
   if (modes) {
     modes.addEventListener("click", function (event) {
       var button = event.target.closest("button");
-      if (button) chooseTheme(button.dataset.mode);
+      if (button) chooseTheme(button.dataset.mode, button);
     });
     showTheme(document.documentElement.dataset.theme || "dark");
   }

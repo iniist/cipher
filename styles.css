@@ -1304,6 +1304,14 @@ select, input, .pick, .seg, .step, .modes,
 select:hover, input:hover:not(:focus), .pick:hover { border-color: var(--frame) }
 .step input:hover { border-color: transparent }
 
+/* ------------------------------------------------------- Themenwechsel */
+
+/* Der Kreis beim Umschalten (siehe revealTheme in app.js): die alte Seite
+   bleibt stehen, die neue waechst vom Knopf aus darueber. Das Ueberblenden
+   des Browsers wuerde beide Bilder halb durchscheinen lassen. */
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; mix-blend-mode: normal }
+
 /* ------------------------------------------------------------- Animation */
 
 @keyframes pop { from { transform: scale(.6); opacity: 0 } }
