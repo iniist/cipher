@@ -85,10 +85,20 @@
          Zeilen, Sammlung, Merken-Knopf, Favoriten. Das Auswahlfeld selbst
          bleibt beim vollen Namen — dort wird gesucht, nicht getippt. -->
     <div class="sel-head">
-      <label class="l" for="building">Legendäres Bauwerk</label>
+      <label class="l" for="buildingPick">Legendäres Bauwerk</label>
       <label class="abbr-toggle" title="Im Chat „AO“ statt „Arktische Orangerie“ schreiben"><input type="checkbox" id="useAbbr"> Kürzel<span class="sr-only"> statt Namen verwenden</span></label>
     </div>
-    <select id="building"></select>
+
+    <!-- Die native Liste des Browsers ist auf dem Telefon bei 49 Einträgen
+         mühsam: auf Android ein langes Blatt ohne Suche, auf dem iPhone ein
+         Drehrad. Der Knopf öffnet stattdessen die eigene Auswahl unten
+         (#picker). Das <select> bleibt als Träger des Werts im Dokument, ist
+         aber für Auge und Screenreader ausgeblendet. -->
+    <button type="button" class="pick" id="buildingPick" aria-haspopup="dialog" aria-expanded="false" aria-controls="picker">
+      <span class="pick-name" id="buildingPickName"></span>
+      <span class="pick-era" id="buildingPickEra"></span>
+    </button>
+    <select id="building" tabindex="-1" aria-hidden="true" hidden></select>
 
     <div class="filter">
       <label class="sr-only" for="buildingFilter">Bauwerke durchsuchen</label>
@@ -240,6 +250,33 @@
   </div>
 
 </main>
+
+<!-- Die Bauwerksauswahl. Ein echtes <dialog> mit showModal(): der Browser
+     fängt darin den Fokus, legt den Rest der Seite still (auch für
+     Screenreader), schließt auf Esc und — bei Chrome auf Android — auf die
+     Zurück-Geste. Auf dem Telefon kommt es als Blatt von unten, auf breiten
+     Bildschirmen als Fenster in der Mitte. -->
+<dialog class="picker" id="picker" aria-labelledby="pickerTitle">
+  <div class="picker-sheet" id="pickerSheet">
+    <div class="picker-head" id="pickerHead">
+      <span class="picker-grip" aria-hidden="true"></span>
+      <h2 id="pickerTitle">Bauwerk wählen</h2>
+      <button type="button" class="picker-close" id="pickerClose" aria-label="Schließen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="filter picker-search">
+      <label class="sr-only" for="pickerFilter">Bauwerke durchsuchen</label>
+      <input id="pickerFilter" type="search" inputmode="search" autocomplete="off" spellcheck="false"
+             enterkeyhint="done" placeholder="Name, Kürzel oder Zeitalter"
+             role="combobox" aria-autocomplete="list" aria-expanded="true"
+             aria-controls="pickerList" aria-describedby="pickerCount">
+      <button type="button" id="pickerFilterClear" aria-label="Suche zurücksetzen" hidden>×</button>
+    </div>
+    <p class="filter-count picker-count" id="pickerCount" role="status"></p>
+    <ul class="picker-list" id="pickerList" role="listbox" tabindex="0" aria-labelledby="pickerTitle"></ul>
+  </div>
+</dialog>
 
 <footer class="site-foot">
   <hr>

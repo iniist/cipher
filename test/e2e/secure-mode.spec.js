@@ -15,7 +15,7 @@ const werte = (page) => spalte(page).allTextContents();
 /** Chateau Frontenac auf Stufe 198 mit Faktor 2,00. */
 async function frontenac(page) {
   await page.goto("/index.html");
-  await page.selectOption("#building", "Château_Frontenac");
+  await page.locator("#building").selectOption("Château_Frontenac", { force: true });
   await page.fill("#level", "198");
   await page.fill("#factor", "2,00");
 }

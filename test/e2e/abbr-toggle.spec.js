@@ -17,7 +17,7 @@ const zustand = (page) =>
 /** Arktische Orangerie mit einem Namen davor. */
 async function orangerie(page) {
   await page.goto("/index.html");
-  await page.selectOption("#building", "Arctic_Orangery");
+  await page.locator("#building").selectOption("Arctic_Orangery", { force: true });
   await page.fill("#playerName", "Dani");
 }
 
@@ -87,7 +87,7 @@ test.describe("Die Sammlung zieht mit", () => {
   test("tauscht den Namen in gesammelten Zeilen beim Umschalten", async ({ page }) => {
     await orangerie(page);
     await page.click('[data-copy="chatPlain"]');
-    await page.selectOption("#building", "Terracotta_Army");
+    await page.locator("#building").selectOption("Terracotta_Army", { force: true });
     await page.click('[data-copy="chatPlain"]');
 
     const zeilen = page.locator("#collList .coll-t");
@@ -110,7 +110,7 @@ test.describe("Die Sammlung zieht mit", () => {
 
   test("gilt auch ohne Spielernamen", async ({ page }) => {
     await page.goto("/index.html");
-    await page.selectOption("#building", "Arctic_Orangery");
+    await page.locator("#building").selectOption("Arctic_Orangery", { force: true });
     await page.click('[data-copy="chatPlain"]');
     await schalter(page).check();
     await expect(page.locator("#collList .coll-t").first()).toHaveText(/^AO P/);
@@ -159,7 +159,7 @@ test.describe("Die Suche", () => {
 
 test("ein kurzer Name haelt auf dem Chip mindestens fuenf Zeichen Platz", async ({ page }) => {
   await page.goto("/index.html");
-  await page.selectOption("#building", "A.I._Core");
+  await page.locator("#building").selectOption("A.I._Core", { force: true });
   await page.click("#favSave");
   await schalter(page).check();
 

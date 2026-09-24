@@ -57,7 +57,7 @@ test("im aktuellen Modus rechnet cipher die Stufe darueber", async ({ page }) =>
 });
 
 test("die Grenzen des Feldes wandern mit", async ({ page }) => {
-  await page.selectOption("#building", "Tower_of_Babel");
+  await page.locator("#building").selectOption("Tower_of_Babel", { force: true });
 
   await expect(page.locator("#level")).toHaveAttribute("min", "1");
   await expect(page.locator("#level")).toHaveAttribute("max", "1000");
@@ -117,7 +117,7 @@ test("die Lesart ueberlebt einen Neuladen", async ({ page }) => {
 });
 
 test("Favoriten folgen der eingestellten Lesart", async ({ page }) => {
-  await page.selectOption("#building", "Notre_Dame");
+  await page.locator("#building").selectOption("Notre_Dame", { force: true });
   await page.fill("#level", "42");
   await page.locator("#level").blur();
   await page.click("#favSave");

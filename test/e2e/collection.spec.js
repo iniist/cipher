@@ -11,7 +11,7 @@ const eintraege = (page) => page.locator("#collList li");
 
 /** Ein Bauwerk einstellen und seine Zeile kopieren. */
 async function sammle(page, id, level, welche) {
-  await page.selectOption("#building", id);
+  await page.locator("#building").selectOption(id, { force: true });
   await page.fill("#level", String(level));
   await page.locator("#level").blur();
   await page.click(`button[data-copy="${welche || "chatPlain"}"]`);

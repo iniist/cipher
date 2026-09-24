@@ -51,7 +51,7 @@ test("der Freigabe-Stempel erscheint bei einem Plan ohne Vorleistung", async ({ 
 
   // Dieser Zuschnitt geht ohne einen einzigen vorgestreckten FP auf und
   // laesst trotzdem noch etwas zum Selberleveln uebrig — das ist selten.
-  await page.selectOption("#building", "Lotus_Temple");
+  await page.locator("#building").selectOption("Lotus_Temple", { force: true });
   await page.fill("#level", "37");
   await page.locator("#level").blur();
   await page.locator('#factorChips button[data-factor="200"]').click();
@@ -75,7 +75,7 @@ test.describe("mit prefers-reduced-motion", () => {
     await page.goto("/index.html");
 
     // Kein Stempel, auch nicht bei einem perfekten Zuschnitt
-    await page.selectOption("#building", "Lotus_Temple");
+    await page.locator("#building").selectOption("Lotus_Temple", { force: true });
     await page.fill("#level", "37");
     await page.locator("#level").blur();
     await page.locator('#factorChips button[data-factor="200"]').click();

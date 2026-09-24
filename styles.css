@@ -311,7 +311,7 @@ h1 {
 
 .l { display: block; font-size: .9rem; color: var(--dim); margin: 0 0 4px }
 
-select, input {
+select, input, .pick {
   font: inherit;
   color: var(--ink);
   background: var(--field);
@@ -321,9 +321,10 @@ select, input {
   border-radius: 0;
 }
 :root[data-theme="contrast"] select,
-:root[data-theme="contrast"] input { border-width: 2px }
+:root[data-theme="contrast"] input,
+:root[data-theme="contrast"] .pick { border-width: 2px }
 
-select {
+select, .pick {
   appearance: none;
   font-weight: 600;
   background-image:
@@ -616,6 +617,182 @@ select {
    Vorgabe des Browsers (gelber Kasten, schwarze Schrift) passt hier nicht. */
 .filter-hit mark { background: none; color: var(--gold); font-weight: 700 }
 :root[data-theme="contrast"] .filter-hit mark { color: #000; text-decoration: underline; text-underline-offset: 2px }
+
+/* ------------------------------------------------------ Bauwerksauswahl */
+
+/* Der Knopf, der die Auswahl oeffnet. Er sieht aus wie das Auswahlfeld
+   davor (Rahmen, Pfeil), zeigt rechts aber zusaetzlich das Zeitalter. */
+.pick {
+  display: flex; align-items: baseline; gap: 10px;
+  text-align: left; cursor: pointer;
+  min-height: 44px;
+}
+.pick-name {
+  flex: 1 1 auto; min-width: 0;
+  font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pick-era { flex: 0 1 auto; font-size: .82rem; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+
+/* Solange die Auswahl offen ist, bleibt die Seite dahinter stehen. Der
+   Platz der Bildlaufleiste bleibt reserviert, sonst ruckt die Seite zur
+   Seite. */
+html.picker-open { overflow: hidden; scrollbar-gutter: stable }
+
+/* Das <dialog> selbst ist nur der Rahmen; es fuellt das Blatt ganz aus,
+   damit ein Klick auf das <dialog> nur vom Hintergrund kommen kann.
+   Telefon: Blatt von unten, ueber der Bildschirmtastatur (--kb setzt
+   app.js aus dem visualViewport). */
+.picker {
+  position: fixed;
+  inset: auto 0 var(--kb, 0px) 0;
+  margin: 0; padding: 0; border: 0;
+  width: 100%; max-width: none;
+  height: calc(var(--vvh, 100dvh) * .88);
+  max-height: calc(var(--vvh, 100dvh) - 16px);
+  background: transparent; color: var(--ink);
+  overflow: visible;
+}
+.picker[open] { display: flex }
+.picker::backdrop { background: rgba(4, 12, 24, .55) }
+:root[data-theme="contrast"] .picker::backdrop { background: rgba(0, 0, 0, .6) }
+
+.picker-sheet {
+  display: flex; flex-direction: column;
+  width: 100%; min-height: 0;
+  /* --panel ist in den dunklen Themes durchscheinend; ueber --bg gelegt
+     ergibt es dieselbe Flaeche wie die Panels, nur deckend. */
+  background: linear-gradient(var(--panel), var(--panel)), var(--bg);
+  border: 1.5px solid var(--frame); border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, .3);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  transition: transform .2s ease-out;
+}
+:root[data-theme="contrast"] .picker-sheet { border-width: 2px; border-bottom: 0; box-shadow: none }
+.picker-sheet.dragging { transition: none }
+
+.picker-head {
+  position: relative;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 18px 10px 8px 16px;
+  /* Hier greift das Wischen nach unten; der Browser soll dabei nicht
+     selbst scrollen oder zoomen. */
+  touch-action: none;
+  user-select: none; -webkit-user-select: none;
+}
+.picker-grip {
+  position: absolute; top: 7px; left: 50%;
+  width: 40px; height: 4px; border-radius: 2px;
+  background: var(--field-border);
+  transform: translateX(-50%);
+}
+:root[data-theme="contrast"] .picker-grip { background: #000 }
+.picker-head h2 { margin: 0; font-size: 1.15rem; font-weight: 600 }
+
+.picker-close {
+  flex: 0 0 44px; width: 44px; height: 44px;
+  display: grid; place-items: center;
+  background: transparent; color: var(--dim);
+  border: 0; border-radius: var(--r-sm); cursor: pointer;
+}
+.picker-close:hover { color: var(--ink) }
+.picker-close svg { width: 20px; height: 20px }
+
+.picker-search { margin: 0 14px }
+/* Unter 16px zoomt Safari auf dem iPhone beim Antippen ins Feld. */
+.picker-search input { font-size: max(16px, 1rem); padding: 10px 12px }
+.picker-count { margin: 6px 16px 0 }
+
+.picker-list {
+  list-style: none;
+  flex: 1 1 auto; min-height: 0;
+  margin: 8px 0 0; padding: 0 8px 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.picker-list:focus-visible { outline-offset: -3px }
+.picker-group { list-style: none; margin: 0; padding: 0 }
+
+/* Die Zeitalter laufen beim Scrollen oben mit, bis das naechste sie
+   wegschiebt — man weiss immer, wo in der Liste man steht. */
+.picker-era {
+  position: sticky; top: 0; z-index: 1;
+  padding: 12px 10px 4px;
+  font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--dim);
+  background: linear-gradient(var(--panel), var(--panel)), var(--bg);
+}
+
+.picker-opt {
+  position: relative;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  min-height: 48px;
+  padding: 12px 12px 12px 36px;
+  border: 1.5px solid transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  /* Platz fuer die mitlaufende Zeitalter-Ueberschrift, wenn die Tastatur
+     eine Option in den sichtbaren Bereich holt. */
+  scroll-margin: 40px 0 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.picker-opt b { font-weight: 600; min-width: 0; overflow-wrap: anywhere }
+.picker-opt span { font-size: .82rem; color: var(--dim); white-space: nowrap }
+.picker-opt:hover, .picker-opt:active { background: var(--field) }
+/* Wo die Tastatur steht: Enter nimmt dieses Bauwerk. */
+.picker-opt.active { background: var(--field); border-color: var(--field-border) }
+:root[data-theme="contrast"] .picker-opt.active { border: 2px solid #000 }
+
+.picker-opt[aria-selected="true"] b { color: var(--gold) }
+.picker-opt[aria-selected="true"]::before {
+  content: "✓";
+  content: "✓" / "";
+  position: absolute; left: 12px;
+  color: var(--gold); font-weight: 700;
+}
+.picker-opt mark { background: none; color: var(--gold); font-weight: 700 }
+:root[data-theme="contrast"] .picker-opt mark { color: #000; text-decoration: underline; text-underline-offset: 2px }
+
+/* Blatt faehrt von unten herein und wieder hinaus. */
+@keyframes picker-up { from { transform: translateY(100%) } }
+@keyframes picker-down { to { transform: translateY(100%) } }
+@keyframes picker-fade-in { from { opacity: 0 } }
+@keyframes picker-fade-out { to { opacity: 0 } }
+.picker[open] .picker-sheet { animation: picker-up .26s cubic-bezier(.2, .8, .25, 1) }
+.picker.closing .picker-sheet { animation: picker-down .18s ease-in forwards }
+.picker[open]::backdrop { animation: picker-fade-in .2s ease-out }
+.picker.closing::backdrop { animation: picker-fade-out .18s ease-in forwards }
+
+/* Breite Bildschirme und Telefone quer: ein Fenster in der Mitte statt
+   eines Blatts, das ueber die ganze Breite liefe. */
+@media (min-width: 641px) {
+  .picker {
+    inset: 0; margin: auto;
+    width: min(460px, calc(100% - 32px));
+    height: min(640px, calc(var(--vvh, 100dvh) - 32px));
+    max-height: none;
+  }
+  .picker-sheet {
+    border-bottom: 1.5px solid var(--frame);
+    border-radius: var(--r);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
+    padding-bottom: 0;
+  }
+  :root[data-theme="contrast"] .picker-sheet { border-bottom: 2px solid #000 }
+  .picker-grip { display: none }
+  .picker-head { padding-top: 12px; touch-action: auto }
+  @keyframes picker-pop { from { opacity: 0; transform: translateY(8px) scale(.98) } }
+  @keyframes picker-pop-out { to { opacity: 0; transform: translateY(8px) scale(.98) } }
+  .picker[open] .picker-sheet { animation: picker-pop .2s cubic-bezier(.2, .8, .25, 1) }
+  .picker.closing .picker-sheet { animation: picker-pop-out .15s ease-in forwards }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picker-sheet, .picker[open] .picker-sheet, .picker.closing .picker-sheet,
+  .picker[open]::backdrop, .picker.closing::backdrop { animation: none; transition: none }
+}
 
 /* ------------------------------------------------------------ Favoriten */
 
@@ -1094,7 +1271,7 @@ tr.off td.pay { text-decoration: line-through }
    und --shadow-sm; hier steht nur, wer sie bekommt. */
 .panel, .card { border-radius: var(--r); box-shadow: var(--shadow) }
 
-select, input, .seg, .step, .modes,
+select, input, .pick, .seg, .step, .modes,
 .chips button, .fav-save, .fav-list li, .filter-hit, .slot-reset,
 .copy .t, .copy button, .coll-copy, .coll-list li,
 .lump, .note, .note .go, .highlight, .bar, .fac-gauge,
@@ -1117,14 +1294,14 @@ select, input, .seg, .step, .modes,
    Knoepfe bleiben aussen vor: an der Grenze soll ihr Zeichen sofort
    verblassen, nicht erst nach einer Blende. */
 .modes button, .seg button, .chips button, .fav-save, .fav-go, .filter-hit,
-.copy button, .coll-copy, .note .go, .slot-reset, select, input {
+.copy button, .coll-copy, .note .go, .slot-reset, select, input, .pick {
   transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s, transform .1s;
 }
 .chips button:active, .fav-save:active, .copy button:active:not(:disabled),
 .coll-copy:active, .note .go:active, .modes button:active { transform: translateY(1px) }
 .chips button:hover:not(.on), .fav-save:hover { border-color: var(--frame) }
 .copy button:hover:not(:disabled), .coll-copy:hover, .note .go:hover { filter: brightness(1.07) }
-select:hover, input:hover:not(:focus) { border-color: var(--frame) }
+select:hover, input:hover:not(:focus), .pick:hover { border-color: var(--frame) }
 .step input:hover { border-color: transparent }
 
 /* ------------------------------------------------------------- Animation */
@@ -1150,7 +1327,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .safe, td.chg, .stamp, .scan, .wordmark.plotting > span, .toast { animation: none }
   .coll-list li.fresh { animation: none }
   .modes button, .seg button, .chips button, .fav-save, .fav-go, .filter-hit,
-  .copy button, .coll-copy, .note .go, .slot-reset, select, input { transition: none }
+  .copy button, .coll-copy, .note .go, .slot-reset, select, input, .pick { transition: none }
   .chips button:active, .fav-save:active, .copy button:active,
   .coll-copy:active, .note .go:active, .modes button:active { transform: none }
   /* Der Stempel wuerde sonst dauerhaft stehen bleiben — er wird in diesem

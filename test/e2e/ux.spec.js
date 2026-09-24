@@ -26,7 +26,7 @@ test.describe("schmale Geräte", () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/index.html");
       // Dreistellig ist der enge Fall.
-      await page.selectOption("#building", "Alcatraz");
+      await page.locator("#building").selectOption("Alcatraz", { force: true });
       await page.fill("#level", "120");
       await page.locator("#level").blur();
 
@@ -70,7 +70,7 @@ test.describe("Leerzustand", () => {
     // echten Datensatz — die schliesst sich mit jeder Datenverbesserung.
     await mitTestdaten(page);
     await page.goto("/index.html");
-    await page.selectOption("#building", OHNE_DATEN);
+    await page.locator("#building").selectOption(OHNE_DATEN, { force: true });
     await page.fill("#level", "20");
     await page.locator("#level").blur();
     await expect(page.locator("td.empty")).toBeVisible();
@@ -154,7 +154,7 @@ test.describe("Favoritenliste", () => {
 
     // Der letzte Eintrag liegt unterhalb der drei sichtbaren Reihen.
     const last = FULL_LIST[FULL_LIST.length - 1];
-    await page.selectOption("#building", last.id);
+    await page.locator("#building").selectOption(last.id, { force: true });
     await page.fill("#level", String(last.level));
     await page.locator("#level").blur();
 
@@ -225,7 +225,7 @@ test.describe("Bauwerkssuche", () => {
   });
 
   test("die Trefferzahl stimmt mit den angezeigten Treffern überein", async ({ page }) => {
-    await page.selectOption("#building", "Saturn_VI_Gate_PEGASUS");
+    await page.locator("#building").selectOption("Saturn_VI_Gate_PEGASUS", { force: true });
     await page.fill("#buildingFilter", "Ho");
 
     await expect(page.locator("#filterCount")).toHaveText("3 Bauwerke gefunden.");
@@ -235,7 +235,7 @@ test.describe("Bauwerkssuche", () => {
   });
 
   test("das Auswahlfeld bleibt vollständig und behält seine Wahl", async ({ page }) => {
-    await page.selectOption("#building", "Colosseum");
+    await page.locator("#building").selectOption("Colosseum", { force: true });
     await page.fill("#buildingFilter", "arche");
 
     expect(await page.locator("#building option").count()).toBe(49);
@@ -254,7 +254,7 @@ test.describe("Bauwerkssuche", () => {
   });
 
   test("nichts wechselt das Bauwerk ohne Klick", async ({ page }) => {
-    await page.selectOption("#building", "Colosseum");
+    await page.locator("#building").selectOption("Colosseum", { force: true });
     for (const query of ["a", "ar", "arc", "arch", "arche"]) {
       await page.fill("#buildingFilter", query);
       await expect(page.locator("#building")).toHaveValue("Colosseum");
@@ -316,7 +316,7 @@ test.describe("Bauwerkssuche", () => {
     await page.fill("#buildingFilter", "arche");
     await expect(page.locator(".filter-hit").first()).toHaveAttribute("aria-current", "true");
 
-    await page.selectOption("#building", "Colosseum");
+    await page.locator("#building").selectOption("Colosseum", { force: true });
     await page.fill("#buildingFilter", "arche");
     await expect(page.locator(".filter-hit").first()).not.toHaveAttribute("aria-current", "true");
   });
