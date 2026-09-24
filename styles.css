@@ -1306,11 +1306,51 @@ select:hover, input:hover:not(:focus), .pick:hover { border-color: var(--frame) 
 
 /* ------------------------------------------------------- Themenwechsel */
 
-/* Der Kreis beim Umschalten (siehe revealTheme in app.js): die alte Seite
-   bleibt stehen, die neue waechst vom Knopf aus darueber. Das Ueberblenden
-   des Browsers wuerde beide Bilder halb durchscheinen lassen. */
+/* Der Uebergang beim Umschalten (siehe revealTheme in app.js). Die alte
+   Seite bleibt stehen, die neue legt sich darueber. Das Ueberblenden des
+   Browsers ist abgeschaltet, sonst schienen beide Bilder halb durch.
+   PROTOTYP: vier Varianten zum Vergleichen, gewaehlt ueber data-reveal. */
 ::view-transition-old(root),
 ::view-transition-new(root) { animation: none; mix-blend-mode: normal }
+
+/* Blende: die neue Seite taucht weich aus einer leichten Unschaerfe auf. */
+:root[data-reveal="blende"]::view-transition-new(root) {
+  animation: reveal-blende .55s cubic-bezier(.4, 0, .2, 1) both;
+}
+@keyframes reveal-blende {
+  from { opacity: 0; filter: blur(10px); transform: scale(1.015) }
+}
+
+/* Vorhang: die neue Seite senkt sich mit weicher Kante von oben herab. */
+:root[data-reveal="vorhang"]::view-transition-new(root) {
+  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 60%);
+  mask-image: linear-gradient(to bottom, #000 40%, transparent 60%);
+  -webkit-mask-size: 100% 250%;
+  mask-size: 100% 250%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: reveal-vorhang .8s cubic-bezier(.65, 0, .35, 1) both;
+}
+@keyframes reveal-vorhang {
+  from { -webkit-mask-position: 0 100%; mask-position: 0 100% }
+  to   { -webkit-mask-position: 0 0; mask-position: 0 0 }
+}
+
+/* Schraeg: eine weiche Kante wischt schraeg von links nach rechts, wie der
+   Lichtstrahl des Blaupausen-Scans. */
+:root[data-reveal="schraeg"]::view-transition-new(root) {
+  -webkit-mask-image: linear-gradient(100deg, #000 40%, transparent 60%);
+  mask-image: linear-gradient(100deg, #000 40%, transparent 60%);
+  -webkit-mask-size: 250% 100%;
+  mask-size: 250% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: reveal-schraeg .8s cubic-bezier(.65, 0, .35, 1) both;
+}
+@keyframes reveal-schraeg {
+  from { -webkit-mask-position: 100% 0; mask-position: 100% 0 }
+  to   { -webkit-mask-position: 0 0; mask-position: 0 0 }
+}
 
 /* ------------------------------------------------------------- Animation */
 

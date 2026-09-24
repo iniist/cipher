@@ -507,24 +507,36 @@
   }
 
   /**
-   * Den Wechsel als Kreis zeigen, der sich vom gedrueckten Knopf aus ueber
-   * die Seite legt. Die View Transitions API fotografiert dafuer die alte
-   * Seite, `apply` stellt die neue ein, und der Kreis gibt sie frei. Ohne
-   * die API oder bei reduzierter Bewegung wird sofort umgeschaltet.
+   * Den Wechsel ueberblenden. Die View Transitions API fotografiert die alte
+   * Seite, `apply` stellt die neue ein, und CSS oder eine Animation gibt sie
+   * frei. Ohne die API oder bei reduzierter Bewegung wird sofort umgeschaltet.
+   *
+   * PROTOTYP: ?uebergang=blende|vorhang|schraeg|kreis waehlt die Variante zum
+   * Vergleichen. Vor dem Mergen bleibt nur die gewaehlte uebrig.
    */
+  var REVEALS = ["blende", "vorhang", "schraeg", "kreis"];
+
   function revealTheme(apply, origin) {
     var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!document.startViewTransition || reduce || !origin) {
       apply();
       return;
     }
+    var root = document.documentElement;
+    var wanted = new URLSearchParams(window.location.search).get("uebergang");
+    var kind = REVEALS.indexOf(wanted) >= 0 ? wanted : REVEALS[0];
+    root.dataset.reveal = kind;
+    var transition = document.startViewTransition(apply);
+    transition.finished.then(function () { delete root.dataset.reveal; }, function () { delete root.dataset.reveal; });
+    if (kind !== "kreis") return;
+
+    // Der Kreis waechst vom gedrueckten Knopf bis in die entfernteste Ecke.
     var box = origin.getBoundingClientRect();
     var x = box.left + box.width / 2;
     var y = box.top + box.height / 2;
     var radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
-    var transition = document.startViewTransition(apply);
     transition.ready.then(function () {
-      document.documentElement.animate(
+      root.animate(
         { clipPath: ["circle(0 at " + x + "px " + y + "px)", "circle(" + radius + "px at " + x + "px " + y + "px)"] },
         { duration: 700, easing: "cubic-bezier(.65, 0, .35, 1)", pseudoElement: "::view-transition-new(root)" }
       );
