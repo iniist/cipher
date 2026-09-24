@@ -460,6 +460,10 @@ index.html        Die Anwendung
 impressum.html    Impressum
 datenschutz.html  Datenschutzerklärung
 404.html          Fehlerseite
+rundgang.html     Vorstellungsseite zum Teilen (nicht aus der App verlinkt)
+rundgang.css      Darstellung des Rundgangs, fest im Schmiede-Look
+rundgang.js       Bewegung des Rundgangs: Einblenden, Funken, Wechsel
+bilder/           Bildschirmfotos für den Rundgang (WebP, generiert)
 styles.css        Darstellung, sechs Themes über data-theme
 fonts.css         @font-face für die lokal ausgelieferte Schrift
 data.js           Datensatz der Legendären Bauwerke (generiert)
@@ -472,9 +476,33 @@ robots.txt        Hält /tools/ und /test/ aus dem Suchindex
 tools/serve.js    Statischer Server für Entwicklung und Tests
 tools/import.html Holt die Daten aus dem Wiki (läuft nur lokal)
 tools/build-data.js  Macht aus dem Import wieder data.js
+tools/screenshots.js Fotografiert cipher für bilder/ neu
 tools/order-scan.js  Misst die Faktor-Spreizung für die Tabelle oben
 test/             Einheitentests (node:test) und Browsertests (Playwright)
 ```
+
+## Rundgang
+
+`rundgang.html` (live unter `/rundgang`) stellt cipher vor: alle
+Einstellungen mit Bildschirmfotos, im Schmiede-Look und leicht animiert —
+Hammer und Amboss, aufsteigende Glut, Einblenden beim Scrollen, der
+Förderplan wechselt von selbst zwischen „Sichern“ und „Summe“. Die Seite ist
+zum Teilen gedacht und wird aus dem Rechner bewusst **nicht** verlinkt; ein
+Browsertest hält das fest.
+
+Sie hält dieselben Regeln ein wie der Rest: keine fremden Anfragen, kein
+Inline-Stil, kein Speicher. Ohne JavaScript und bei
+`prefers-reduced-motion` steht alles sofort und ohne Bewegung da.
+
+Die Bilder in `bilder/` entstehen aus der echten Oberfläche:
+
+```sh
+node tools/screenshots.js
+```
+
+Das startet den Testserver, stellt einen Beispielzustand ein und legt alle
+Fotos als WebP neu ab. Nach sichtbaren Änderungen an der App einfach erneut
+laufen lassen.
 
 ## Ausliefern
 

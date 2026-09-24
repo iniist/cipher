@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#183c30">
+<meta name="description" content="Ein kleiner Rundgang durch cipher, einen neuen Förder-Rechner für Legendäre Bauwerke: Mäzen-Plätze sichern, FP-Einsatz planen, Chat-Zeilen sammeln. Alle Einstellungen mit Bildern.">
+<title>cipher — ein kleiner Rundgang</title>
+
+<!-- Die Seite wird geteilt, nicht aus dem Rechner verlinkt. Die Vorschau
+     im Gildenchat soll trotzdem vollständig sein. -->
+<link rel="canonical" href="https://cipher-calc.netlify.app/rundgang">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cipher-calc.netlify.app/rundgang">
+<meta property="og:site_name" content="cipher">
+<meta property="og:locale" content="de_DE">
+<meta property="og:title" content="cipher — ein kleiner Rundgang">
+<meta property="og:description" content="Ein neuer Förder-Rechner für Legendäre Bauwerke. Er versucht, so gut wie alles zu können, was man sich beim Fördern wünscht — ohne Konto und ohne Tracking.">
+<meta name="twitter:card" content="summary">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231f4a7a'/%3E%3Cpath d='M22 10.5a7.5 7.5 0 1 0 0 11' fill='none' stroke='%23f0c24f' stroke-width='3.2' stroke-linecap='square'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="stylesheet" href="./fonts.css">
+<link rel="stylesheet" href="./rundgang.css">
+<!-- Synchron im Kopf, damit die Klasse "js" vor dem ersten Bild steht:
+     ohne Skript bleibt alles sofort sichtbar, mit Skript blendet es ein. -->
+<script src="./rundgang.js"></script>
+</head>
+<body>
+
+<div class="progress" aria-hidden="true"><i id="progress"></i></div>
+<div class="embers" id="embers" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="hero-text">
+    <p class="eyebrow reveal">Ein kleiner, neuer Rechner</p>
+    <h1 class="wordmark reveal">cipher</h1>
+    <p class="lead reveal">Für alle, die Legendäre Bauwerke fördern. Wir haben versucht, darin so gut wie alles unterzubringen, was man sich dabei wünscht — und würden uns freuen, wenn er dir ein wenig Arbeit abnimmt.</p>
+    <div class="cta-row reveal">
+      <a class="btn" href="./index.html">cipher ausprobieren</a>
+      <a class="btn ghost" href="#rundgang">Erst einmal umschauen</a>
+    </div>
+    <p class="fine reveal">Kostenlos, ohne Konto, ohne Werbung. Ein inoffizielles Fan-Projekt.</p>
+  </div>
+
+  <div class="hero-art">
+    <!-- Hammer und Amboss, in CSS animiert: ein Schlag, ein paar Funken. -->
+    <svg class="forge-mark" viewBox="0 0 200 160" aria-hidden="true">
+      <g class="anvil">
+        <ellipse class="glow" cx="100" cy="95" rx="22" ry="5"/>
+        <path d="M30 94H150V106H122C114 106 110 110 110 116V124H128V138H72V124H90V116C90 110 86 106 78 106H58C44 106 34 101 30 94Z"/>
+        <rect class="anvil-face" x="56" y="94" width="94" height="4" rx="1"/>
+      </g>
+      <g class="sparks">
+        <circle cx="100" cy="93" r="2.4"/><circle cx="100" cy="93" r="2"/><circle cx="100" cy="93" r="2.6"/>
+        <circle cx="100" cy="93" r="1.8"/><circle cx="100" cy="93" r="2.2"/><circle cx="100" cy="93" r="1.6"/>
+        <circle cx="100" cy="93" r="2"/>
+      </g>
+      <g class="hammer">
+        <path class="handle" d="M114 76H184"/>
+        <rect class="head" x="86" y="58" width="28" height="36" rx="3"/>
+        <rect class="face" x="86" y="88" width="28" height="6" rx="1.5"/>
+      </g>
+    </svg>
+    <figure class="phone tilt reveal">
+      <img src="./bilder/ueberblick.webp" width="786" height="1702" alt="cipher im Schmiede-Look: Gemerkte Bauwerke, Auswahl der Arche, Stufe 80 und Faktor 1,90.">
+    </figure>
+  </div>
+</header>
+
+<main>
+
+  <section class="promises" aria-label="Kurz gesagt">
+    <div class="promise reveal">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 3.5v6c0 5-3.4 9-8 10.5C7.4 20.5 4 16.5 4 11.5v-6z"/><path class="tick" d="M8.5 12l2.5 2.5 4.5-5"/></svg>
+      <h2>Plätze sicher belegen</h2>
+      <p>cipher sagt dir für jeden Mäzen-Platz, wie viel du vorab einzahlen musst, damit ihn dir niemand mehr wegschnappt.</p>
+    </div>
+    <div class="promise reveal">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path class="tick" d="M8 9.5h8M8 12.5h5"/></svg>
+      <h2>Chat-Zeile gleich dabei</h2>
+      <p>Die Zeile für den Förderchat entsteht nebenher — mit oder ohne FP, mit vollem Namen oder Kürzel.</p>
+    </div>
+    <div class="promise reveal">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path class="tick" d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <h2>Bleibt bei dir</h2>
+      <p>Gerechnet wird im Browser. Kein Konto, keine Cookies, keine Anfragen an Dritte — was du einstellst, verlässt dein Gerät nicht.</p>
+    </div>
+  </section>
+
+  <section class="numbers" aria-label="In Zahlen">
+    <div class="reveal"><b data-count="49">49</b><span>Legendäre Bauwerke</span></div>
+    <div class="reveal"><b data-count="24">24</b><span>Zeitalter</span></div>
+    <div class="reveal"><b data-count="6">6</b><span>Darstellungen</span></div>
+    <div class="reveal"><b data-count="0">0</b><span>Anfragen an Dritte</span></div>
+  </section>
+
+  <h2 class="section-title reveal" id="rundgang">Ein Rundgang</h2>
+  <p class="section-lead reveal">Nichts davon ist neu erfunden. Es sind die Dinge, die beim Fördern immer wieder Arbeit machen — so ruhig gelöst, wie wir es hinbekommen haben.</p>
+
+  <!-- ------------------------------------------------------------ Bauwerk -->
+  <article class="feature">
+    <figure class="phone tilt reveal">
+      <img src="./bilder/auswahl.webp" width="786" height="1702" loading="lazy" alt="Die Bauwerksauswahl als Blatt von unten. Die Suche „zukunft“ findet zehn Bauwerke, die Arche ist markiert.">
+    </figure>
+    <div class="feature-text reveal">
+      <p class="kicker">Bauwerk</p>
+      <h3>Finden, statt zu scrollen</h3>
+      <p>Ein Tipp auf das Bauwerk öffnet eine eigene Auswahl: am Telefon als Blatt von unten, am großen Bildschirm als Fenster in der Mitte. Die 49 Bauwerke stehen nach Zeitalter geordnet, das gewählte ist markiert.</p>
+      <ul class="ticks">
+        <li>Suche nach Name, Kürzel oder Zeitalter — „obsi“ findet das Observatorium, „zukunft“ alle zehn aus den Zukunfts-Zeitaltern.</li>
+        <li>Schließt wie ein System-Blatt: Zurück-Geste, Esc, Kreuz, Tipp daneben oder nach unten ziehen.</li>
+        <li>Vollständig per Tastatur bedienbar: Pfeile, Bild auf/ab, Pos1/Ende, Enter. Wer lostippt, sucht.</li>
+        <li>Eine Schnellsuche direkt unter dem Feld, für alle, die lieber gleich tippen.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- -------------------------------------------------------------- Stufe -->
+  <article class="feature flip">
+    <figure class="shot reveal">
+      <img src="./bilder/stufe.webp" width="706" height="330" loading="lazy" alt="Stufenfeld im Modus „aktuell“ mit 79, darunter der Hinweis „Gefördert wird Stufe 80“.">
+    </figure>
+    <div class="feature-text reveal">
+      <p class="kicker">Stufe</p>
+      <h3>Aktuell oder nächste — wie du denkst</h3>
+      <p>Die einen sagen „es steht auf 79“, die anderen „es wird auf 80 gezogen“. Beides ist richtig. Ein kleiner Umschalter legt fest, welche Zahl gemeint ist, und darunter steht jeweils die andere. So rechnet niemand versehentlich eine Stufe daneben.</p>
+      <ul class="ticks">
+        <li>Stepper mit − und +, die Zahl lässt sich auch eintippen.</li>
+        <li>Im Modus „aktuell“ ist auch Stufe 0 erlaubt — für ein Bauwerk, das noch gar nicht steht.</li>
+        <li>Die Lesart wird gemerkt und gilt auch für die Favoriten.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ------------------------------------------------------------- Faktor -->
+  <article class="feature">
+    <figure class="shot reveal">
+      <img src="./bilder/faktor.webp" width="706" height="1104" loading="lazy" alt="Faktor 1,90 mit Schnellwahl von 1,80 bis 2,00. Aufgeklappt: je Platz ein eigener Faktor, P3 steht auf 1,85 und ist als „eigen“ markiert.">
+    </figure>
+    <div class="feature-text reveal">
+      <p class="kicker">Arche-Faktor</p>
+      <h3>Ein Faktor für alle — oder einer je Platz</h3>
+      <p>Der Faktor läuft über einen Stepper mit Schnellwahl für die üblichen Werte. Getippt werden darf, wie es gerade kommt: <code>1,93</code>, <code>1.93</code>, <code>193</code> oder <code>193 %</code> meinen alle dasselbe.</p>
+      <p>Weil der Arche-Bonus dem Förderer gehört und nicht dem Bauwerk, lässt sich hinter „Faktor oder FP je Platz“ jeder der fünf Plätze einzeln einstellen.</p>
+      <ul class="ticks">
+        <li>Schnellwahl: 1,80 · 1,85 · 1,90 · 1,92 · 1,95 · 2,00 — erlaubt ist alles von 1,80 bis 2,00.</li>
+        <li>Je Platz wahlweise als Faktor oder als fester FP-Betrag, etwa wenn jemand einen Platz mit krummer Summe übernimmt.</li>
+        <li>Ein Platz <em>folgt</em> dem Wert oben, bis du ihn anfasst — danach ist er <em>eigen</em>. „Alle wieder angleichen“ holt alle zurück.</li>
+        <li>Kein Schieberegler, der beim Scrollen versehentlich springt.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- -------------------------------------------------------------- Plan -->
+  <article class="feature flip">
+    <div class="swap reveal" id="planSwap">
+      <div class="seg" role="group" aria-label="Lesart der letzten Spalte">
+        <button type="button" data-plan="sichern" aria-pressed="true">Sichern</button>
+        <button type="button" data-plan="summe" aria-pressed="false">Summe</button>
+      </div>
+      <figure class="shot stack">
+        <img class="is-on" data-plan-img="sichern" src="./bilder/plan-sichern.webp" width="770" height="1260" loading="lazy" alt="Förderplan für die Arche auf Stufe 80: fünf Plätze mit Belohnung, Einzahlung und dem Betrag, der jeweils zum Sichern nötig ist. 951 FP vorab, Eigenanteil 18 %.">
+        <img data-plan-img="summe" src="./bilder/plan-summe.webp" width="770" height="1260" loading="lazy" alt="Derselbe Förderplan, die letzte Spalte zeigt nun die laufende Summe: 238, sicher, 666, 875, 951.">
+      </figure>
+    </div>
+    <div class="feature-text reveal">
+      <p class="kicker">Förderplan</p>
+      <h3>Was jeder Platz kostet — und was du vorstreckst</h3>
+      <p>Für jeden der fünf Mäzen-Plätze stehen Belohnung und Einzahlung samt Arche-Bonus da. Die letzte Spalte sagt, was du vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann.</p>
+      <p>Ein Tipp auf die Spaltenüberschrift wechselt zwischen zwei verbreiteten Lesarten: <strong>Sichern</strong> zeigt den Schritt je Platz, <strong>Summe</strong> den laufenden Stand.</p>
+      <ul class="ticks">
+        <li>Häkchen weg — der Platz wird nicht angeboten und fällt in deinen Eigenanteil.</li>
+        <li>Ein Balken zeigt die Aufteilung auf Eigenanteil und P1 bis P5.</li>
+        <li>Unter der Tabelle: Gesamt, Fremd, Eigenanteil in FP und Prozent — und ein Kasten, der erklärt, wann du was einzahlst.</li>
+        <li>Fehlen dem Datensatz Kosten oder P1 für eine sehr hohe Stufe, sagt cipher das offen und rechnet mit deinen Zahlen aus dem Förderfenster weiter.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- -------------------------------------------------------------- Chat -->
+  <article class="feature">
+    <figure class="shot reveal">
+      <img src="./bilder/chat.webp" width="770" height="1186" loading="lazy" alt="Förderchat mit zwei Zeilen zum Kopieren, darunter die Sammlung mit drei Zeilen: AO, Obsi und Arche.">
+    </figure>
+    <div class="feature-text reveal">
+      <p class="kicker">Förderchat</p>
+      <h3>Die Zeile für den Chat, schon fertig</h3>
+      <p>Zwei Zeilen zum Kopieren: nur die Plätze oder mit FP dahinter. Wer mehrere Bauwerke auf einmal in die Fördergruppe stellt, findet jede kopierte Zeile in der Sammlung wieder — und nimmt am Ende alle zusammen mit.</p>
+      <ul class="ticks">
+        <li><strong>Kürzel</strong>-Schalter: „AO“ statt „Arktische Orangerie“, „Obsi“ statt „Observatorium“ — in Chat, Sammlung und Favoriten.</li>
+        <li><strong>Eigenes Kürzel</strong> je Bauwerk, falls deine Gilde es anders nennt. Leer lassen heißt: den Vorschlag nehmen.</li>
+        <li>Die Sammlung hält bis zu 15 Zeilen, eine je Bauwerk. Erneut kopiert, ersetzt die neue die alte an ihrem Platz.</li>
+        <li>„Alle kopieren“, einzelne Zeilen entfernen, „Sammlung leeren“.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- --------------------------------------------------------- Favoriten -->
+  <article class="feature flip">
+    <figure class="shot reveal">
+      <img src="./bilder/favoriten.webp" width="706" height="298" loading="lazy" alt="Gemerkte Bauwerke als Chips: Die Arche 80, Arktische Orangerie 64, Observatorium 112, Innovation Tower 35, Atomium 90.">
+    </figure>
+    <div class="feature-text reveal">
+      <p class="kicker">Gemerkt</p>
+      <h3>Deine Bauwerke, einen Tipp entfernt</h3>
+      <p>Bis zu zwölf Bauwerke lassen sich merken. Ein Tipp springt zurück — praktisch, wenn mehrere parallel wachsen. Ziehst du eines eine Stufe weiter, wandert der Eintrag einfach mit; doppelt steht nie etwas da.</p>
+      <ul class="ticks">
+        <li>Der Merken-Knopf nennt Bauwerk und Stufe beim Namen.</li>
+        <li>Auch der Wechsel per Auswahl oder Suche lädt die gemerkte Stufe.</li>
+        <li>Solange nichts gemerkt ist, fällt der Streifen ganz weg.</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ------------------------------------------------------------ Themes -->
+  <section class="themes" aria-labelledby="themesTitle">
+    <div class="feature-text center reveal">
+      <p class="kicker">Darstellung</p>
+      <h3 id="themesTitle">Sechs Gewänder, ein Rechner</h3>
+      <p>Blaupause, Weißpause, Kontrast, Papier, Weltall — und die Schmiede in Holz und Messing, in der auch diese Seite steht. Der Wechsel senkt sich wie ein Vorhang über die Seite.</p>
+    </div>
+    <div class="fan" id="fan">
+      <figure class="reveal"><img src="./bilder/theme-dark.webp" width="786" height="1240" loading="lazy" alt="Blaupause"><figcaption>Blaupause</figcaption></figure>
+      <figure class="reveal"><img src="./bilder/theme-light.webp" width="786" height="1240" loading="lazy" alt="Weißpause"><figcaption>Weißpause</figcaption></figure>
+      <figure class="reveal"><img src="./bilder/theme-contrast.webp" width="786" height="1240" loading="lazy" alt="Kontrast"><figcaption>Kontrast</figcaption></figure>
+      <figure class="reveal"><img src="./bilder/theme-writer.webp" width="786" height="1240" loading="lazy" alt="Papier"><figcaption>Papier</figcaption></figure>
+      <figure class="reveal"><img src="./bilder/theme-space.webp" width="786" height="1240" loading="lazy" alt="Weltall"><figcaption>Weltall</figcaption></figure>
+      <figure class="reveal"><img src="./bilder/theme-forge.webp" width="786" height="1240" loading="lazy" alt="Schmiede"><figcaption>Schmiede</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- -------------------------------------------------------------- Quer -->
+  <article class="feature wide">
+    <div class="feature-text center reveal">
+      <p class="kicker">Telefon quer</p>
+      <h3>Links einstellen, rechts ablesen</h3>
+      <p>Quer ist Höhe knapp und Breite im Überfluss. Dort stehen die Einstellungen links und der Förderplan rechts — einstellen und ablesen, ohne zu scrollen.</p>
+    </div>
+    <figure class="landscape tilt reveal">
+      <img src="./bilder/quer.webp" width="1500" height="680" loading="lazy" alt="cipher auf einem Telefon im Querformat: links Bauwerk und Stufe, rechts der Förderplan.">
+    </figure>
+  </article>
+
+  <!-- ------------------------------------------------ Alle Einstellungen -->
+  <section class="all" aria-labelledby="allTitle">
+    <h2 class="section-title reveal" id="allTitle">Alle Einstellungen auf einen Blick</h2>
+    <p class="section-lead reveal">Für alle, die es genau wissen möchten. Alles hier merkt sich cipher auf deinem Gerät — und nur dort.</p>
+
+    <div class="grid">
+      <div class="card reveal">
+        <h3>Bauwerk</h3>
+        <dl>
+          <dt>Legendäres Bauwerk</dt><dd>49 Bauwerke aus 24 Zeitaltern, in eigener Auswahl mit Suche.</dd>
+          <dt>Schnellsuche</dt><dd>Direkt unter dem Feld: Name, Kürzel oder Zeitalter tippen.</dd>
+          <dt>Kürzel</dt><dd>Schalter: voller Name wie im Spiel oder das gildenübliche Kürzel.</dd>
+          <dt>Eigenes Kürzel</dt><dd>Ein eigener Name je Bauwerk für Chat, Sammlung und Favoriten.</dd>
+        </dl>
+      </div>
+      <div class="card reveal">
+        <h3>Stufe &amp; Name</h3>
+        <dl>
+          <dt>Stufe</dt><dd>Stepper mit Eingabefeld; Pfeiltasten zählen.</dd>
+          <dt>aktuell / nächste</dt><dd>Legt fest, wie die Zahl gemeint ist; die andere steht darunter.</dd>
+          <dt>Dein Name</dt><dd>Steht vorn in der Chat-Zeile.</dd>
+        </dl>
+      </div>
+      <div class="card reveal">
+        <h3>Faktor</h3>
+        <dl>
+          <dt>Arche-Faktor</dt><dd>1,80 bis 2,00, als Stepper, Eingabe oder Schnellwahl.</dd>
+          <dt>Faktor je Platz</dt><dd>P1 bis P5 einzeln, folgt sonst dem Wert oben.</dd>
+          <dt>FP je Platz</dt><dd>Statt eines Faktors ein fester Betrag für einzelne Plätze.</dd>
+          <dt>Alle angleichen</dt><dd>Setzt alle Plätze zurück auf den gemeinsamen Faktor.</dd>
+        </dl>
+      </div>
+      <div class="card reveal">
+        <h3>Förderplan</h3>
+        <dl>
+          <dt>Platz anbieten</dt><dd>Häkchen je Platz; ohne Häkchen zählt er zum Eigenanteil.</dd>
+          <dt>Sichern / Summe</dt><dd>Letzte Spalte als Schritt je Platz oder als laufender Stand.</dd>
+          <dt>Eigene Zahlen</dt><dd>Gesamtkosten und P1 selbst eintragen, wo der Datensatz schweigt.</dd>
+        </dl>
+      </div>
+      <div class="card reveal">
+        <h3>Förderchat</h3>
+        <dl>
+          <dt>Nur Plätze</dt><dd>„Maren Arche P5 P4 P3 P2 P1“ — fertig zum Einfügen.</dd>
+          <dt>Mit FP</dt><dd>Dieselbe Zeile mit den Einzahlungen in Klammern.</dd>
+          <dt>Sammlung</dt><dd>Bis zu 15 Zeilen, eine je Bauwerk, zusammen kopierbar.</dd>
+        </dl>
+      </div>
+      <div class="card reveal">
+        <h3>Merken</h3>
+        <dl>
+          <dt>Favoriten</dt><dd>Bis zu zwölf Bauwerke, die Stufe wandert mit.</dd>
+          <dt>Zuletzt gewählt</dt><dd>Bauwerk, Stufe, Faktor und Name sind beim nächsten Besuch wieder da.</dd>
+          <dt>Alles löschen</dt><dd>Ein Knopf auf der Datenschutzseite entfernt alles Gemerkte.</dd>
+        </dl>
+      </div>
+      <div class="card reveal">
+        <h3>Darstellung</h3>
+        <dl>
+          <dt>Sechs Themes</dt><dd>Blaupause, Weißpause, Kontrast, Papier, Weltall, Schmiede.</dd>
+          <dt>Querformat</dt><dd>Auf dem Telefon quer: Einstellungen links, Plan rechts.</dd>
+          <dt>Weniger Bewegung</dt><dd>Folgt der Systemeinstellung und lässt Animationen weg.</dd>
+        </dl>
+      </div>
+      <div class="card reveal">
+        <h3>Im Hintergrund</h3>
+        <dl>
+          <dt>Kein Konto</dt><dd>Einfach öffnen und rechnen.</dd>
+          <dt>Keine Dritten</dt><dd>Schrift und alles andere kommen von derselben Adresse.</dd>
+          <dt>Barrierearm</dt><dd>Beschriftete Bedienelemente, deutlicher Fokus, Screenreader-tauglich.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing reveal">
+    <svg class="closing-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.6 2.8l7.6 7.6-2.8 2.8-7.6-7.6z"/><path d="M11.4 8.1l4.5 4.5-9.2 9.2a1.6 1.6 0 0 1-2.3 0l-2.2-2.2a1.6 1.6 0 0 1 0-2.3z"/></svg>
+    <h2>Probier ihn einfach aus</h2>
+    <p>cipher ist ein Hobby-Projekt und wird nie fertig sein. Wenn dir etwas fehlt oder etwas nicht stimmt, ist das eine Nachricht wert — so ist er bisher gewachsen. Und wer genau hinschaut, findet vielleicht eine der drei kleinen Überraschungen.</p>
+    <a class="btn big" href="./index.html">Zu cipher</a>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <p>cipher ist ein inoffizielles Fan-Projekt und steht in keiner Verbindung zur InnoGames GmbH. „Forge of Empires“ sowie alle zugehörigen Bezeichnungen und Logos sind Marken der InnoGames GmbH. Alle Angaben ohne Gewähr — im Zweifel gilt das Spiel. Daten: <a href="https://forgeofempires.fandom.com/de/wiki/" target="_blank" rel="noopener noreferrer">Forge of Empires Wiki</a> (CC BY-SA 3.0).</p>
+  <nav class="foot-links" aria-label="Rechtliches">
+    <a href="./impressum.html">Impressum</a>
+    <a href="./datenschutz.html">Datenschutz</a>
+    <a href="https://github.com/iniist/cipher" target="_blank" rel="noopener noreferrer">Quelltext</a>
+  </nav>
+</footer>
+
+</body>
+</html>

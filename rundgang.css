@@ -1,0 +1,598 @@
+/*!
+ * cipher — Rundgang (rundgang.html)
+ *
+ * Die Vorstellungsseite steht fest im Schmiede-Theme: dieselben Farben wie
+ * :root[data-theme="forge"] in styles.css — Wiese und Wasser als Grund,
+ * darauf Holzleisten mit Messingrand. Eigene Datei, damit die Anwendung
+ * nichts von dieser Seite mitladen muss.
+ *
+ * Alle Bewegung haengt an zwei Stellen: .js (das Skript laeuft) und
+ * prefers-reduced-motion (ganz unten, schaltet alles ab).
+ */
+
+:root {
+  --bg: #183c30;
+  --wood: #3e2410;
+  --wood-dark: #2e1a08;
+  --wood-deep: #1e0f02;
+  --brass: #c27f2e;
+  --ink: #fff4e4;
+  --dim: #dcbf94;
+  --gold: #f5b95e;
+  --ok: #a8cc3c;
+  --ember: #ff8a3c;
+  --btn: linear-gradient(#e0a24c, #bd782a);
+  --shadow: inset 0 1px 0 rgba(255, 200, 120, .25), 0 4px 0 var(--wood-deep), 0 10px 24px rgba(0, 0, 0, .35);
+  --radius: 12px;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box }
+
+html { background: var(--bg); scroll-behavior: smooth }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 80% 0%, rgba(108, 114, 40, .5), transparent 60%),
+    radial-gradient(ellipse at 0% 45%, rgba(48, 84, 60, .7), transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgba(20, 60, 70, .6), transparent 55%);
+  background-attachment: fixed;
+  font-family: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+a { color: var(--gold) }
+code {
+  font: inherit;
+  font-weight: 600;
+  color: var(--gold);
+  background: var(--wood-dark);
+  border: 1px solid #6c3c18;
+  border-radius: 4px;
+  padding: 0 .3em;
+}
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px }
+
+main, .hero, .foot { position: relative; z-index: 1 }
+main { max-width: 1080px; margin: 0 auto; padding: 0 16px 40px }
+
+/* ------------------------------------------------------ Fortschritt oben */
+
+.progress {
+  position: fixed; inset: 0 0 auto; height: 4px; z-index: 10;
+  background: rgba(30, 15, 2, .5);
+}
+.progress i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--brass), var(--gold), var(--ok));
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+
+/* ------------------------------------------------------------ Glutfunken */
+
+.embers { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden }
+.embers span {
+  position: absolute;
+  bottom: -12px;
+  left: var(--x, 50%);
+  width: var(--s, 4px);
+  height: var(--s, 4px);
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffd27a 0 30%, var(--ember) 60%, transparent 70%);
+  box-shadow: 0 0 8px rgba(255, 138, 60, .8);
+  opacity: 0;
+  animation: rise var(--t, 12s) linear var(--d, 0s) infinite;
+}
+@keyframes rise {
+  0%   { transform: translate(0, 0); opacity: 0 }
+  10%  { opacity: .9 }
+  60%  { opacity: .6 }
+  100% { transform: translate(var(--drift, 30px), -105vh); opacity: 0 }
+}
+
+/* ------------------------------------------------------------------ Hero */
+
+.hero {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 56px 16px 32px;
+  display: grid;
+  gap: 32px;
+  align-items: center;
+}
+@media (min-width: 860px) {
+  .hero { grid-template-columns: 1.1fr .9fr; padding-top: 88px; min-height: 92vh }
+}
+
+.eyebrow {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 4px 12px;
+  border: 1.5px solid var(--brass);
+  border-radius: 999px;
+  color: var(--dim);
+  font-size: .95rem;
+  letter-spacing: .04em;
+  background: rgba(30, 15, 2, .35);
+}
+
+.wordmark {
+  margin: 0;
+  font-size: clamp(4rem, 17vw, 8.5rem);
+  line-height: .9;
+  font-weight: 700;
+  letter-spacing: -.035em;
+  color: var(--gold);
+  background: linear-gradient(100deg, #e0a24c 0%, #f5b95e 35%, #fff1c9 50%, #f5b95e 65%, #c27f2e 100%);
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 0 var(--wood-deep)) drop-shadow(0 0 18px rgba(0, 0, 0, .35));
+}
+.js .wordmark.in { animation: shimmer 6s ease-in-out 1s infinite }
+@keyframes shimmer {
+  0%, 55% { background-position: 100% 0 }
+  85%, 100% { background-position: 0 0 }
+}
+
+.lead { font-size: 1.25rem; color: var(--ink); max-width: 36ch; margin: 18px 0 24px }
+.fine { color: var(--dim); font-size: .95rem; margin: 16px 0 0 }
+
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px }
+
+.btn {
+  display: inline-block;
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: 0;
+  background: var(--btn);
+  color: var(--wood-deep);
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 230, 180, .5), 0 4px 0 var(--wood-deep), 0 8px 16px rgba(0, 0, 0, .3);
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+.btn:hover { transform: translateY(-2px); filter: brightness(1.06) }
+.btn:active { transform: translateY(3px); box-shadow: inset 0 1px 0 rgba(255, 230, 180, .5), 0 1px 0 var(--wood-deep) }
+.btn.ghost {
+  background: rgba(30, 15, 2, .35);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1.5px var(--brass), 0 4px 0 var(--wood-deep);
+}
+.btn.big { font-size: 1.3rem; padding: 14px 34px }
+
+.hero-art { position: relative; display: grid; justify-items: center }
+
+/* Hammer und Amboss */
+.forge-mark {
+  position: absolute;
+  width: 190px;
+  left: -30px;
+  bottom: 40px;
+  z-index: 2;
+  filter: drop-shadow(0 4px 0 var(--wood-deep)) drop-shadow(0 10px 16px rgba(0, 0, 0, .45));
+}
+@media (min-width: 860px) {
+  .hero-art .phone { justify-self: end; margin-right: 12px }
+  .forge-mark { left: -10px; bottom: 24px }
+}
+/* Schmal steht die Schmiede ueber dem Telefon, nicht auf ihm. */
+@media (max-width: 859px) { .forge-mark { position: static; width: 130px; margin: 0 0 -8px } }
+
+.anvil path { fill: #3b3f45 }
+.anvil .anvil-face { fill: #6b7079 }
+.anvil .glow { fill: var(--ember); opacity: 0 }
+.hammer .handle { stroke: #9a5a24; stroke-width: 8; stroke-linecap: round; fill: none }
+.hammer .head { fill: #7d828b }
+.hammer .face { fill: #b3a590 }
+.hammer {
+  transform-box: view-box;
+  transform-origin: 182px 76px;
+  transform: rotate(0deg);
+}
+.sparks circle { fill: #ffd27a; opacity: 0 }
+
+.js .hammer { animation: strike 2.6s cubic-bezier(.5, 0, .75, 0) infinite }
+.js .sparks circle { animation: spark 2.6s ease-out infinite }
+.js .anvil .glow { animation: glow 2.6s ease-out infinite }
+@keyframes strike {
+  0%   { transform: rotate(52deg); animation-timing-function: cubic-bezier(.6, 0, .9, .4) }
+  40%  { transform: rotate(52deg); animation-timing-function: cubic-bezier(.6, 0, .9, .4) }
+  56%  { transform: rotate(0deg); animation-timing-function: ease-out }
+  62%  { transform: rotate(7deg) }
+  68%  { transform: rotate(0deg); animation-timing-function: ease-in-out }
+  100% { transform: rotate(52deg) }
+}
+@keyframes spark {
+  0%, 55% { transform: translate(0, 0); opacity: 0 }
+  56%     { transform: translate(0, 0); opacity: 1 }
+  78%     { transform: translate(var(--sx), var(--sy)); opacity: 0 }
+  100%    { opacity: 0 }
+}
+@keyframes glow {
+  0%, 55% { opacity: 0 }
+  57%     { opacity: .8 }
+  80%, 100% { opacity: 0 }
+}
+.sparks circle:nth-child(1) { --sx: -34px; --sy: -30px }
+.sparks circle:nth-child(2) { --sx: -18px; --sy: -44px }
+.sparks circle:nth-child(3) { --sx: 22px;  --sy: -40px }
+.sparks circle:nth-child(4) { --sx: 40px;  --sy: -22px }
+.sparks circle:nth-child(5) { --sx: -46px; --sy: -8px }
+.sparks circle:nth-child(6) { --sx: 8px;   --sy: -52px }
+.sparks circle:nth-child(7) { --sx: 50px;  --sy: -6px }
+
+/* ------------------------------------------------------- Telefonrahmen */
+
+.phone, .shot, .landscape { margin: 0 }
+
+.phone {
+  width: min(320px, 78vw);
+  padding: 10px;
+  border-radius: 34px;
+  background: linear-gradient(145deg, #5a3416, var(--wood-dark));
+  box-shadow: inset 0 0 0 2px var(--brass), inset 0 2px 0 3px rgba(255, 200, 120, .15), 0 6px 0 var(--wood-deep), 0 24px 50px rgba(0, 0, 0, .5);
+  justify-self: center;
+}
+.phone img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 25px;
+}
+
+.shot {
+  width: min(380px, 100%);
+  justify-self: center;
+  padding: 8px;
+  border-radius: var(--radius);
+  background: var(--wood-dark);
+  box-shadow: inset 0 0 0 2px var(--brass), 0 5px 0 var(--wood-deep), 0 18px 36px rgba(0, 0, 0, .4);
+}
+.shot img { display: block; width: 100%; height: auto; border-radius: 6px }
+
+.landscape {
+  max-width: 820px;
+  margin: 28px auto 0;
+  padding: 10px;
+  border-radius: 30px;
+  background: linear-gradient(145deg, #5a3416, var(--wood-dark));
+  box-shadow: inset 0 0 0 2px var(--brass), 0 6px 0 var(--wood-deep), 0 24px 50px rgba(0, 0, 0, .5);
+}
+.landscape img { display: block; width: 100%; height: auto; border-radius: 22px }
+
+/* Leichtes Kippen zum Zeiger hin; die Winkel setzt rundgang.js. */
+.tilt {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform .4s ease;
+}
+.js .reveal.tilt:not(.in) { transform: perspective(900px) translateY(28px) rotateX(8deg) }
+
+/* ------------------------------------------------------------ Versprechen */
+
+.promises {
+  display: grid;
+  gap: 16px;
+  margin: 24px 0 40px;
+}
+@media (min-width: 760px) { .promises { grid-template-columns: repeat(3, 1fr) } }
+
+.promise, .card {
+  position: relative;
+  background: var(--wood);
+  background-image: linear-gradient(rgba(255, 200, 120, .07), transparent 45%);
+  border: 2px solid var(--brass);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+.promise h2 { font-size: 1.3rem; margin: 10px 0 6px; color: var(--gold) }
+.promise p { margin: 0; color: var(--dim) }
+.promise svg {
+  width: 40px; height: 40px;
+  fill: none; stroke: var(--gold); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round;
+}
+.promise svg .tick { stroke: var(--ok); stroke-dasharray: 30; stroke-dashoffset: 0 }
+.js .promise:not(.in) svg .tick { stroke-dashoffset: 30 }
+.js .promise.in svg .tick { transition: stroke-dashoffset .9s ease .5s }
+
+/* ----------------------------------------------------------------- Zahlen */
+
+.numbers {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 0 0 72px;
+  text-align: center;
+}
+@media (min-width: 760px) { .numbers { grid-template-columns: repeat(4, 1fr) } }
+.numbers div {
+  padding: 16px 8px;
+  border-top: 2px solid var(--brass);
+  border-bottom: 2px solid var(--brass);
+  background: rgba(30, 15, 2, .3);
+  border-radius: 6px;
+}
+.numbers b {
+  display: block;
+  font-size: clamp(2.4rem, 8vw, 3.4rem);
+  line-height: 1;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 3px 0 var(--wood-deep);
+}
+.numbers span { color: var(--dim) }
+
+/* ---------------------------------------------------------- Ueberschriften */
+
+.section-title {
+  font-size: clamp(2rem, 6vw, 2.8rem);
+  line-height: 1.1;
+  margin: 0 0 10px;
+  text-align: center;
+  color: var(--gold);
+  text-shadow: 0 3px 0 var(--wood-deep);
+  scroll-margin-top: 24px;
+}
+.section-title::after {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 4px;
+  margin: 14px auto 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--brass), var(--gold));
+}
+.section-lead { text-align: center; color: var(--dim); max-width: 56ch; margin: 0 auto 48px }
+
+/* ---------------------------------------------------------------- Kapitel */
+
+.feature {
+  display: grid;
+  gap: 28px;
+  align-items: center;
+  margin: 0 0 88px;
+}
+@media (min-width: 860px) {
+  .feature { grid-template-columns: 1fr 1fr; gap: 56px }
+  .feature.flip > :first-child { order: 2 }
+  .feature.wide { grid-template-columns: 1fr }
+}
+
+.feature-text h3 {
+  font-size: clamp(1.6rem, 4.6vw, 2.1rem);
+  line-height: 1.15;
+  margin: 0 0 12px;
+}
+.feature-text p { margin: 0 0 12px }
+.feature-text.center { text-align: center; max-width: 62ch; margin: 0 auto }
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ok);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-size: .85rem;
+}
+.kicker::before {
+  content: "";
+  width: 22px; height: 2px;
+  background: currentColor;
+}
+
+.ticks { list-style: none; padding: 0; margin: 16px 0 0 }
+.ticks li {
+  position: relative;
+  padding: 0 0 0 30px;
+  margin: 0 0 10px;
+  color: var(--dim);
+}
+.ticks li strong, .ticks li em { color: var(--ink) }
+.ticks li::before {
+  content: "";
+  position: absolute;
+  left: 2px; top: .38em;
+  width: 16px; height: 16px;
+  border-radius: 4px;
+  background: var(--btn);
+  box-shadow: 0 2px 0 var(--wood-deep);
+}
+.ticks li::after {
+  content: "";
+  position: absolute;
+  left: 7px; top: calc(.38em + 3px);
+  width: 5px; height: 8px;
+  border: solid var(--wood-deep);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* --------------------------------------------- Sichern / Summe im Wechsel */
+
+.swap { display: grid; justify-items: center; gap: 14px }
+
+.seg {
+  display: inline-flex;
+  border: 1.5px solid #6c3c18;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--wood-dark);
+}
+.seg button {
+  font: inherit;
+  font-weight: 700;
+  color: var(--dim);
+  background: transparent;
+  border: 0;
+  padding: 6px 18px;
+  cursor: pointer;
+  transition: background .25s ease, color .25s ease;
+}
+.seg button[aria-pressed="true"] { background: var(--btn); color: var(--wood-deep) }
+
+.stack { display: grid }
+.stack img { grid-area: 1 / 1; transition: opacity .6s ease }
+.stack img:not(.is-on) { opacity: 0 }
+
+/* ----------------------------------------------------------------- Themes */
+
+.themes { margin: 0 0 88px }
+
+.fan {
+  display: flex;
+  justify-content: center;
+  margin: 36px auto 0;
+  padding: 20px 0 10px;
+}
+.fan figure {
+  position: relative;
+  flex: 0 0 auto;
+  width: 170px;
+  margin: 0 -22px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--wood-dark);
+  box-shadow: inset 0 0 0 2px var(--brass), 0 5px 0 var(--wood-deep), 0 14px 28px rgba(0, 0, 0, .45);
+  transform: rotate(var(--r, 0deg)) translateY(var(--y, 0));
+  transition: transform .45s cubic-bezier(.2, .8, .3, 1.2), opacity .7s ease, z-index 0s;
+}
+.fan figure img { display: block; width: 100%; height: auto; border-radius: 11px }
+.fan figcaption {
+  position: absolute;
+  left: 50%; bottom: -14px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--btn);
+  color: var(--wood-deep);
+  font-weight: 700;
+  font-size: .9rem;
+  box-shadow: 0 2px 0 var(--wood-deep);
+}
+.fan figure:nth-child(1) { --r: -15deg; --y: 34px }
+.fan figure:nth-child(2) { --r: -9deg;  --y: 12px }
+.fan figure:nth-child(3) { --r: -3deg;  --y: 0 }
+.fan figure:nth-child(4) { --r: 3deg;   --y: 0 }
+.fan figure:nth-child(5) { --r: 9deg;   --y: 12px }
+.fan figure:nth-child(6) { --r: 15deg;  --y: 34px }
+.fan figure:hover, .fan figure.lit { z-index: 5; transform: rotate(0deg) translateY(-18px) scale(1.08) }
+.js .fan figure.reveal:not(.in) { transform: rotate(0deg) translateY(60px); opacity: 0 }
+
+/* Schmal: statt Faecher eine Reihe zum Wischen. */
+@media (max-width: 859px) {
+  .fan {
+    justify-content: flex-start;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 14px;
+    padding: 20px 16px 28px;
+    margin: 24px -16px 0;
+  }
+  .fan figure { width: 58vw; max-width: 220px; margin: 0; scroll-snap-align: center; --r: 0deg; --y: 0 }
+  .fan figure:nth-child(n) { --r: 0deg; --y: 0 }
+  .fan figure:hover, .fan figure.lit { transform: none }
+}
+
+/* ----------------------------------------------------- Alle Einstellungen */
+
+.all { margin: 0 0 88px }
+.grid {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr) } }
+@media (min-width: 980px) { .grid { grid-template-columns: repeat(4, 1fr) } }
+
+.card h3 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+  color: var(--gold);
+  padding-bottom: 8px;
+  border-bottom: 1.5px dashed rgba(194, 127, 46, .6);
+}
+.card dl { margin: 0 }
+.card dt { font-weight: 700; color: var(--ink) }
+.card dd { margin: 0 0 10px; color: var(--dim); font-size: .95rem; line-height: 1.4 }
+.card dd:last-child { margin-bottom: 0 }
+.card { transition: transform .25s ease, box-shadow .25s ease }
+.card:hover { transform: translateY(-4px); box-shadow: var(--shadow), 0 0 0 1px var(--gold) }
+
+/* ------------------------------------------------------------- Abschluss */
+
+.closing {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 40px;
+  padding: 36px 24px;
+  background: var(--wood);
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(255, 170, 80, .18), transparent 60%);
+  border: 2px solid var(--brass);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+.closing h2 { font-size: clamp(1.8rem, 5vw, 2.3rem); margin: 8px 0 12px; color: var(--gold) }
+.closing p { color: var(--dim); margin: 0 0 24px }
+.closing-mark { width: 44px; height: 44px; fill: var(--gold); filter: drop-shadow(0 2px 0 var(--wood-deep)) }
+.js .closing.in .closing-mark { animation: tap 2.6s ease-in-out infinite; transform-origin: 80% 20% }
+@keyframes tap {
+  0%, 70%, 100% { transform: rotate(0) }
+  78% { transform: rotate(-22deg) }
+  86% { transform: rotate(4deg) }
+}
+
+/* --------------------------------------------------------------- Fusszeile */
+
+.foot {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  border-top: 1.5px solid rgba(194, 127, 46, .5);
+  color: var(--dim);
+  font-size: .9rem;
+}
+.foot p { margin: 0 0 12px; max-width: 80ch }
+.foot-links { display: flex; flex-wrap: wrap; gap: 18px }
+.foot a { color: var(--dim) }
+.foot-links a { color: var(--gold) }
+
+/* ---------------------------------------------------------------- Einblenden */
+
+.js .reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .8s ease var(--delay, 0s), transform .8s cubic-bezier(.2, .7, .2, 1) var(--delay, 0s);
+}
+.js .reveal.in { opacity: 1; transform: none }
+.js .reveal.tilt.in {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: opacity .8s ease var(--delay, 0s), transform .4s ease;
+}
+.js .fan figure.reveal.in { opacity: 1; transform: rotate(var(--r, 0deg)) translateY(var(--y, 0)) }
+.js .fan figure.reveal.in:hover, .js .fan figure.reveal.in.lit { transform: rotate(0deg) translateY(-18px) scale(1.08) }
+@media (max-width: 859px) {
+  .js .fan figure.reveal.in, .js .fan figure.reveal.in:hover, .js .fan figure.reveal.in.lit { transform: none }
+}
+
+/* ------------------------------------------------------ Weniger Bewegung */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto }
+  *, *::before, *::after { animation: none !important; transition: none !important }
+  .js .reveal, .js .fan figure.reveal:not(.in) { opacity: 1; transform: none }
+  .js .promise:not(.in) svg .tick { stroke-dashoffset: 0 }
+  .embers { display: none }
+  .hammer { transform: rotate(18deg) }
+}
