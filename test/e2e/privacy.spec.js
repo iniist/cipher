@@ -5,7 +5,7 @@
  */
 const { test, expect } = require("@playwright/test");
 
-const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html"];
+const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html", "/rundgang.html"];
 
 test.describe("keine externen Anfragen", () => {
   for (const path of PAGES) {

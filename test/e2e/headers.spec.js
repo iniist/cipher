@@ -8,7 +8,7 @@
 const { test, expect } = require("@playwright/test");
 const path = require("node:path");
 
-const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html"];
+const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html", "/rundgang.html"];
 
 /** Konsolenfehler und blockierte Anfragen einer Seite einsammeln. */
 function collectViolations(page) {
