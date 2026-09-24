@@ -489,11 +489,11 @@
   // -------------------------------------------------------------------- Theme
 
   /**
-   * Das Theme einstellen. Mit `origin` (dem gedrueckten Knopf) wird der
-   * Wechsel sichtbar ueberblendet; gemerkt wird sofort, nicht erst am Ende
-   * des Uebergangs.
+   * Das Theme einstellen. Mit `animate` (beim Klick) wird der Wechsel
+   * sichtbar ueberblendet; gemerkt wird sofort, nicht erst am Ende des
+   * Uebergangs.
    */
-  function setTheme(theme, origin) {
+  function setTheme(theme, animate) {
     if (THEMES.indexOf(theme) < 0) return;
     var changed = theme !== document.documentElement.dataset.theme;
     state.theme = theme;
@@ -503,44 +503,23 @@
       document.querySelectorAll(".modes button").forEach(function (button) {
         button.setAttribute("aria-pressed", String(button.dataset.mode === theme));
       });
-    }, changed ? origin : null);
+    }, changed && animate);
   }
 
   /**
-   * Den Wechsel ueberblenden. Die View Transitions API fotografiert die alte
-   * Seite, `apply` stellt die neue ein, und CSS oder eine Animation gibt sie
-   * frei. Ohne die API oder bei reduzierter Bewegung wird sofort umgeschaltet.
-   *
-   * PROTOTYP: ?uebergang=blende|vorhang|schraeg|kreis waehlt die Variante zum
-   * Vergleichen. Vor dem Mergen bleibt nur die gewaehlte uebrig.
+   * Den Wechsel als Vorhang zeigen: die neue Seite senkt sich mit weicher
+   * Kante von oben ueber die alte. Die View Transitions API fotografiert
+   * dafuer die alte Seite, `apply` stellt die neue ein, das Absenken macht
+   * CSS (siehe "Themenwechsel" in styles.css). Ohne die API, bei reduzierter
+   * Bewegung oder ohne Anlass (`animate` falsch) wird sofort umgeschaltet.
    */
-  var REVEALS = ["blende", "vorhang", "schraeg", "kreis"];
-
-  function revealTheme(apply, origin) {
+  function revealTheme(apply, animate) {
     var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!document.startViewTransition || reduce || !origin) {
+    if (!document.startViewTransition || reduce || !animate) {
       apply();
       return;
     }
-    var root = document.documentElement;
-    var wanted = new URLSearchParams(window.location.search).get("uebergang");
-    var kind = REVEALS.indexOf(wanted) >= 0 ? wanted : REVEALS[0];
-    root.dataset.reveal = kind;
-    var transition = document.startViewTransition(apply);
-    transition.finished.then(function () { delete root.dataset.reveal; }, function () { delete root.dataset.reveal; });
-    if (kind !== "kreis") return;
-
-    // Der Kreis waechst vom gedrueckten Knopf bis in die entfernteste Ecke.
-    var box = origin.getBoundingClientRect();
-    var x = box.left + box.width / 2;
-    var y = box.top + box.height / 2;
-    var radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
-    transition.ready.then(function () {
-      root.animate(
-        { clipPath: ["circle(0 at " + x + "px " + y + "px)", "circle(" + radius + "px at " + x + "px " + y + "px)"] },
-        { duration: 700, easing: "cubic-bezier(.65, 0, .35, 1)", pseudoElement: "::view-transition-new(root)" }
-      );
-    }).catch(function () { /* Uebergang abgebrochen — das Theme steht trotzdem. */ });
+    document.startViewTransition(apply);
   }
 
   // ----------------------------------------------------------- Aufbau statisch
@@ -1944,7 +1923,7 @@
   function bindEvents() {
     document.querySelector(".modes").addEventListener("click", function (event) {
       var button = event.target.closest("button");
-      if (button) setTheme(button.dataset.mode, button);
+      if (button) setTheme(button.dataset.mode, true);
     });
 
     bindPicker();
