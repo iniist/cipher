@@ -24,6 +24,22 @@
   }
 
   /**
+   * Den Wechsel als Vorhang zeigen: die neue Seite senkt sich mit weicher
+   * Kante von oben ueber die alte. Die View Transitions API fotografiert
+   * dafuer die alte Seite, `apply` stellt die neue ein, das Absenken macht
+   * CSS (siehe "Themenwechsel" in styles.css). Ohne die API, bei reduzierter
+   * Bewegung oder ohne Anlass (`animate` falsch) wird sofort umgeschaltet.
+   */
+  function revealTheme(apply, animate) {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!document.startViewTransition || reduce || !animate) {
+      apply();
+      return;
+    }
+    document.startViewTransition(apply);
+  }
+
+  /**
    * Das Theme anzeigen und merken. Gespeichert wird nur auf Klick: beim
    * Laden das Standard-Theme zurueckzuschreiben legte `cipher:state` schon
    * an, wenn jemand nur die Datenschutzerklaerung lesen wollte — und genau
@@ -31,7 +47,8 @@
    */
   function chooseTheme(theme) {
     if (THEMES.indexOf(theme) < 0) return;
-    showTheme(theme);
+    var changed = theme !== document.documentElement.dataset.theme;
+    revealTheme(function () { showTheme(theme); }, changed);
     try {
       var state = JSON.parse(window.localStorage.getItem(STATE_KEY) || "{}");
       state.theme = theme;

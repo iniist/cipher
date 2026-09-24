@@ -125,6 +125,8 @@ test.describe("Favoritenliste", () => {
 
     for (const theme of ["dark", "light", "contrast", "writer", "space", "forge"]) {
       await page.click(`.modes button[data-mode="${theme}"]`);
+      // Der Wechsel laeuft als Uebergang: erst messen, wenn das Theme steht.
+      await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
 
       const fit = await page.locator("#favList").evaluate((list) => {
         const rows = [...list.children].reduce((groups, entry) => {
@@ -450,6 +452,7 @@ test.describe("Zurückhaltung der Stepper", () => {
   test("im Kontrastmodus senkt der Grenzfall den Kontrast nicht", async ({ page }) => {
     await page.goto("/index.html");
     await page.click('.modes button[data-mode="contrast"]');
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "contrast");
     await page.locator('#factorChips button[data-factor="200"]').click();
     await expect(page.locator("#factorUp")).toBeDisabled();
 

@@ -1304,6 +1304,30 @@ select, input, .pick, .seg, .step, .modes,
 select:hover, input:hover:not(:focus), .pick:hover { border-color: var(--frame) }
 .step input:hover { border-color: transparent }
 
+/* ------------------------------------------------------- Themenwechsel */
+
+/* Der Vorhang beim Umschalten (siehe revealTheme in app.js): die alte Seite
+   bleibt stehen, die neue senkt sich mit weicher Kante von oben darueber.
+   Die Maske ist 2,5-mal so hoch wie die Seite, oben deckend, unten
+   durchsichtig; sie wandert von unten nach oben und gibt die neue Seite
+   dabei von oben nach unten frei. Das Ueberblenden des Browsers ist
+   abgeschaltet, sonst schienen beide Bilder halb durch. */
+::view-transition-old(root) { animation: none; mix-blend-mode: normal }
+::view-transition-new(root) {
+  mix-blend-mode: normal;
+  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 60%);
+  mask-image: linear-gradient(to bottom, #000 40%, transparent 60%);
+  -webkit-mask-size: 100% 250%;
+  mask-size: 100% 250%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: theme-curtain .8s cubic-bezier(.65, 0, .35, 1) both;
+}
+@keyframes theme-curtain {
+  from { -webkit-mask-position: 0 100%; mask-position: 0 100% }
+  to   { -webkit-mask-position: 0 0; mask-position: 0 0 }
+}
+
 /* ------------------------------------------------------------- Animation */
 
 @keyframes pop { from { transform: scale(.6); opacity: 0 } }

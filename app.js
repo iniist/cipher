@@ -488,14 +488,38 @@
 
   // -------------------------------------------------------------------- Theme
 
-  function setTheme(theme) {
+  /**
+   * Das Theme einstellen. Mit `animate` (beim Klick) wird der Wechsel
+   * sichtbar ueberblendet; gemerkt wird sofort, nicht erst am Ende des
+   * Uebergangs.
+   */
+  function setTheme(theme, animate) {
     if (THEMES.indexOf(theme) < 0) return;
+    var changed = theme !== document.documentElement.dataset.theme;
     state.theme = theme;
-    document.documentElement.dataset.theme = theme;
-    document.querySelectorAll(".modes button").forEach(function (button) {
-      button.setAttribute("aria-pressed", String(button.dataset.mode === theme));
-    });
     persistState();
+    revealTheme(function () {
+      document.documentElement.dataset.theme = theme;
+      document.querySelectorAll(".modes button").forEach(function (button) {
+        button.setAttribute("aria-pressed", String(button.dataset.mode === theme));
+      });
+    }, changed && animate);
+  }
+
+  /**
+   * Den Wechsel als Vorhang zeigen: die neue Seite senkt sich mit weicher
+   * Kante von oben ueber die alte. Die View Transitions API fotografiert
+   * dafuer die alte Seite, `apply` stellt die neue ein, das Absenken macht
+   * CSS (siehe "Themenwechsel" in styles.css). Ohne die API, bei reduzierter
+   * Bewegung oder ohne Anlass (`animate` falsch) wird sofort umgeschaltet.
+   */
+  function revealTheme(apply, animate) {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!document.startViewTransition || reduce || !animate) {
+      apply();
+      return;
+    }
+    document.startViewTransition(apply);
   }
 
   // ----------------------------------------------------------- Aufbau statisch
@@ -1899,7 +1923,7 @@
   function bindEvents() {
     document.querySelector(".modes").addEventListener("click", function (event) {
       var button = event.target.closest("button");
-      if (button) setTheme(button.dataset.mode);
+      if (button) setTheme(button.dataset.mode, true);
     });
 
     bindPicker();
