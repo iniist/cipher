@@ -87,7 +87,7 @@ test.describe("Content-Security-Policy im Betrieb", () => {
     const violations = collectViolations(page);
     await page.goto("/index.html");
 
-    await page.selectOption("#building", "Notre_Dame");
+    await page.locator("#building").selectOption("Notre_Dame", { force: true });
     await page.fill("#level", "55");
     await page.locator("#level").blur();
     await page.fill("#playerName", "Dani");

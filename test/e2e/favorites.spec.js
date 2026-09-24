@@ -18,7 +18,7 @@ test("ohne Favoriten fehlt der Streifen, der Knopf erklärt sich selbst", async 
 });
 
 test("merkt Bauwerk und Stufe und springt zurueck", async ({ page }) => {
-  await page.selectOption("#building", "Notre_Dame");
+  await page.locator("#building").selectOption("Notre_Dame", { force: true });
   await page.fill("#level", "42");
   await page.locator("#level").blur();
   await page.click("#favSave");
@@ -30,7 +30,7 @@ test("merkt Bauwerk und Stufe und springt zurueck", async ({ page }) => {
   await expect(page.locator(".fav-go").first()).toHaveText("Notre Dame 42");
 
   // Woanders hin, dann ueber den Favoriten zurueck
-  await page.selectOption("#building", "Colosseum");
+  await page.locator("#building").selectOption("Colosseum", { force: true });
   await page.fill("#level", "7");
   await page.locator("#level").blur();
   await expect(page.locator("#favSaveText")).toHaveText("Kolosseum · Stufe 7 merken");
@@ -49,7 +49,7 @@ test("mehrere Favoriten stehen nebeneinander, neueste zuerst", async ({ page }) 
     ["The_Arc", "80"]
   ];
   for (const [id, level] of picks) {
-    await page.selectOption("#building", id);
+    await page.locator("#building").selectOption(id, { force: true });
     await page.fill("#level", level);
     await page.locator("#level").blur();
     await page.click("#favSave");
@@ -95,7 +95,7 @@ test("erneutes Klicken vergisst den Favoriten wieder", async ({ page }) => {
 
 test("das Kreuz entfernt einen einzelnen Favoriten", async ({ page }) => {
   await page.click("#favSave");
-  await page.selectOption("#building", "Colosseum");
+  await page.locator("#building").selectOption("Colosseum", { force: true });
   await page.click("#favSave");
   await expect(favEntries(page)).toHaveCount(2);
 
@@ -105,7 +105,7 @@ test("das Kreuz entfernt einen einzelnen Favoriten", async ({ page }) => {
 });
 
 test("Favoriten ueberleben einen Neuladen", async ({ page }) => {
-  await page.selectOption("#building", "Notre_Dame");
+  await page.locator("#building").selectOption("Notre_Dame", { force: true });
   await page.fill("#level", "42");
   await page.locator("#level").blur();
   await page.click("#favSave");
@@ -119,7 +119,7 @@ test("die Liste wird bei zwoelf Eintraegen gedeckelt", async ({ page }) => {
   const ids = await page.locator("#building option").evaluateAll((options) =>
     options.slice(0, 14).map((option) => option.value));
   for (const id of ids) {
-    await page.selectOption("#building", id);
+    await page.locator("#building").selectOption(id, { force: true });
     await page.click("#favSave");
   }
   await expect(favEntries(page)).toHaveCount(12);
@@ -155,7 +155,7 @@ test.describe("Platzierung", () => {
 
     const [favs, select, panel] = await Promise.all([
       page.locator("#favs").boundingBox(),
-      page.locator("#building").boundingBox(),
+      page.locator("#buildingPick").boundingBox(),
       page.locator(".panel").first().boundingBox()
     ]);
 
@@ -216,7 +216,7 @@ test.describe("Zuletzt benutzt zuerst", () => {
   // selbst angefasst hat.
   const seed = async (page) => {
     for (const [id, level] of [["Notre_Dame", "42"], ["Colosseum", "12"], ["The_Arc", "80"]]) {
-      await page.selectOption("#building", id);
+      await page.locator("#building").selectOption(id, { force: true });
       await page.fill("#level", level);
       await page.locator("#level").blur();
       await page.click("#favSave");
@@ -254,7 +254,7 @@ test.describe("Zuletzt benutzt zuerst", () => {
   test("die Stufe zu aendern haelt den Eintrag aktuell, bewegt die Liste aber nicht", async ({ page }) => {
     await seed(page);
     await page.locator(".fav-go", { hasText: "Kolosseum 12" }).click();
-    await page.selectOption("#building", "Notre_Dame"); // Notre Dame ist Eintrag 3
+    await page.locator("#building").selectOption("Notre_Dame", { force: true }); // Notre Dame ist Eintrag 3
     await expect(favEntries(page).nth(2)).toHaveAttribute("aria-current", "true");
 
     // Stufe weiterziehen: der Eintrag wandert mit, bleibt aber wo er ist.
@@ -265,7 +265,7 @@ test.describe("Zuletzt benutzt zuerst", () => {
 
   test("den ersten Eintrag anzutippen aendert nichts an der Reihenfolge", async ({ page }) => {
     await seed(page);
-    await page.selectOption("#building", "Hagia_Sophia"); // woanders hin
+    await page.locator("#building").selectOption("Hagia_Sophia", { force: true }); // woanders hin
     await page.locator(".fav-go", { hasText: "Die Arche 80" }).click();
     await expect(page.locator(".fav-go")).toHaveText(["Die Arche 80", "Kolosseum 12", "Notre Dame 42"]);
     await expect(favEntries(page).first()).toHaveAttribute("aria-current", "true");
@@ -275,7 +275,7 @@ test.describe("Zuletzt benutzt zuerst", () => {
 test.describe("Ein Bauwerk, eine Stufe", () => {
   const seed = async (page) => {
     for (const [id, level] of [["Notre_Dame", "42"], ["The_Arc", "81"]]) {
-      await page.selectOption("#building", id);
+      await page.locator("#building").selectOption(id, { force: true });
       await page.fill("#level", level);
       await page.locator("#level").blur();
       await page.click("#favSave");
@@ -287,7 +287,7 @@ test.describe("Ein Bauwerk, eine Stufe", () => {
     await seed(page);
     await expect(page.locator("#level")).toHaveValue("81");
 
-    await page.selectOption("#building", "Notre_Dame");
+    await page.locator("#building").selectOption("Notre_Dame", { force: true });
     await expect(page.locator("#level")).toHaveValue("42");
     // Und Notre Dames Eintrag ist unveraendert — die 81 der Arche kam nicht mit.
     await expect(page.locator(".fav-go")).toHaveText(["Die Arche 81", "Notre Dame 42"]);
@@ -304,7 +304,7 @@ test.describe("Ein Bauwerk, eine Stufe", () => {
 
   test("ein nicht gemerktes Bauwerk behaelt die mitgebrachte Stufe", async ({ page }) => {
     await seed(page);
-    await page.selectOption("#building", "Colosseum"); // nicht gemerkt
+    await page.locator("#building").selectOption("Colosseum", { force: true }); // nicht gemerkt
     await expect(page.locator("#level")).toHaveValue("81");
     await expect(page.locator("#favSaveText")).toHaveText("Kolosseum · Stufe 81 merken");
   });

@@ -17,7 +17,7 @@ const gespeichert = (page) =>
 /** Arktische Orangerie mit einem Namen davor — die Lage aus dem Beispiel. */
 async function orangerie(page) {
   await page.goto("/index.html");
-  await page.selectOption("#building", "Arctic_Orangery");
+  await page.locator("#building").selectOption("Arctic_Orangery", { force: true });
   await page.fill("#playerName", "Dani");
 }
 
@@ -72,13 +72,13 @@ test.describe("Ein Kuerzel vergeben", () => {
     await orangerie(page);
     await feld(page).fill("AO");
 
-    await page.selectOption("#building", "Temple_of_Relics");
+    await page.locator("#building").selectOption("Temple_of_Relics", { force: true });
     await expect(feld(page)).toHaveValue("");
     await expect(feld(page)).toHaveAttribute("placeholder", "Relikttempel");
     await expect(chat(page)).toContainText("Dani Relikttempel");
 
     await feld(page).fill("RT");
-    await page.selectOption("#building", "Arctic_Orangery");
+    await page.locator("#building").selectOption("Arctic_Orangery", { force: true });
     await expect(feld(page)).toHaveValue("AO");
     expect(JSON.parse(await gespeichert(page)))
       .toEqual({ Arctic_Orangery: "AO", Temple_of_Relics: "RT" });
@@ -139,11 +139,11 @@ test.describe("Kaputtes im Speicher", () => {
     })));
     await page.reload();
 
-    await page.selectOption("#building", "Arctic_Orangery");
+    await page.locator("#building").selectOption("Arctic_Orangery", { force: true });
     await expect(feld(page)).toHaveValue("AO");
-    await page.selectOption("#building", "Temple_of_Relics");
+    await page.locator("#building").selectOption("Temple_of_Relics", { force: true });
     await expect(feld(page)).toHaveValue("");
-    await page.selectOption("#building", "The_Arc");
+    await page.locator("#building").selectOption("The_Arc", { force: true });
     await expect(feld(page)).toHaveValue("");
   });
 
@@ -153,7 +153,7 @@ test.describe("Kaputtes im Speicher", () => {
       Arctic_Orangery: "A".repeat(80)
     })));
     await page.reload();
-    await page.selectOption("#building", "Arctic_Orangery");
+    await page.locator("#building").selectOption("Arctic_Orangery", { force: true });
 
     expect((await feld(page).inputValue()).length).toBe(24);
   });

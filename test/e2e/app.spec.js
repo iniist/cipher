@@ -50,7 +50,7 @@ test("die Stufe laesst sich ueber die Knoepfe aendern", async ({ page }) => {
 test("die Stufe wird erst weit oberhalb des Dokumentierten begrenzt", async ({ page }) => {
   // Die Stufe aus dem Wiki ist keine Wand mehr — Bauwerke im Spiel stehen
   // hoeher. Abgefangen wird nur, was kein Spielstand hergibt.
-  await page.selectOption("#building", "Tower_of_Babel");
+  await page.locator("#building").selectOption("Tower_of_Babel", { force: true });
   await page.fill("#level", "260");
   await page.locator("#level").blur();
   await expect(page.locator("#level")).toHaveValue("260");
@@ -95,7 +95,7 @@ test("das Theme laesst sich wechseln und ueberlebt einen Neuladen", async ({ pag
 });
 
 test("Bauwerk, Stufe und Name ueberleben einen Neuladen", async ({ page }) => {
-  await page.selectOption("#building", "Notre_Dame");
+  await page.locator("#building").selectOption("Notre_Dame", { force: true });
   await page.fill("#level", "63");
   await page.locator("#level").blur();
   await page.fill("#playerName", "Testspielerin");
@@ -113,7 +113,7 @@ test("fehlende Daten fuehren zur Eingabeaufforderung, eigene Werte rechnen weite
   // eines mit.
   await mitTestdaten(page);
   await page.goto("/index.html");
-  await page.selectOption("#building", OHNE_DATEN);
+  await page.locator("#building").selectOption(OHNE_DATEN, { force: true });
   await page.fill("#level", "20");
   await page.locator("#level").blur();
 
@@ -145,7 +145,7 @@ test("ein widerspruechlicher Wiki-Wert bittet um Bestaetigung, nicht um Rettung"
   // Stufe 84 des Observatoriums: Die Kosten stehen fest, nur die P1-Angaben
   // des Wikis widersprechen sich. Der Plan rechnet trotzdem mit dem Wert,
   // der zur Kurve passt — der Kasten darf also nicht warnen.
-  await page.selectOption("#building", "Observatory");
+  await page.locator("#building").selectOption("Observatory", { force: true });
   await page.fill("#level", "84");
   await page.locator("#level").blur();
 
@@ -178,7 +178,7 @@ test("ein wackliges Zeitalter sagt, wie weit es danebenliegen kann", async ({ pa
   await page.goto("/index.html");
 
   const stufe = WACKLIG_STUFEN + 30;
-  await page.selectOption("#building", WACKLIG);
+  await page.locator("#building").selectOption(WACKLIG, { force: true });
   await page.fill("#level", String(stufe));
   await page.locator("#level").blur();
 
@@ -208,7 +208,7 @@ test("ein wackliges Zeitalter sagt, wie weit es danebenliegen kann", async ({ pa
 test("eine ungueltige P1-Eingabe wird abgelehnt", async ({ page }) => {
   await mitTestdaten(page);
   await page.goto("/index.html");
-  await page.selectOption("#building", OHNE_DATEN);
+  await page.locator("#building").selectOption(OHNE_DATEN, { force: true });
   await page.fill("#level", "20");
   await page.locator("#level").blur();
 
@@ -260,7 +260,7 @@ test.describe("Datum der Datenquelle", () => {
 test.describe("Stufen-Stepper an den Grenzen", () => {
   test("bei Stufe 1 ist Minus aus, beim Maximum Plus", async ({ page }) => {
     await page.goto("/index.html");
-    await page.selectOption("#building", "Tower_of_Babel");
+    await page.locator("#building").selectOption("Tower_of_Babel", { force: true });
 
     await page.fill("#level", "1");
     await page.locator("#level").blur();
@@ -281,7 +281,7 @@ test.describe("Stufen-Stepper an den Grenzen", () => {
 
   test("ueber der dokumentierten Stufe rechnet cipher weiter", async ({ page }) => {
     await page.goto("/index.html");
-    await page.selectOption("#building", "Statue_of_Zeus");
+    await page.locator("#building").selectOption("Statue_of_Zeus", { force: true });
 
     // Stufe 202 gibt es im Wiki nicht mehr — im Spiel schon.
     await page.fill("#level", "202");

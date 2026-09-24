@@ -222,6 +222,21 @@ die Sache.
 
 ### Bauwerk finden
 
+Ein Tipp auf das Bauwerk öffnet die **Auswahl**. Sie ersetzt die native Liste
+des Browsers, die auf dem Telefon bei 49 Einträgen mühsam war: auf Android
+ein langes Blatt ohne Suche, auf dem iPhone ein Drehrad. Am Telefon kommt die
+Auswahl als Blatt von unten, auf breiten Bildschirmen als Fenster in der
+Mitte. Oben steht ein Suchfeld, darunter die Bauwerke nach Zeitalter
+gruppiert. Die Überschriften laufen beim Scrollen mit, und das gewählte
+Bauwerk ist markiert und steht beim Öffnen in der Mitte.
+
+Geschlossen wird die Auswahl, wie man es von System-Blättern kennt: mit der
+Zurück-Geste, per Esc, mit dem Kreuz, durch Tippen daneben oder indem man den
+Kopf nach unten zieht. Mit dem Finger geöffnet, bleibt die Tastatur zu, bis
+man ins Suchfeld tippt. Mit Maus oder Tastatur geöffnet, steht der Cursor
+gleich im Suchfeld. Pfeiltasten, Bild auf/ab, Pos1/Ende und Enter bedienen
+die Liste, und wer in der Liste lostippt, sucht.
+
 49 Bauwerke in 24 Zeitaltern sind viel zum Scrollen. Das Suchfeld unter der
 Auswahl findet sie nach Name, Kürzel und Zeitalter — Groß- und
 Kleinschreibung sowie Umlaute spielen keine Rolle. Die Treffer erscheinen als
@@ -547,6 +562,10 @@ CSP und die Zusicherung „keine externen Anfragen“ ab.
   Farben des Spiels).
 - Alle Bedienelemente sind beschriftet und per Tastatur erreichbar, mit
   deutlich sichtbarem Fokusring.
+- Die Bauwerksauswahl ist ein echtes `<dialog>` nach dem ARIA-Muster
+  „Combobox mit Listbox“: Screenreader hören Zeitalter als Gruppen, das
+  gewählte Bauwerk als ausgewählt und die Trefferzahl der Suche. Der Fokus
+  bleibt im Fenster und kehrt danach auf den Knopf zurück.
 - `prefers-reduced-motion` schaltet sämtliche Animationen ab — auch die
   Easter Eggs, die dann nur noch einen kurzen Texthinweis zeigen.
 - Ab etwa 390 Pixel Breite stehen Stufe und Name nebeneinander, darunter

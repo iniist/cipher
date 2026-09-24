@@ -587,8 +587,8 @@
    * getroffen hat — man sieht also, ob der Name oder das Zeitalter gemeint
    * war.
    */
-  function currentMatches() {
-    var needle = normalise($("buildingFilter").value).trim();
+  function matchesFor(query) {
+    var needle = normalise(query).trim();
     if (!needle) return [];
 
     var byName = [];
@@ -613,18 +613,14 @@
     return byName.concat(byEra);
   }
 
+  function currentMatches() { return matchesFor($("buildingFilter").value); }
+
   function renderFilter() {
     var query = $("buildingFilter").value;
     var matches = currentMatches();
 
     $("filterClear").hidden = !query;
-    $("filterCount").textContent = !query.trim()
-      ? ""
-      : matches.length === 0
-        ? "Kein Bauwerk gefunden."
-        : matches.length === 1
-          ? "1 Bauwerk gefunden."
-          : matches.length + " Bauwerke gefunden.";
+    $("filterCount").textContent = countText(query, matches);
 
     var needle = normalise(query).trim();
     $("filterResults").innerHTML = matches.map(function (match) {
@@ -641,19 +637,405 @@
     }).join("");
   }
 
-  /** Ein Bauwerk aus der Trefferliste uebernehmen und die Suche schliessen. */
-  function pickBuilding(id) {
+  function countText(query, matches) {
+    return !query.trim()
+      ? ""
+      : matches.length === 0
+        ? "Kein Bauwerk gefunden."
+        : matches.length === 1
+          ? "1 Bauwerk gefunden."
+          : matches.length + " Bauwerke gefunden.";
+  }
+
+  /** Ein Bauwerk uebernehmen, egal von wo aus es gewaehlt wurde. */
+  function chooseBuilding(id) {
     if (!byId[id]) return;
     state.building = id;
     adoptFavoriteLevel();
-    clearBuildingFilter({ keepFocus: false });
     render();
+  }
+
+  /** Ein Bauwerk aus der Trefferliste uebernehmen und die Suche schliessen. */
+  function pickBuilding(id) {
+    if (!byId[id]) return;
+    clearBuildingFilter({ keepFocus: false });
+    chooseBuilding(id);
   }
 
   function clearBuildingFilter(options) {
     $("buildingFilter").value = "";
     renderFilter();
     if (!options || options.keepFocus !== false) $("buildingFilter").focus();
+  }
+
+  // ------------------------------------------------------- Bauwerksauswahl
+
+  /*
+   * Die eigene Auswahlliste statt der nativen des Browsers.
+   *
+   * Die native Liste war auf dem Telefon bei 49 Bauwerken der muehsamste
+   * Weg: Android zeigt ein langes Blatt ohne Suche, das iPhone ein Drehrad,
+   * auf dem man wenig auf einmal sieht. Hier kommt ein Blatt von unten mit
+   * Suchfeld oben, Zeitaltern als mitlaufenden Ueberschriften und dem
+   * gewaehlten Bauwerk in der Mitte.
+   *
+   * Was der Browser bei einem <select> umsonst mitbringt, muss eine eigene
+   * Liste selbst leisten. Das meiste davon kommt vom <dialog> mit
+   * showModal(): Fokusfang, stillgelegter Hintergrund, Esc, Top-Layer. Der
+   * Rest steht hier:
+   *   - Zurueck-Geste: ein eigener Verlaufseintrag, damit "zurueck" das Blatt
+   *     schliesst und nicht die Seite verlaesst
+   *   - Tastatur: Pfeile, Bild auf/ab, Pos1/Ende, Enter, Leertaste, Esc und
+   *     Lostippen (Muster "Combobox mit Listbox", aria-activedescendant)
+   *   - Bildschirmtastatur: das Blatt rueckt ueber sie, statt verdeckt zu
+   *     werden (visualViewport)
+   *   - Wischen nach unten am Kopf schliesst, Tippen daneben auch
+   *   - Hintergrund scrollt nicht mit
+   *   - der Fokus kehrt auf den Knopf zurueck
+   */
+  var SHEET_QUERY = "(max-width: 640px)";
+
+  /** DOM-id je Bauwerk. Die Bauwerk-ids enthalten Punkte und Apostrophe. */
+  var PICK_DOM_ID = {};
+  DATA.buildings.forEach(function (building, index) { PICK_DOM_ID[building.id] = "pk-" + index; });
+
+  var picker = {
+    ids: [],               // Bauwerke in der Reihenfolge, in der sie dastehen
+    active: -1,            // Index in ids, auf dem die Tastatur steht
+    historyPushed: false,  // liegt unser Verlaufseintrag noch obenauf?
+    closing: false,
+    closeTimer: null,
+    openedByTouch: false
+  };
+
+  function pickerOption(building, needle, match) {
+    picker.ids.push(building.id);
+    var name = match && match.where === "name" ? highlight(building.name, needle) : escapeHtml(building.name);
+    var aside;
+    if (match) {
+      // Suchtreffer stehen ohne Gruppen da, darum nennt jeder sein Zeitalter
+      // — wie in der Trefferliste unter dem Suchfeld der Seite.
+      aside = (match.where === "era" ? highlight(building.era, needle) : escapeHtml(building.era)) +
+        (match.where === "short" ? " · " + highlight(match.alias, needle) : "");
+    } else {
+      // In der vollen Liste steht das Zeitalter schon darueber. Rechts steht
+      // dann das Kuerzel, unter dem das Bauwerk im Chat erscheint.
+      var short = shortName(building);
+      aside = short !== building.name ? escapeHtml(short) : "";
+    }
+    return '<li role="option" class="picker-opt" id="' + PICK_DOM_ID[building.id] + '"' +
+      ' data-pick="' + escapeHtml(building.id) + '"' +
+      ' aria-selected="' + (building.id === state.building) + '">' +
+      "<b>" + name + "</b>" + (aside ? "<span>" + aside + "</span>" : "") +
+    "</li>";
+  }
+
+  function renderPicker() {
+    var query = $("pickerFilter").value;
+    var needle = normalise(query).trim();
+    var matches = matchesFor(query);
+    picker.ids = [];
+
+    $("pickerFilterClear").hidden = !query;
+    $("pickerCount").textContent = countText(query, matches);
+
+    if (needle) {
+      $("pickerList").innerHTML = matches.map(function (match) {
+        return pickerOption(match.building, needle, match);
+      }).join("");
+      return;
+    }
+
+    var groups = [];
+    var byEra = {};
+    DATA.buildings.forEach(function (building) {
+      if (!byEra[building.era]) { byEra[building.era] = []; groups.push(building.era); }
+      byEra[building.era].push(building);
+    });
+    // Aufbau nach dem Muster "gruppierte Listbox" der ARIA-Praxis: die
+    // Ueberschrift benennt die Gruppe, ist selbst aber keine Option.
+    $("pickerList").innerHTML = groups.map(function (era, index) {
+      return '<li role="presentation"><ul class="picker-group" role="group" aria-labelledby="pkg-' + index + '">' +
+        '<li role="presentation" class="picker-era" id="pkg-' + index + '">' + escapeHtml(era) + "</li>" +
+        byEra[era].map(function (building) { return pickerOption(building, "", null); }).join("") +
+      "</ul></li>";
+    }).join("");
+  }
+
+  /** Die Tastatur auf eine Option setzen; -1 heisst: auf keine. */
+  function setPickerActive(index, reveal) {
+    var list = $("pickerList");
+    var previous = list.querySelector(".picker-opt.active");
+    if (previous) previous.classList.remove("active");
+
+    picker.active = picker.ids.length ? Math.max(-1, Math.min(index, picker.ids.length - 1)) : -1;
+    var domId = picker.active >= 0 ? PICK_DOM_ID[picker.ids[picker.active]] : "";
+    [$("pickerFilter"), list].forEach(function (element) {
+      if (domId) element.setAttribute("aria-activedescendant", domId);
+      else element.removeAttribute("aria-activedescendant");
+    });
+    if (!domId) return;
+    var option = $(domId);
+    option.classList.add("active");
+    if (reveal) option.scrollIntoView({ block: "nearest" });
+  }
+
+  /** Das gewaehlte Bauwerk in die Mitte der Liste holen. */
+  function centerPickerSelection() {
+    var list = $("pickerList");
+    var option = $(PICK_DOM_ID[state.building]);
+    if (!option) { list.scrollTop = 0; return; }
+    var listBox = list.getBoundingClientRect();
+    var optionBox = option.getBoundingClientRect();
+    list.scrollTop += optionBox.top - listBox.top - (listBox.height - optionBox.height) / 2;
+  }
+
+  /**
+   * Das Blatt ueber die Bildschirmtastatur ruecken. Chrome auf Android und
+   * Safari verkleinern beim Einblenden der Tastatur nur den sichtbaren
+   * Ausschnitt, nicht das Fenster — ein unten verankertes Blatt laege sonst
+   * zur Haelfte hinter ihr.
+   */
+  function syncPickerViewport() {
+    var viewport = window.visualViewport;
+    if (!viewport) return;
+    var dialog = $("picker");
+    var below = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+    dialog.style.setProperty("--kb", Math.round(below) + "px");
+    dialog.style.setProperty("--vvh", Math.round(viewport.height) + "px");
+  }
+
+  function watchPickerViewport(on) {
+    var viewport = window.visualViewport;
+    if (!viewport) return;
+    var method = on ? "addEventListener" : "removeEventListener";
+    viewport[method]("resize", syncPickerViewport);
+    viewport[method]("scroll", syncPickerViewport);
+    if (on) syncPickerViewport();
+  }
+
+  function openPicker() {
+    var dialog = $("picker");
+    if (dialog.open) return;
+    window.clearTimeout(picker.closeTimer);
+    picker.closing = false;
+    dialog.classList.remove("closing");
+    $("pickerSheet").style.transform = "";
+
+    $("pickerFilter").value = "";
+    renderPicker();
+
+    document.documentElement.classList.add("picker-open");
+    watchPickerViewport(true);
+    dialog.showModal();
+    $("buildingPick").setAttribute("aria-expanded", "true");
+
+    // Ein eigener Verlaufseintrag: die Zurueck-Geste schliesst das Blatt,
+    // statt die Seite zu verlassen. Ohne Zugriff auf den Verlauf (etwa in
+    // einem gesperrten Rahmen) bleibt es bei Esc, Kreuz und Tippen daneben.
+    try {
+      window.history.pushState({ cipherPicker: true }, "");
+      picker.historyPushed = true;
+    } catch (e) { picker.historyPushed = false; }
+
+    centerPickerSelection();
+    setPickerActive(picker.ids.indexOf(state.building), false);
+
+    // Mit dem Finger geoeffnet: die Liste bekommt den Fokus, nicht das
+    // Suchfeld. Sonst schiebt sich sofort die Tastatur ueber die halbe
+    // Liste, obwohl die meisten nur tippen und nicht suchen wollen. Mit
+    // Maus oder Tastatur geht es direkt ins Suchfeld.
+    (picker.openedByTouch ? $("pickerList") : $("pickerFilter")).focus({ preventScroll: true });
+  }
+
+  /** Schliessen, auf Wunsch mit kurzer Blende nach unten. */
+  function closePicker() {
+    var dialog = $("picker");
+    if (!dialog.open || picker.closing) return;
+    if (prefersReducedMotion) { dialog.close(); return; }
+    picker.closing = true;
+    dialog.classList.add("closing");
+    picker.closeTimer = window.setTimeout(function () { dialog.close(); }, 180);
+  }
+
+  /** Aufraeumen — gleich, ob per Auswahl, Esc, Zurueck oder Tippen daneben. */
+  function onPickerClosed() {
+    var dialog = $("picker");
+    window.clearTimeout(picker.closeTimer);
+    picker.closing = false;
+    dialog.classList.remove("closing");
+    $("pickerSheet").style.transform = "";
+    document.documentElement.classList.remove("picker-open");
+    watchPickerViewport(false);
+    $("buildingPick").setAttribute("aria-expanded", "false");
+    $("buildingPick").focus({ preventScroll: true });
+
+    // Nicht per Zurueck geschlossen: den eigenen Eintrag wieder abraeumen,
+    // sonst braeuchte das naechste "zurueck" zwei Anlaeufe.
+    if (picker.historyPushed) {
+      picker.historyPushed = false;
+      window.history.back();
+    }
+  }
+
+  function choosePicked(id) {
+    chooseBuilding(id);
+    closePicker();
+  }
+
+  function onPickerKey(event) {
+    var input = $("pickerFilter");
+    var list = $("pickerList");
+    var inInput = event.target === input;
+    var inList = event.target === list;
+    if (!inInput && !inList) return;
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+
+    var last = picker.ids.length - 1;
+    switch (event.key) {
+      case "ArrowDown": setPickerActive(picker.active < 0 ? 0 : picker.active + 1, true); break;
+      case "ArrowUp": setPickerActive(picker.active < 0 ? last : Math.max(0, picker.active - 1), true); break;
+      case "PageDown": setPickerActive(Math.min(last, picker.active + 8), true); break;
+      case "PageUp": setPickerActive(Math.max(0, picker.active - 8), true); break;
+      case "Home":
+      case "End":
+        // Im Suchfeld gehoeren Pos1 und Ende dem Cursor.
+        if (inInput) return;
+        setPickerActive(event.key === "Home" ? 0 : last, true);
+        break;
+      case "Enter":
+        if (picker.active < 0) return;
+        choosePicked(picker.ids[picker.active]);
+        break;
+      case " ":
+        if (!inList || picker.active < 0) return;
+        choosePicked(picker.ids[picker.active]);
+        break;
+      case "Escape":
+        // Erst die Suche leeren, dann schliessen — wie im Suchfeld der Seite.
+        if (input.value) {
+          input.value = "";
+          onPickerInput();
+        } else {
+          closePicker();
+        }
+        break;
+      default:
+        // Lostippen, waehrend die Liste den Fokus hat, sucht.
+        if (!inList || event.key.length !== 1) return;
+        input.value += event.key;
+        input.focus();
+        onPickerInput();
+    }
+    event.preventDefault();
+  }
+
+  function onPickerInput() {
+    var query = $("pickerFilter").value;
+    renderPicker();
+    if (normalise(query).trim()) {
+      $("pickerList").scrollTop = 0;
+      setPickerActive(0, false);
+    } else {
+      centerPickerSelection();
+      setPickerActive(picker.ids.indexOf(state.building), false);
+    }
+  }
+
+  /** Am Kopf des Blatts nach unten ziehen schliesst es. */
+  function bindPickerSwipe() {
+    var head = $("pickerHead");
+    var sheet = $("pickerSheet");
+    var drag = null;
+
+    head.addEventListener("pointerdown", function (event) {
+      if (event.pointerType === "mouse" || event.target.closest("button")) return;
+      if (!window.matchMedia(SHEET_QUERY).matches || picker.closing) return;
+      drag = { id: event.pointerId, y: event.clientY, t: event.timeStamp, dy: 0 };
+      head.setPointerCapture(event.pointerId);
+      sheet.classList.add("dragging");
+    });
+    head.addEventListener("pointermove", function (event) {
+      if (!drag || event.pointerId !== drag.id) return;
+      drag.dy = Math.max(0, event.clientY - drag.y);
+      sheet.style.transform = drag.dy ? "translateY(" + drag.dy + "px)" : "";
+    });
+    function release(event, cancelled) {
+      if (!drag || event.pointerId !== drag.id) return;
+      var speed = drag.dy / Math.max(1, event.timeStamp - drag.t);
+      var dismiss = !cancelled && (drag.dy > 96 || (drag.dy > 32 && speed > .5));
+      drag = null;
+      sheet.classList.remove("dragging");
+      if (dismiss) closePicker();
+      else sheet.style.transform = "";
+    }
+    head.addEventListener("pointerup", function (event) { release(event, false); });
+    head.addEventListener("pointercancel", function (event) { release(event, true); });
+  }
+
+  function bindPicker() {
+    var dialog = $("picker");
+    var trigger = $("buildingPick");
+
+    trigger.addEventListener("pointerdown", function (event) {
+      picker.openedByTouch = event.pointerType === "touch" || event.pointerType === "pen";
+    });
+    trigger.addEventListener("click", openPicker);
+
+    // Wie beim <select>: Pfeil hoch/runter auf dem geschlossenen Feld
+    // oeffnet die Liste.
+    trigger.addEventListener("keydown", function (event) {
+      picker.openedByTouch = false;
+      if ((event.key === "ArrowDown" || event.key === "ArrowUp") && !event.altKey) {
+        event.preventDefault();
+        openPicker();
+      }
+    });
+
+    dialog.addEventListener("keydown", onPickerKey);
+    dialog.addEventListener("close", onPickerClosed);
+    // Esc ausserhalb von Suchfeld und Liste, und bei Chrome auf Android die
+    // Zurueck-Geste: mit derselben Blende schliessen wie sonst auch. Laesst
+    // der Browser das Abfangen nicht zu, schliesst er selbst, und das
+    // close-Ereignis raeumt auf.
+    dialog.addEventListener("cancel", function (event) {
+      event.preventDefault();
+      closePicker();
+    });
+
+    // Tippen daneben. Ein Klick auf den Hintergrund trifft das <dialog>
+    // selbst; das Blatt fuellt es sonst ganz aus. Der Druck muss dort auch
+    // begonnen haben — wer im Suchfeld Text markiert und die Maus daneben
+    // loslaesst, will nicht schliessen.
+    var downOnBackdrop = false;
+    dialog.addEventListener("pointerdown", function (event) { downOnBackdrop = event.target === dialog; });
+    dialog.addEventListener("click", function (event) {
+      if (event.target === dialog && downOnBackdrop) closePicker();
+      downOnBackdrop = false;
+    });
+
+    $("pickerClose").addEventListener("click", closePicker);
+    $("pickerFilter").addEventListener("input", onPickerInput);
+    $("pickerFilterClear").addEventListener("click", function () {
+      $("pickerFilter").value = "";
+      onPickerInput();
+      $("pickerFilter").focus();
+    });
+
+    $("pickerList").addEventListener("click", function (event) {
+      var option = event.target.closest("[data-pick]");
+      if (option) choosePicked(option.dataset.pick);
+    });
+
+    window.addEventListener("popstate", function () {
+      if (!picker.historyPushed) return;
+      // Der Eintrag ist schon weg — onPickerClosed darf ihn nicht noch
+      // einmal zuruecknehmen.
+      picker.historyPushed = false;
+      closePicker();
+    });
+
+    bindPickerSwipe();
   }
 
   /**
@@ -918,6 +1300,8 @@
     state.level = Math.min(Math.max(1, Math.floor(state.level) || 1), LEVEL_MAX);
 
     $("building").value = building.id;
+    $("buildingPickName").textContent = building.name;
+    $("buildingPickEra").textContent = building.era;
     renderLevelField();
     // Waehrend des Tippens nicht dazwischenfunken.
     if (document.activeElement !== $("factor")) $("factor").value = formatFactor(state.factor);
@@ -1518,6 +1902,8 @@
       if (button) setTheme(button.dataset.mode);
     });
 
+    bindPicker();
+
     $("building").addEventListener("change", function (event) {
       state.building = event.target.value;
       adoptFavoriteLevel();
@@ -1946,6 +2332,8 @@
       // In Eingabefeldern hat der Code nichts zu suchen.
       var tag = document.activeElement && document.activeElement.tagName;
       if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") { konamiProgress = 0; return; }
+      // In der Bauwerksauswahl gehoeren die Pfeiltasten der Liste.
+      if (document.activeElement && document.activeElement.closest("dialog")) { konamiProgress = 0; return; }
 
       var expected = KONAMI[konamiProgress];
       var pressed = event.key.length === 1 ? event.key.toLowerCase() : event.key;
