@@ -66,8 +66,14 @@
         <rect class="face" x="86" y="88" width="28" height="6" rx="1.5"/>
       </g>
     </svg>
+    <!-- Das Video laeuft stumm in Schleife, sobald es zu sehen ist; das
+         startet rundgang.js. Ohne Skript und bei weniger Bewegung bleibt das
+         Standbild mit Bedienleiste stehen — abspielen, wer mag. -->
     <figure class="phone tilt reveal">
-      <img src="./bilder/ueberblick.webp" width="786" height="1702" alt="cipher im Schmiede-Look: Gemerkte Bauwerke, Auswahl der Arche, Stufe 80 und Faktor 1,90.">
+      <video id="heroVideo" poster="./bilder/rundgang-poster.webp" width="720" height="1280" muted loop playsinline controls preload="none" aria-label="cipher in 40 Sekunden: die Arche wählen, Stufe und Faktor setzen, den Förderplan sichern, die Chat-Zeile kopieren und zwischen den sechs Looks wechseln.">
+        <source src="./bilder/rundgang.webm" type="video/webm; codecs=vp9">
+        <source src="./bilder/rundgang.mp4" type="video/mp4">
+      </video>
     </figure>
   </div>
 </header>

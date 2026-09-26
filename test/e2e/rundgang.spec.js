@@ -64,3 +64,25 @@ test("keine waagrechte Scrollleiste", async ({ page }) => {
   const [scroll, inner] = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
   expect(scroll).toBeLessThanOrEqual(inner);
 });
+
+test("das Hero-Video liegt bereit und steht bei weniger Bewegung still", async ({ browser }) => {
+  const context = await browser.newContext({ reducedMotion: "reduce" });
+  const page = await context.newPage();
+  await page.goto("/rundgang.html");
+  const video = page.locator("#heroVideo");
+  await expect(video).toBeVisible();
+  for (const src of ["./bilder/rundgang.webm", "./bilder/rundgang.mp4", "./bilder/rundgang-poster.webp"]) {
+    const response = await page.request.get(new URL(src, page.url()).href);
+    expect(response.ok()).toBe(true);
+  }
+  expect(await video.evaluate((element) => element.paused && element.controls)).toBe(true);
+  await context.close();
+});
+
+test("das Hero-Video laeuft stumm von selbst", async ({ page }) => {
+  await page.goto("/rundgang.html");
+  const video = page.locator("#heroVideo");
+  await video.scrollIntoViewIfNeeded();
+  await expect.poll(() => video.evaluate((element) => element.currentTime)).toBeGreaterThan(0);
+  expect(await video.evaluate((element) => element.muted && !element.controls)).toBe(true);
+});
