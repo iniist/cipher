@@ -222,6 +222,9 @@
     factor: clampFactor(Number(stored.factor)) || 190,
     name: typeof stored.name === "string" ? stored.name : "",
     enabled: normaliseEnabled(stored.enabled),
+    // Schon vergebene Plaetze: nicht mehr ausschreiben, aber weiter als
+    // Fremdkapital rechnen. Zaehlt nur, wo der Platz auch angeboten ist.
+    taken: normaliseTaken(stored.taken),
     theme: THEMES.indexOf(stored.theme) >= 0 ? stored.theme : "dark",
     // Wie die Zahl im Stufenfeld zu lesen ist. "next" ist die Vorgabe und
     // das, was cipher vorher ohne Wahl getan hat.
@@ -340,6 +343,35 @@
       result.push(Array.isArray(value) ? value[i] !== false : true);
     }
     return result;
+  }
+
+  /** Immer genau fuenf Eintraege; nur ein ausdrueckliches true heisst vergeben. */
+  function normaliseTaken(value) {
+    var result = [];
+    for (var i = 0; i < Calc.SLOTS; i++) {
+      result.push(Array.isArray(value) && value[i] === true);
+    }
+    return result;
+  }
+
+  /**
+   * Die drei Zustaende eines Platzes, in der Reihenfolge, in der ein Tipp
+   * aufs Haekchen sie durchlaeuft: angeboten -> vergeben -> aus -> angeboten.
+   *
+   * "Vergeben" kommt direkt nach "angeboten", weil das der haeufige Weg ist:
+   * P1 und P2 sind belegt, jetzt werden P3 bis P5 ausgeschrieben. Wer das
+   * Haekchen dafuer herausnahm, bekam frueher einen Eigenanteil, als haette
+   * er P1 und P2 selbst bezahlt.
+   */
+  function slotStateOf(index) {
+    if (!state.enabled[index]) return "off";
+    return state.taken[index] ? "taken" : "on";
+  }
+
+  function cycleSlot(index) {
+    var current = slotStateOf(index);
+    state.enabled[index] = current !== "taken";
+    state.taken[index] = current === "on";
   }
 
   var ownTotals = read(KEY.totals, {});
@@ -1363,7 +1395,8 @@
       factor: state.factor,
       factors: state.slotFactors,
       payments: state.slotPays,
-      enabled: state.enabled
+      enabled: state.enabled,
+      taken: state.taken
     });
 
     lastPlan = plan;
@@ -1432,12 +1465,12 @@
       if (row.offered) running += row.secure;
       var secureCell = secureText(row, running);
 
-      return '<tr class="' + (row.offered ? "" : "off") + '">' +
+      return '<tr class="' + (row.offered ? "" : row.taken ? "taken" : "off") + '">' +
         '<td><label class="pl">' +
           '<input type="checkbox" data-slot="' + index + '"' +
             (state.enabled[index] ? " checked" : "") +
             (row.reward > 0 ? "" : " disabled") +
-            ' aria-label="Platz P' + row.slot + ' anbieten">' +
+            ' aria-label="' + slotLabel(row) + '">' +
           '<span class="tag slot-' + row.slot + '">P' + row.slot + "</span>" +
         "</label></td>" +
         "<td>" + formatNumber(row.reward) + "</td>" +
@@ -1446,7 +1479,21 @@
       "</tr>";
     }).join("");
 
+    // "Vergeben" zeigt die Checkbox als Strich. Das geht nur ueber die
+    // Eigenschaft, ein Attribut dafuer gibt es nicht.
+    plan.rows.forEach(function (row, index) {
+      if (row.taken) $("rows").querySelector('input[data-slot="' + index + '"]').indeterminate = true;
+    });
+
     restoreFocusToSlot(focusedSlot);
+  }
+
+  /** Was ein Screenreader an der Checkbox eines Platzes vorliest. */
+  function slotLabel(row) {
+    var name = "Platz P" + row.slot;
+    if (row.taken) return name + " vergeben — umschalten auf nicht anbieten";
+    if (state.enabled[row.slot - 1] && !row.tooTight) return name + " anbieten — umschalten auf vergeben";
+    return name + " anbieten";
   }
 
   /**
@@ -1466,6 +1513,7 @@
    * @param {number} running Summe der Absicherungen bis hier einschliesslich
    */
   function secureText(row, running) {
+    if (row.taken) return '<span class="given">vergeben</span>';
     if (!row.offered) return row.tooTight ? "passt nicht" : "–";
     if (row.secure === 0) return '<span class="safe">Sicher</span>';
     return state.secureMode === "total"
@@ -1507,7 +1555,7 @@
     $("legend").hidden = false;
 
     var segments = [["own", plan.ownShare]].concat(plan.rows.map(function (row) {
-      return [String(row.slot), row.offered ? row.contribution : 0];
+      return [String(row.slot), row.offered || row.taken ? row.contribution : 0];
     }));
 
     if (bar.children.length !== segments.length) {
@@ -1525,7 +1573,7 @@
     $("lump").hidden = offered.length === 0;
     if (!offered.length) return;
 
-    countTo($("lumpValue"), plan.upfront);
+    countTo($("lumpValue"), plan.upfrontOpen);
 
     var labels = offered.map(function (row) { return "P" + row.slot; });
     var range = labels.length > 1 ? labels[0] + " bis " + labels[labels.length - 1] : labels[0];
@@ -2132,7 +2180,7 @@
     $("rows").addEventListener("change", function (event) {
       var slot = event.target.dataset.slot;
       if (slot != null) {
-        state.enabled[Number(slot)] = event.target.checked;
+        cycleSlot(Number(slot));
         render();
       }
     });

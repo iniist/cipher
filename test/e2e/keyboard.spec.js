@@ -23,16 +23,21 @@ test.describe("Tastatur", () => {
     await checkbox.focus();
     await page.keyboard.press("Space");
 
-    await expect(checkbox).not.toBeChecked();
+    // Ein Tipp stellt den Platz auf "vergeben", die Checkbox zeigt einen Strich.
+    expect(await checkbox.evaluate((box) => box.indeterminate)).toBe(true);
     expect(await activeDescriptor(page)).toEqual({ tag: "INPUT", slot: "2" });
   });
 
   test("mehrere Plaetze lassen sich nacheinander abwaehlen, ohne neu zu tabben", async ({ page }) => {
     await page.locator('#rows input[data-slot="4"]').focus();
+    // Zweimal: angeboten -> vergeben -> aus. Schon der zweite Druck setzt
+    // voraus, dass der Fokus den ersten ueberlebt hat.
+    await page.keyboard.press("Space");
     await page.keyboard.press("Space");
     // Ohne Fokuswiederherstellung landete der Fokus hier auf <body> und
     // Shift+Tab kaeme nie bei P4 an.
     await page.keyboard.press("Shift+Tab");
+    await page.keyboard.press("Space");
     await page.keyboard.press("Space");
 
     await expect(page.locator('#rows input[data-slot="4"]')).not.toBeChecked();

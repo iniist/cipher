@@ -31,7 +31,31 @@ Dazu die Aufteilung in Eigenanteil und Fremdkapital, den Betrag, den du vorab
 einzahlen solltest, und zwei fertige Zeilen zum Kopieren in den Förderchat —
 samt einer Sammlung, die mehrere davon aufhebt.
 
-Häkchen weg = der Platz wird nicht angeboten und fällt in deinen Eigenanteil.
+Das Häkchen je Platz kennt drei Zustände, ein Tipp schaltet weiter:
+
+| Häkchen | Zustand | Rechnung | Chat |
+| --- | --- | --- | --- |
+| ✓ | angeboten | Fremdkapital, mit „Sichern“ | steht drin |
+| – | vergeben | Fremdkapital, schon abgesichert | fällt heraus |
+| leer | nicht angeboten | Eigenanteil | fällt heraus |
+
+### Vergeben
+
+Wer in Runden fördert, schreibt erst P1 und P2 aus und, wenn die belegt
+sind, P3 bis P5. Dafür nahm man früher die Häkchen bei P1 und P2 heraus —
+und cipher rechnete dann, als zahltest du die beiden selbst: der Eigenanteil
+sprang hoch, und vor P3 stand eine Absicherung ab null, obwohl P1 und P2
+längst eingezahlt sind. Das kam als Rückmeldung, und sie hatte recht.
+
+Darum „vergeben“: der Platz bleibt mit seiner Einzahlung in der Rechnung,
+Eigenanteil und Fremdkapital ändern sich nicht, die Spalte zeigt „vergeben“
+statt einer Zahl, und nur die Chatzeile lässt ihn weg. Der Kasten „vorab
+einzahlen“ nennt nur noch, was für die offenen Plätze aussteht.
+
+Der Zustand kommt direkt nach „angeboten“, weil das der häufige Weg ist:
+ein Tipp auf P1 heißt meist „ist weg“, nicht „zahl ich selbst“. Hat der
+Förderer eines vergebenen Platzes mit anderem Faktor gezahlt, trägst du
+seinen Betrag wie gewohnt im Block je Platz ein.
 
 ### Schritt oder Summe
 

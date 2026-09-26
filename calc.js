@@ -412,20 +412,28 @@
    *   options.p1Secure unberuehrt: der Zuschlag gleicht die Unsicherheit einer
    *   hergeleiteten P1-Belohnung aus, eine abgelesene Zahl hat sie nicht.
    * @param {boolean[]} options.enabled Welche Plaetze angeboten werden (Laenge 5)
+   * @param {boolean[]} [options.taken] Welche Plaetze schon vergeben sind.
+   *   Ein vergebener Platz wird nicht mehr ausgeschrieben, bleibt aber in der
+   *   Rechnung: seine Einzahlung zaehlt als Fremdkapital, seine Absicherung
+   *   ist schon geleistet. Gilt nur fuer Plaetze, die auch `enabled` sind —
+   *   wer einen Platz nicht anbietet, hat ihn auch nicht vergeben.
    * @returns {{
    *   rows: Array<{slot:number, reward:number, factor:number, contribution:number,
-   *                offered:boolean, secure:number|null, tooTight:boolean,
-   *                fixed:boolean, outOfOrder:boolean}>,
+   *                offered:boolean, taken:boolean, secure:number|null,
+   *                tooTight:boolean, fixed:boolean, outOfOrder:boolean}>,
    *   total:number, external:number, ownShare:number,
-   *   upfront:number, remainder:number, anyTooTight:boolean,
-   *   anyOutOfOrder:boolean
+   *   upfront:number, upfrontOpen:number, remainder:number,
+   *   anyTooTight:boolean, anyOutOfOrder:boolean
    * }}
+   *   `upfront` ist die ganze Vorleistung, auch die vor schon vergebenen
+   *   Plaetzen; `upfrontOpen` nur die, die fuer noch offene Plaetze aussteht.
    */
   function buildPlan(options) {
     var total = options.total;
     var factors = options.factors || [];
     var fixed = options.payments || [];
     var enabled = options.enabled;
+    var taken = options.taken || [];
 
     /** Der Faktor, der fuer diesen Platz tatsaechlich gilt. */
     function factorFor(index) {
@@ -456,6 +464,7 @@
     function planWith(securePay) {
       var remaining = total;
       var upfront = 0; // Was du zahlst, bevor alle Plaetze vergeben sind
+      var upfrontOpen = 0; // Davon der Teil fuer Plaetze, die noch offen sind
       var external = 0; // Was die Foerderer zusammen einzahlen
       var anyTooTight = false;
 
@@ -467,6 +476,7 @@
           factor: factorFor(index),
           contribution: pay,
           offered: Boolean(enabled[index]) && reward > 0,
+          taken: false,
           secure: null,
           tooTight: false,
           fixed: isFixed(index),
@@ -495,6 +505,16 @@
         row.secure = needed;
         remaining -= pay;
         external += pay;
+
+        // Ein vergebener Platz ist durchgerechnet wie ein angebotener — nur
+        // ausgeschrieben wird er nicht mehr, und seine Absicherung ist
+        // schon eingezahlt.
+        if (taken[index]) {
+          row.offered = false;
+          row.taken = true;
+        } else {
+          upfrontOpen += needed;
+        }
         return row;
       });
 
@@ -504,6 +524,7 @@
         external: external,
         ownShare: upfront + remaining,
         upfront: upfront,
+        upfrontOpen: upfrontOpen,
         remainder: remaining,
         anyTooTight: anyTooTight,
         anyOutOfOrder: markOutOfOrder(rows)
@@ -521,7 +542,8 @@
     // gilt der Plan ohne Zuschlag.
     var plain = planWith(payments);
     var lost = careful.rows.some(function (row, index) {
-      return plain.rows[index].offered && !row.offered;
+      var before = plain.rows[index];
+      return (before.offered || before.taken) && !(row.offered || row.taken);
     });
     return lost ? plain : careful;
   }

@@ -917,6 +917,10 @@ table.none thead { display: none }
 
 tr.off td:not(:first-child) { opacity: .35 }
 tr.off td.pay { text-decoration: line-through }
+/* Vergeben: bezahlt, nur nicht mehr ausgeschrieben. Leiser als ein
+   angebotener Platz, aber ohne Streichung — das Geld ist ja da. */
+tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
+.given { color: var(--dim); font-weight: 600; font-size: .85rem }
 
 .safe {
   display: inline-block;

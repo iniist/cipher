@@ -3,6 +3,7 @@
  * Ausfuehren mit: npm run test:e2e
  */
 const { test, expect } = require("@playwright/test");
+const { haekchen, vergeben, abwaehlen } = require("./plaetze");
 const DATA = require("../../data.js");
 const Calc = require("../../calc.js");
 const { mitTestdaten, testDaten, OHNE_DATEN, WACKLIG, WACKLIG_STUFEN } = require("./testdaten");
@@ -73,9 +74,73 @@ test("ein abgewaehlter Platz verschwindet aus dem Foerderchat", async ({ page })
   await page.fill("#playerName", "Dani");
   await expect(page.locator("#chatPlain")).toHaveText(/Dani .* P5 P4 P3 P2 P1$/);
 
-  await page.locator('#rows input[data-slot="4"]').uncheck();
+  await abwaehlen(page, 4);
   await expect(page.locator("#chatPlain")).toHaveText(/Dani .* P4 P3 P2 P1$/);
   await expect(page.locator("#rows tr").nth(4)).toHaveClass(/off/);
+});
+
+test.describe("Vergebene Plaetze", () => {
+  // Die Rueckmeldung dahinter: P1 und P2 sind belegt, jetzt werden P3 bis P5
+  // ausgeschrieben. Frueher hiess das Haekchen weg — und der Eigenanteil
+  // sprang, als haettest du P1 und P2 selbst bezahlt.
+  test.beforeEach(async ({ page }) => {
+    await page.fill("#level", "40");
+    await page.locator("#level").blur();
+    await page.fill("#playerName", "Dani");
+  });
+
+  test("fallen aus dem Chat, aber nicht aus der Rechnung", async ({ page }) => {
+    const eigen = await page.locator("#sumOwn").getAttribute("data-value");
+    const fremd = await page.locator("#sumExternal").getAttribute("data-value");
+
+    await vergeben(page, 0);
+    await vergeben(page, 1);
+
+    await expect(page.locator("#chatPlain")).toHaveText(/Dani .* P5 P4 P3$/);
+    await expect(page.locator("#sumOwn")).toHaveAttribute("data-value", eigen);
+    await expect(page.locator("#sumExternal")).toHaveAttribute("data-value", fremd);
+    await expect(page.locator("#rows tr").nth(0)).toHaveClass(/taken/);
+    await expect(page.locator("#rows tr").nth(1).locator("td.pre")).toHaveText("vergeben");
+    expect(await haekchen(page, 0).evaluate((box) => box.indeterminate)).toBe(true);
+  });
+
+  test("der Kasten nennt nur, was fuer die offenen Plaetze aussteht", async ({ page }) => {
+    // Auf Stufe 80 braucht schon P1 eine Vorleistung; auf 40 ist er von selbst sicher.
+    await page.fill("#level", "80");
+    await page.locator("#level").blur();
+    const vorab = async () => Number(await page.locator("#lumpValue").getAttribute("data-value"));
+    const vorher = await vorab();
+    const p1Sichern = Number((await page.locator("#rows tr").nth(0).locator("td.pre").textContent()).replace(/\D/g, ""));
+    expect(p1Sichern).toBeGreaterThan(0);
+
+    await vergeben(page, 0);
+    await expect(page.locator("#lumpText")).toContainText("P2 bis P5");
+    // P1 musste vorab gesichert werden; das ist geschehen und zaehlt nicht mehr.
+    await expect.poll(vorab).toBe(vorher - p1Sichern);
+  });
+
+  test("ein weiterer Tipp nimmt den Platz ganz heraus", async ({ page }) => {
+    const eigen = Number(await page.locator("#sumOwn").getAttribute("data-value"));
+    await vergeben(page, 0);
+    await haekchen(page, 0).click();
+
+    await expect(page.locator("#rows tr").nth(0)).toHaveClass(/off/);
+    expect(await haekchen(page, 0).evaluate((box) => box.indeterminate)).toBe(false);
+    await expect(haekchen(page, 0)).not.toBeChecked();
+    await expect.poll(async () => Number(await page.locator("#sumOwn").getAttribute("data-value")))
+      .toBeGreaterThan(eigen);
+
+    await haekchen(page, 0).click();
+    await expect(haekchen(page, 0)).toBeChecked();
+    await expect(page.locator("#chatPlain")).toHaveText(/P2 P1$/);
+  });
+
+  test("ueberdauern das Neuladen", async ({ page }) => {
+    await vergeben(page, 1);
+    await page.reload();
+    await expect(page.locator("#rows tr").nth(1)).toHaveClass(/taken/);
+    expect(await haekchen(page, 1).evaluate((box) => box.indeterminate)).toBe(true);
+  });
 });
 
 test("der Foerderchat nennt auf Wunsch die Einzahlungen", async ({ page }) => {
