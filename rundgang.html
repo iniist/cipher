@@ -6,19 +6,97 @@
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#183c30">
-<meta name="description" content="Ein kleiner Rundgang durch cipher, einen neuen Förder-Rechner für Legendäre Bauwerke: Mäzen-Plätze sichern, FP-Einsatz planen, Chat-Zeilen sammeln. Alle Einstellungen mit Bildern.">
-<title>cipher — ein kleiner Rundgang</title>
+<meta name="description" content="Förderrechner für Forge of Empires: Mäzenplätze P1–P5 sichern, Arche-Faktor wie 1,9 einrechnen, FP-Einsatz planen, Chat-Zeile kopieren. Ohne Konto.">
+<meta name="robots" content="index, follow, max-image-preview:large, max-video-preview:-1">
+<title>FoE-Förderrechner mit Arche-Faktor für LGs — cipher</title>
 
-<!-- Die Seite wird geteilt, nicht aus dem Rechner verlinkt. Die Vorschau
-     im Gildenchat soll trotzdem vollständig sein. -->
-<link rel="canonical" href="https://cipher-calc.netlify.app/rundgang">
+<!-- Die Seite wird vor allem geteilt; der Rechner verlinkt sie nur ganz
+     unten im Footer. Die Vorschau im Gildenchat soll vollständig sein — und
+     Suchmaschinen finden sie auch über sitemap.xml. -->
+<link rel="canonical" href="https://foe-foerderrechner.com/rundgang">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://cipher-calc.netlify.app/rundgang">
+<meta property="og:url" content="https://foe-foerderrechner.com/rundgang">
 <meta property="og:site_name" content="cipher">
 <meta property="og:locale" content="de_DE">
-<meta property="og:title" content="cipher — ein kleiner Rundgang">
-<meta property="og:description" content="Ein neuer Förder-Rechner für Legendäre Bauwerke. Er versucht, so gut wie alles zu können, was man sich beim Fördern wünscht — ohne Konto und ohne Tracking.">
-<meta name="twitter:card" content="summary">
+<meta property="og:title" content="cipher — Förderrechner für Forge of Empires">
+<meta property="og:description" content="Legendäre Bauwerke fördern, ohne dass dir jemand die Mäzenplätze wegschnappt: Arche-Faktor, FP-Einsatz und Chat-Zeile auf einen Blick. Kostenlos, ohne Konto und ohne Tracking.">
+<meta property="og:image" content="https://foe-foerderrechner.com/bilder/og-cipher.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="cipher, der Förderrechner für Forge of Empires: ein Förderplan mit den Mäzenplätzen P1 bis P5.">
+<meta property="og:video" content="https://foe-foerderrechner.com/bilder/rundgang.mp4">
+<meta property="og:video:type" content="video/mp4">
+<meta property="og:video:width" content="720">
+<meta property="og:video:height" content="1280">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="cipher — Förderrechner für Forge of Empires">
+<meta name="twitter:description" content="Mäzenplätze sichern, Arche-Faktor einrechnen, FP-Einsatz planen und die Chat-Zeile gleich mitnehmen. Kostenlos, ohne Konto.">
+<meta name="twitter:image" content="https://foe-foerderrechner.com/bilder/og-cipher.png">
+<meta name="twitter:image:alt" content="cipher, der Förderrechner für Forge of Empires: ein Förderplan mit den Mäzenplätzen P1 bis P5.">
+
+<!-- Strukturierte Daten für Suchmaschinen. Ein Datenblock, kein Skript:
+     der Browser führt ihn nicht aus, darum braucht er keinen Hash im CSP. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://foe-foerderrechner.com/#website",
+      "url": "https://foe-foerderrechner.com/",
+      "name": "cipher",
+      "inLanguage": "de"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://foe-foerderrechner.com/rundgang#webpage",
+      "url": "https://foe-foerderrechner.com/rundgang",
+      "name": "FoE-Förderrechner mit Arche-Faktor für LGs — cipher",
+      "description": "Ein Rundgang durch cipher, einen Förderrechner für Legendäre Bauwerke in Forge of Empires: Mäzenplätze P1–P5 sichern, Arche-Faktor einrechnen, FP-Einsatz planen, Chat-Zeile kopieren.",
+      "inLanguage": "de",
+      "isPartOf": { "@id": "https://foe-foerderrechner.com/#website" },
+      "about": { "@id": "https://foe-foerderrechner.com/#app" },
+      "primaryImageOfPage": { "@type": "ImageObject", "url": "https://foe-foerderrechner.com/bilder/og-cipher.png", "width": 1200, "height": 630 },
+      "video": { "@id": "https://foe-foerderrechner.com/rundgang#video" },
+      "breadcrumb": { "@id": "https://foe-foerderrechner.com/rundgang#breadcrumb" }
+    },
+    {
+      "@type": "VideoObject",
+      "@id": "https://foe-foerderrechner.com/rundgang#video",
+      "name": "cipher in 40 Sekunden",
+      "description": "Der Förderrechner cipher für Forge of Empires in 40 Sekunden: die Arche wählen, Stufe und Arche-Faktor setzen, den Förderplan mit den Mäzenplätzen sichern, die Chat-Zeile kopieren und zwischen den sechs Darstellungen wechseln.",
+      "thumbnailUrl": "https://foe-foerderrechner.com/bilder/rundgang-poster.webp",
+      "contentUrl": "https://foe-foerderrechner.com/bilder/rundgang.mp4",
+      "uploadDate": "2026-09-26",
+      "duration": "PT40S",
+      "inLanguage": "de",
+      "isFamilyFriendly": true
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://foe-foerderrechner.com/#app",
+      "name": "cipher",
+      "alternateName": "cipher Förderrechner",
+      "description": "Förderrechner für Legendäre Bauwerke in Forge of Empires: Mäzenplätze sichern, Arche-Faktor einrechnen, FP-Einsatz planen und die Zeile für den Förderchat erzeugen. Inoffizielles Fan-Projekt.",
+      "url": "https://foe-foerderrechner.com/",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web",
+      "inLanguage": "de",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://foe-foerderrechner.com/rundgang#breadcrumb",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "cipher", "item": "https://foe-foerderrechner.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Rundgang", "item": "https://foe-foerderrechner.com/rundgang" }
+      ]
+    }
+  ]
+}
+</script>
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231f4a7a'/%3E%3Cpath d='M22 10.5a7.5 7.5 0 1 0 0 11' fill='none' stroke='%23f0c24f' stroke-width='3.2' stroke-linecap='square'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -37,11 +115,13 @@
 
 <header class="hero">
   <div class="hero-text">
-    <p class="eyebrow reveal">Ein kleiner, neuer Rechner</p>
-    <h1 class="wordmark reveal">cipher</h1>
-    <p class="lead reveal">Für alle, die Legendäre Bauwerke fördern. Wir haben versucht, darin so gut wie alles unterzubringen, was man sich dabei wünscht — und würden uns freuen, wenn er dir ein wenig Arbeit abnimmt.</p>
+    <p class="eyebrow reveal">Ein kleiner Förderrechner für Forge of Empires</p>
+    <!-- Die Wortmarke bleibt allein sichtbar; der Zusatz ist für Screenreader
+         und Suchmaschinen und sagt, was cipher ist. -->
+    <h1 class="wordmark reveal">cipher<span class="sr-only"> — Förderrechner für Legendäre Bauwerke in Forge of Empires</span></h1>
+    <p class="lead reveal">Für alle, die in Forge of Empires Legendäre Bauwerke fördern: Arche-Faktor, Mäzenplätze und FP-Einsatz auf einen Blick. Wir haben versucht, darin so gut wie alles unterzubringen, was man sich dabei wünscht — und würden uns freuen, wenn er dir ein wenig Arbeit abnimmt.</p>
     <div class="cta-row reveal">
-      <a class="btn" href="./index.html">cipher ausprobieren</a>
+      <a class="btn" href="./">cipher ausprobieren</a>
       <a class="btn ghost" href="#rundgang">Erst einmal umschauen</a>
     </div>
     <p class="fine reveal">Kostenlos, ohne Konto, ohne Werbung. Ein inoffizielles Fan-Projekt.</p>
@@ -70,7 +150,7 @@
          startet rundgang.js. Ohne Skript und bei weniger Bewegung bleibt das
          Standbild mit Bedienleiste stehen — abspielen, wer mag. -->
     <figure class="phone tilt reveal">
-      <video id="heroVideo" poster="./bilder/rundgang-poster.webp" width="720" height="1280" muted loop playsinline controls preload="none" aria-label="cipher in 40 Sekunden: die Arche wählen, Stufe und Faktor setzen, den Förderplan sichern, die Chat-Zeile kopieren und zwischen den sechs Looks wechseln.">
+      <video id="heroVideo" poster="./bilder/rundgang-poster.webp" width="720" height="1280" muted loop playsinline controls preload="none" aria-label="cipher in 40 Sekunden: die Arche wählen, Stufe und Arche-Faktor setzen, den Förderplan mit den Mäzenplätzen sichern, die Chat-Zeile kopieren und zwischen den sechs Looks wechseln.">
         <source src="./bilder/rundgang.webm" type="video/webm; codecs=vp9">
         <source src="./bilder/rundgang.mp4" type="video/mp4">
       </video>
@@ -146,7 +226,7 @@
   <!-- ------------------------------------------------------------- Faktor -->
   <article class="feature">
     <figure class="shot reveal">
-      <img src="./bilder/faktor.webp" width="706" height="1104" loading="lazy" alt="Faktor 1,90 mit Schnellwahl von 1,80 bis 2,00. Aufgeklappt: je Platz ein eigener Faktor, P3 steht auf 1,85 und ist als „eigen“ markiert.">
+      <img src="./bilder/faktor.webp" width="706" height="1104" loading="lazy" alt="Arche-Faktor 1,90 mit Schnellwahl von 1,80 bis 2,00. Aufgeklappt: je Platz ein eigener Faktor, P3 steht auf 1,85 und ist als „eigen“ markiert.">
     </figure>
     <div class="feature-text reveal">
       <p class="kicker">Arche-Faktor</p>
@@ -170,7 +250,7 @@
         <button type="button" data-plan="summe" aria-pressed="false">Summe</button>
       </div>
       <figure class="shot stack">
-        <img class="is-on" data-plan-img="sichern" src="./bilder/plan-sichern.webp" width="770" height="1260" loading="lazy" alt="Förderplan für die Arche auf Stufe 80: fünf Plätze mit Belohnung, Einzahlung und dem Betrag, der jeweils zum Sichern nötig ist. 951 FP vorab, Eigenanteil 18 %.">
+        <img class="is-on" data-plan-img="sichern" src="./bilder/plan-sichern.webp" width="770" height="1260" loading="lazy" alt="Förderplan für die Arche auf Stufe 80: fünf Mäzenplätze mit Belohnung, Einzahlung und dem Betrag, der jeweils zum Sichern nötig ist. 951 FP vorab, Eigenanteil 18 %.">
         <img data-plan-img="summe" src="./bilder/plan-summe.webp" width="770" height="1260" loading="lazy" alt="Derselbe Förderplan, die letzte Spalte zeigt nun die laufende Summe: 238, sicher, 666, 875, 951.">
       </figure>
     </div>
@@ -231,12 +311,12 @@
       <p>Blaupause, Weißpause, Kontrast, Papier, Weltall — und die Schmiede in Holz und Messing, in der auch diese Seite steht. Der Wechsel senkt sich wie ein Vorhang über die Seite.</p>
     </div>
     <div class="fan" id="fan">
-      <figure class="reveal"><img src="./bilder/theme-dark.webp" width="786" height="1240" loading="lazy" alt="Blaupause"><figcaption>Blaupause</figcaption></figure>
-      <figure class="reveal"><img src="./bilder/theme-light.webp" width="786" height="1240" loading="lazy" alt="Weißpause"><figcaption>Weißpause</figcaption></figure>
-      <figure class="reveal"><img src="./bilder/theme-contrast.webp" width="786" height="1240" loading="lazy" alt="Kontrast"><figcaption>Kontrast</figcaption></figure>
-      <figure class="reveal"><img src="./bilder/theme-writer.webp" width="786" height="1240" loading="lazy" alt="Papier"><figcaption>Papier</figcaption></figure>
-      <figure class="reveal"><img src="./bilder/theme-space.webp" width="786" height="1240" loading="lazy" alt="Weltall"><figcaption>Weltall</figcaption></figure>
-      <figure class="reveal"><img src="./bilder/theme-forge.webp" width="786" height="1240" loading="lazy" alt="Schmiede"><figcaption>Schmiede</figcaption></figure>
+      <figure class="reveal"><img src="./bilder/theme-dark.webp" width="786" height="1240" loading="lazy" alt="cipher in der Darstellung Blaupause"><figcaption>Blaupause</figcaption></figure>
+      <figure class="reveal"><img src="./bilder/theme-light.webp" width="786" height="1240" loading="lazy" alt="cipher in der Darstellung Weißpause"><figcaption>Weißpause</figcaption></figure>
+      <figure class="reveal"><img src="./bilder/theme-contrast.webp" width="786" height="1240" loading="lazy" alt="cipher in der Darstellung Kontrast"><figcaption>Kontrast</figcaption></figure>
+      <figure class="reveal"><img src="./bilder/theme-writer.webp" width="786" height="1240" loading="lazy" alt="cipher in der Darstellung Papier"><figcaption>Papier</figcaption></figure>
+      <figure class="reveal"><img src="./bilder/theme-space.webp" width="786" height="1240" loading="lazy" alt="cipher in der Darstellung Weltall"><figcaption>Weltall</figcaption></figure>
+      <figure class="reveal"><img src="./bilder/theme-forge.webp" width="786" height="1240" loading="lazy" alt="cipher in der Darstellung Schmiede"><figcaption>Schmiede</figcaption></figure>
     </div>
   </section>
 
@@ -327,11 +407,44 @@
     </div>
   </section>
 
+  <!-- ------------------------------------------------------ Kurz gefragt -->
+  <section class="faq" aria-labelledby="faqTitle">
+    <h2 class="section-title reveal" id="faqTitle">Kurz gefragt</h2>
+    <p class="section-lead reveal">Was beim Fördern in Forge of Empires immer wieder gefragt wird — und was cipher dazu beiträgt.</p>
+
+    <div class="faq-list">
+      <div class="qa reveal">
+        <h3>Was rechnet cipher genau?</h3>
+        <p>Du wählst ein Legendäres Bauwerk, die Stufe und deinen Arche-Faktor. cipher zeigt dann für die Mäzenplätze P1 bis P5 die Belohnung, die Einzahlung samt Arche-Bonus und was du vorab einzahlen musst, damit dir niemand einen Platz wegschnappt — dazu Eigenanteil und Fremdkapital in FP.</p>
+      </div>
+      <div class="qa reveal">
+        <h3>Wie wirkt der Arche-Faktor, etwa 1,9?</h3>
+        <p>Der Faktor sagt, wie viel ein Förderer für einen Platz einzahlt. P1 der Arche auf Stufe 80 bringt 1.375 FP; mit Faktor 1,9 sind dafür 2.613 FP fällig. Einstellen lässt sich alles von 1,80 bis 2,00 — auch für jeden Platz einzeln.</p>
+      </div>
+      <div class="qa reveal">
+        <h3>Was heißt „Mäzenplätze sichern“?</h3>
+        <p>Du zahlst vorab so viele FP ein, dass der Rest der Stufe nicht mehr reicht, um einen Platz zu überbieten. Wie viel das je Platz ist, steht in der letzten Spalte des Förderplans — als Schritt oder als laufende Summe.</p>
+      </div>
+      <div class="qa reveal">
+        <h3>Welche Bauwerke kennt cipher?</h3>
+        <p>Alle 49 Legendären Bauwerke aus 24 Zeitaltern — die Arche ebenso wie das Observatorium oder die Arktische Orangerie. Fehlen dem Datensatz für eine sehr hohe Stufe die Kosten, trägst du die Zahlen aus dem Förderfenster selbst ein.</p>
+      </div>
+      <div class="qa reveal">
+        <h3>Kostet cipher etwas, brauche ich ein Konto?</h3>
+        <p>Nein. cipher ist kostenlos, ohne Konto und ohne Werbung. Gerechnet wird im Browser, am Telefon wie am Rechner; auf Wunsch lässt er sich als App auf den Startbildschirm legen.</p>
+      </div>
+      <div class="qa reveal">
+        <h3>Ist cipher ein offizielles Tool?</h3>
+        <p>Nein. cipher ist ein inoffizielles Fan-Projekt ohne Verbindung zu InnoGames. Die Werte stammen aus dem Forge of Empires Wiki — im Zweifel gilt, was das Spiel anzeigt.</p>
+      </div>
+    </div>
+  </section>
+
   <section class="closing reveal">
     <svg class="closing-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.6 2.8l7.6 7.6-2.8 2.8-7.6-7.6z"/><path d="M11.4 8.1l4.5 4.5-9.2 9.2a1.6 1.6 0 0 1-2.3 0l-2.2-2.2a1.6 1.6 0 0 1 0-2.3z"/></svg>
     <h2>Probier ihn einfach aus</h2>
     <p>cipher ist ein Hobby-Projekt und wird nie fertig sein. Wenn dir etwas fehlt oder etwas nicht stimmt, ist das eine Nachricht wert — so ist er bisher gewachsen. Und wer genau hinschaut, findet vielleicht eine der drei kleinen Überraschungen.</p>
-    <a class="btn big" href="./index.html">Zu cipher</a>
+    <a class="btn big" href="./">Zu cipher</a>
   </section>
 
 </main>

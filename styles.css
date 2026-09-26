@@ -1080,6 +1080,24 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 .coll-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px }
 .coll-copy { flex: 1 }
 
+/* ------------------------------------------------------- Zwischenstopp */
+
+/* Unter dem Rechner steht seit der Erklaerung viel Text. Ein kraeftiger
+   Wisch auf dem Telefon soll nicht am Rechner vorbei in die Fragen
+   schiessen, sondern am Ende des Foerderchats (Kopierknoepfe, Sammlung)
+   anhalten. Von dort geht es mit einem zweiten Wisch weiter.
+
+   proximity statt mandatory: gerastet wird nur in der Naehe eines Punkts,
+   alles dazwischen bleibt frei erreichbar. scroll-snap-stop: always sorgt
+   dafuer, dass ein Wisch diesen einen Punkt nicht ueberspringt. Oben und
+   am Anfang der Erklaerung liegen weitere Punkte, damit die Seite dort
+   sauber zur Ruhe kommt. scroll-padding laesst unten etwas Luft, damit die
+   Knoepfe nicht an der Kante kleben. */
+html { scroll-snap-type: y proximity; scroll-padding: 0 0 14px }
+body { scroll-snap-align: start }
+#chatPanel { scroll-snap-align: end; scroll-snap-stop: always }
+.info { scroll-snap-align: start; scroll-margin-top: 12px }
+
 /* ----------------------------------------------------------------- Fuss */
 
 .foot { color: var(--dim); font-size: .85rem; margin-top: 20px }
@@ -1097,6 +1115,53 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 .foot-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px }
 .foot-links a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--field-border) }
 .foot-links a:hover { border-bottom-color: var(--gold); color: var(--gold) }
+
+/* ------------------------------------------------ Erklaerung und Fragen */
+
+/* Zum Nachlesen unter dem Rechner. Die Kaesten sind .panel, stehen aber in
+   einem eigenen Abschnitt: main > .panel meint nur die drei Rechnerteile. */
+.info { margin-top: 26px }
+
+/* Trennlinie mit Beschriftung: ab hier Lesestoff, nicht mehr Rechner. */
+.info-sep {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 14px;
+  color: var(--dim); font-size: .85rem; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase;
+}
+.info-sep::before, .info-sep::after {
+  content: ""; flex: 1 1 0;
+  border-top: 1.5px dashed var(--field-border);
+}
+.info .panel { line-height: 1.45 }
+.info p { margin: 0 0 10px }
+.info-steps { margin: 0; padding-left: 1.4em }
+.info-steps li + li { margin-top: 6px }
+
+/* Fragen als Aufklapper, Pfeil wie bei "Faktor oder FP je Platz". */
+.faq details { border-top: 1.5px solid var(--field-border) }
+.faq details:last-child { border-bottom: 1.5px solid var(--field-border) }
+:root[data-theme="contrast"] .faq details { border-width: 2px 0 0 }
+:root[data-theme="contrast"] .faq details:last-child { border-bottom-width: 2px }
+.faq summary {
+  display: flex; align-items: baseline; gap: 9px;
+  padding: 9px 0; font-weight: 600;
+  cursor: pointer; list-style: none;
+}
+.faq summary::-webkit-details-marker { display: none }
+.faq summary::before {
+  content: ""; flex: 0 0 auto;
+  width: 0; height: 0;
+  border: 5px solid transparent;
+  border-left-color: var(--gold);
+  transform: translateY(-1px);
+  transition: transform .15s ease;
+}
+.faq details[open] summary::before { transform: rotate(90deg) translateX(-2px) }
+.faq summary:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px }
+.faq details p { margin: 0 0 12px 19px; color: var(--dim) }
+:root[data-theme="contrast"] .faq details p { color: var(--ink) }
+@media (prefers-reduced-motion: reduce) { .faq summary::before { transition: none } }
 
 /* ----------------------------------------------------- Rechtliche Seiten */
 
@@ -1269,6 +1334,11 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 
   .foot { margin-top: 8px }
   .site-foot { max-width: 1000px }
+
+  /* Erklaerung und Fragen fallen quer weg: Hoehe ist hier das knappe Gut,
+     und landscape.spec.js haelt die Seite unter festen Bildschirmzahlen.
+     Hochkant und am Rechner stehen sie wie gewohnt da. */
+  .info { display: none }
 }
 
 /* ------------------------------------------------------------ Feinschliff */

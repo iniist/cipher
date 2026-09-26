@@ -1,7 +1,8 @@
 {
-  "name": "cipher — Förder-Dashboard",
+  "name": "cipher — Förderrechner für Forge of Empires",
   "short_name": "cipher",
-  "description": "Mäzen-Plätze sicher belegen, FP-Einsatz planen und die Zeile für den Förderchat gleich mitnehmen. Inoffizielles Fan-Tool für Forge of Empires.",
+  "description": "Förderrechner für Legendäre Bauwerke in Forge of Empires: Mäzenplätze sichern, Arche-Faktor einrechnen, FP-Einsatz planen und die Zeile für den Förderchat gleich mitnehmen. Inoffizielles Fan-Tool.",
+  "categories": ["games", "utilities"],
   "lang": "de",
   "dir": "ltr",
   "id": "/",

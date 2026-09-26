@@ -5,22 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark light">
-<meta name="description" content="cipher — Förder-Dashboard für Legendäre Bauwerke: Mäzen-Plätze sicher belegen, FP-Einsatz planen, Text für den Förderchat erzeugen. Inoffizielles Fan-Tool, läuft komplett im Browser.">
-<title>cipher — Das Förder-Dashboard für Mäzen-Plätze &amp; FP-Einsatz</title>
+<meta name="description" content="Kostenloser Förderrechner für Forge of Empires: Mäzen-Plätze P1–P5 sichern, mit Arche 1,9 rechnen, Chat-Zeile kopieren. Ohne Konto. Inoffizielles Fan-Tool.">
+<title>cipher — Förderrechner für FoE: LG fördern mit Arche 1,9</title>
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#1f4a7a">
 
-<!-- Vorschau beim Teilen, etwa im Gildenchat. Bewusst ohne og:image: ein
-     Verweis auf eine fehlende Bilddatei erzeugt eine kaputte Karte, eine
-     Textkarte ist ohne Bild vollständig. -->
-<link rel="canonical" href="https://cipher-calc.netlify.app/">
+<!-- Vorschau beim Teilen, etwa im Gildenchat. Das Bild liegt in bilder/
+     und wird absolut verlinkt — Vorschau-Dienste lösen relative Pfade
+     nicht auf. test/e2e/seo-rechner.spec.js prüft, dass die Datei da ist
+     und die angegebene Größe hat; sonst entstünde eine kaputte Karte. -->
+<link rel="canonical" href="https://foe-foerderrechner.com/">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://cipher-calc.netlify.app/">
+<meta property="og:url" content="https://foe-foerderrechner.com/">
 <meta property="og:site_name" content="cipher">
 <meta property="og:locale" content="de_DE">
-<meta property="og:title" content="cipher — Förder-Dashboard für Legendäre Bauwerke">
-<meta property="og:description" content="Mäzen-Plätze sicher belegen, FP-Einsatz planen und die Zeile für den Förderchat gleich mitnehmen. Rechnet im Browser, ohne Konto und ohne Tracking. Inoffizielles Fan-Tool.">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="cipher — Förder-Dashboard für Legendäre Bauwerke">
-<meta name="twitter:description" content="Mäzen-Plätze sicher belegen, FP-Einsatz planen und die Zeile für den Förderchat gleich mitnehmen. Rechnet im Browser, ohne Konto und ohne Tracking.">
+<meta property="og:title" content="cipher — Förderrechner für Legendäre Bauwerke in Forge of Empires">
+<meta property="og:description" content="Mäzen-Plätze sichern, mit Arche 1,9 rechnen und die Zeile für den Förderchat gleich mitnehmen. Kostenlos, ohne Konto, rechnet im Browser. Inoffizielles Fan-Tool.">
+<meta property="og:image" content="https://foe-foerderrechner.com/bilder/og-cipher.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="cipher, der Förderrechner für Legendäre Bauwerke: Förderplan mit den Mäzen-Plätzen P1 bis P5">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="cipher — Förderrechner für Legendäre Bauwerke in Forge of Empires">
+<meta name="twitter:description" content="Mäzen-Plätze sichern, mit Arche 1,9 rechnen und die Zeile für den Förderchat gleich mitnehmen. Kostenlos, ohne Konto, rechnet im Browser.">
+<meta name="twitter:image" content="https://foe-foerderrechner.com/bilder/og-cipher.png">
+<meta name="twitter:image:alt" content="cipher, der Förderrechner für Legendäre Bauwerke: Förderplan mit den Mäzen-Plätzen P1 bis P5">
 
 <!-- Favicon als Daten-URI: keine zusätzliche Anfrage, kein externer Host.
      favicon.ico und apple-touch-icon.png liegen trotzdem im Wurzelverzeichnis:
@@ -43,13 +53,130 @@
 
 <link rel="stylesheet" href="./fonts.css">
 <link rel="stylesheet" href="./styles.css">
+
+<!-- Strukturierte Daten für Suchmaschinen. Ein Datenblock wird nicht
+     ausgeführt, der CSP greift hier nicht. Die FAQ steht wortgleich unten im
+     Abschnitt „Häufige Fragen“ — ändert sich dort etwas, hier nachziehen
+     (test/e2e/seo-rechner.spec.js vergleicht beides). -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://foe-foerderrechner.com/#website",
+      "url": "https://foe-foerderrechner.com/",
+      "name": "cipher",
+      "description": "Förderrechner für Legendäre Bauwerke in Forge of Empires",
+      "inLanguage": "de"
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://foe-foerderrechner.com/#app",
+      "url": "https://foe-foerderrechner.com/",
+      "name": "cipher",
+      "alternateName": "cipher Förderrechner",
+      "description": "Förderrechner für Legendäre Bauwerke in Forge of Empires: Mäzen-Plätze P1 bis P5 sichern, mit Arche-Faktor 1,9 rechnen, Eigenanteil und Fremdkapital aufteilen und die Zeile für den Förderchat kopieren. Inoffizielles Fan-Projekt ohne Verbindung zur InnoGames GmbH.",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Web",
+      "browserRequirements": "JavaScript",
+      "inLanguage": "de",
+      "isAccessibleForFree": true,
+      "image": "https://foe-foerderrechner.com/bilder/og-cipher.png",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "isPartOf": {
+        "@id": "https://foe-foerderrechner.com/#website"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://foe-foerderrechner.com/#faq",
+      "url": "https://foe-foerderrechner.com/",
+      "inLanguage": "de",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Was bedeutet Arche 1,9?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Die Arche ist ein Legendäres Bauwerk, das die Belohnungen deiner Förderungen erhöht. Daher kommt die Faustregel der Fördergruppen: Wer einen Platz nimmt, zahlt das 1,9-Fache der Belohnung ein — bei 100 FP Belohnung also 190 FP. Mit einer Arche von +90 % bekommt er etwa so viele FP zurück, wie er eingezahlt hat, dazu Medaillen und Blaupausen. cipher ist auf 1,90 voreingestellt; du kannst jeden Wert zwischen 1,80 und 2,00 wählen."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Wie viele FP muss ich einzahlen, um einen Platz zu sichern?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "So viele, dass danach höchstens noch das Doppelte dessen offen ist, was der Förderer für den Platz einzahlt. Nach seiner Einzahlung bleibt dann höchstens sein Betrag übrig: Ein Nachzügler kann gleichziehen, aber nicht überbieten, und bei Gleichstand behält der frühere Förderer den Platz. cipher rechnet das für jeden Platz aus und zeigt es in der Spalte „Sichern“, auf Tipp auch als laufende Summe."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Wie rechnet cipher die Belohnungen der Mäzen-Plätze?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Die Gesamt-FP der Stufe und die Belohnung für P1 stammen aus dem Datensatz, der auf dem Forge of Empires Wiki beruht. P2 bis P5 leitet cipher daraus ab: P2 ist die Hälfte von P1, P3 ein Drittel von P2, P4 ein Viertel von P3 und P5 ein Fünftel von P4, jeweils auf 5 gerundet. Fehlt ein Wert oder ist er nur geschätzt, bittet cipher dich, die Zahl aus dem Förderfenster einzutragen."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Was sind Eigenanteil und Fremdkapital?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Fremdkapital ist, was die Förderer für ihre Plätze einzahlen. Eigenanteil ist alles, was du selbst beisteuerst: die FP zum Sichern der Plätze und der Rest, der nach allen Plätzen noch fehlt. Zusammen ergeben beide die Gesamtkosten der Stufe. Plätze, die du nicht anbietest, zählen zum Eigenanteil."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Was schreibe ich in den Förderchat?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "cipher baut die Zeile aus deinem Namen, dem Bauwerk und den angebotenen Plätzen, etwa „Dani Arche P5 P4 P3“, auf Wunsch mit den FP je Platz in Klammern. Statt des vollen Namens kann ein Kürzel stehen. Jede kopierte Zeile landet zusätzlich in einer Sammlung, so gibst du mehrere Bauwerke auf einmal in den Chat."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Geht das auch mit verschiedenen Faktoren je Platz?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ja. Unter „Faktor oder FP je Platz“ bekommt jeder Platz auf Wunsch einen eigenen Arche-Faktor oder einen festen FP-Betrag, etwa wenn ein Förderer mit anderer Arche einzahlt oder einen Platz schon genommen hat. Ist ein Platz schon vergeben, schaltest du sein Häkchen per Tipp auf den Strich: Er bleibt in der Rechnung, fällt aber aus der Chat-Zeile."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Welche Legendären Bauwerke kennt cipher?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Knapp 50 Legendäre Bauwerke aus allen Zeitaltern von der Bronzezeit bis in den Weltraum, dazu Observatorium, Relikttempel und Orakel von Delphi. Du findest sie über die Suche nach Name, Kürzel oder Zeitalter. Die Daten stammen aus dem Forge of Empires Wiki; im Zweifel gilt, was das Spiel anzeigt."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Kostet cipher etwas, und brauche ich ein Konto?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nein. cipher ist kostenlos, braucht keine Anmeldung und rechnet komplett in deinem Browser; es wird nichts an einen Server geschickt. Deine Einstellungen und Gemerktes bleiben auf deinem Gerät. cipher ist ein inoffizielles Fan-Projekt und steht in keiner Verbindung zur InnoGames GmbH."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 <main>
 
   <header>
     <div>
-      <h1><button type="button" class="wordmark" id="wordmark">cipher</button></h1>
+      <!-- Die Wortmarke bleibt ein Knopf (Easter Egg). Der Zusatz sagt
+           Screenreadern und Suchmaschinen, was die Seite ist; zu sehen ist
+           er im Untertitel darunter und im Abschnitt unten. -->
+      <h1><button type="button" class="wordmark" id="wordmark">cipher</button><span class="sr-only"> — Förderrechner für Legendäre Bauwerke in Forge of Empires</span></h1>
       <p class="sub">Das Förder-Dashboard für Mäzen-Plätze &amp; FP-Einsatz.</p>
     </div>
     <div class="modes" role="group" aria-label="Darstellung">
@@ -217,7 +344,8 @@
     </div>
   </section>
 
-  <section class="panel">
+  <!-- id="chatPanel": Zwischenstopp beim Scrollen, siehe styles.css. -->
+  <section class="panel" id="chatPanel">
     <!-- Derselbe Schalter wie beim Bauwerk, ein zweites Mal: hier sieht man,
          was er bewirkt, und hier wird kopiert. Beide zeigen denselben Stand. -->
     <div class="chat-head">
@@ -255,6 +383,64 @@
     <p>Daten: <a href="https://forgeofempires.fandom.com/de/wiki/" target="_blank" rel="noopener noreferrer">Forge of Empires Wiki</a> (Fandom, <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.de" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a>), Stand <span id="dataDate"></span>. Kosten per Formel, P2–P5 aus P1 berechnet.</p>
   </div>
 
+  <!-- Erklärung und Fragen zum Nachlesen. Für die Bedienung braucht es sie
+       nicht, darum stehen sie unter dem Rechner und die Antworten bleiben
+       zugeklappt. Der Text ist zugleich das, was Suchmaschinen von der Seite
+       lesen: nur behaupten, was cipher wirklich tut. Die Fragen und Antworten
+       stehen wortgleich im JSON-LD im <head> — test/e2e/seo-rechner.spec.js
+       vergleicht beides. -->
+  <section class="info" aria-labelledby="howTitle">
+    <p class="info-sep">Wissenswertes zum Fördern</p>
+    <div class="panel">
+      <h2 id="howTitle">So funktioniert der Förderrechner</h2>
+      <p>cipher hilft dir, ein Legendäres Bauwerk (LG) in Forge of Empires zu fördern, ohne dass dir jemand die Mäzen-Plätze wegschnappt. Du stellst ein, was im Förderfenster steht, und liest ab, was du vorab einzahlen musst.</p>
+      <ol class="info-steps">
+        <li><b>Bauwerk und Stufe wählen.</b> Gesamt-FP und die Belohnungen für P1 bis P5 kommen aus dem Datensatz.</li>
+        <li><b>Arche-Faktor einstellen.</b> Voreingestellt ist 1,90, die übliche Arche 1,9. Möglich sind Werte von 1,80 bis 2,00.</li>
+        <li><b>Plan ablesen.</b> Je Platz steht da, was ein Förderer einzahlt und was du vorher sichern musst; darunter die Aufteilung in Eigenanteil und Fremdkapital.</li>
+        <li><b>Chat-Zeile kopieren.</b> Ein Tipp, und die Plätze stehen fertig für den Förderchat bereit.</li>
+      </ol>
+    </div>
+
+    <div class="panel">
+      <h2 id="faqTitle">Häufige Fragen</h2>
+      <div class="faq" id="faq">
+        <details>
+          <summary>Was bedeutet Arche 1,9?</summary>
+          <p>Die Arche ist ein Legendäres Bauwerk, das die Belohnungen deiner Förderungen erhöht. Daher kommt die Faustregel der Fördergruppen: Wer einen Platz nimmt, zahlt das 1,9-Fache der Belohnung ein — bei 100 FP Belohnung also 190 FP. Mit einer Arche von +90 % bekommt er etwa so viele FP zurück, wie er eingezahlt hat, dazu Medaillen und Blaupausen. cipher ist auf 1,90 voreingestellt; du kannst jeden Wert zwischen 1,80 und 2,00 wählen.</p>
+        </details>
+        <details>
+          <summary>Wie viele FP muss ich einzahlen, um einen Platz zu sichern?</summary>
+          <p>So viele, dass danach höchstens noch das Doppelte dessen offen ist, was der Förderer für den Platz einzahlt. Nach seiner Einzahlung bleibt dann höchstens sein Betrag übrig: Ein Nachzügler kann gleichziehen, aber nicht überbieten, und bei Gleichstand behält der frühere Förderer den Platz. cipher rechnet das für jeden Platz aus und zeigt es in der Spalte „Sichern“, auf Tipp auch als laufende Summe.</p>
+        </details>
+        <details>
+          <summary>Wie rechnet cipher die Belohnungen der Mäzen-Plätze?</summary>
+          <p>Die Gesamt-FP der Stufe und die Belohnung für P1 stammen aus dem Datensatz, der auf dem Forge of Empires Wiki beruht. P2 bis P5 leitet cipher daraus ab: P2 ist die Hälfte von P1, P3 ein Drittel von P2, P4 ein Viertel von P3 und P5 ein Fünftel von P4, jeweils auf 5 gerundet. Fehlt ein Wert oder ist er nur geschätzt, bittet cipher dich, die Zahl aus dem Förderfenster einzutragen.</p>
+        </details>
+        <details>
+          <summary>Was sind Eigenanteil und Fremdkapital?</summary>
+          <p>Fremdkapital ist, was die Förderer für ihre Plätze einzahlen. Eigenanteil ist alles, was du selbst beisteuerst: die FP zum Sichern der Plätze und der Rest, der nach allen Plätzen noch fehlt. Zusammen ergeben beide die Gesamtkosten der Stufe. Plätze, die du nicht anbietest, zählen zum Eigenanteil.</p>
+        </details>
+        <details>
+          <summary>Was schreibe ich in den Förderchat?</summary>
+          <p>cipher baut die Zeile aus deinem Namen, dem Bauwerk und den angebotenen Plätzen, etwa „Dani Arche P5 P4 P3“, auf Wunsch mit den FP je Platz in Klammern. Statt des vollen Namens kann ein Kürzel stehen. Jede kopierte Zeile landet zusätzlich in einer Sammlung, so gibst du mehrere Bauwerke auf einmal in den Chat.</p>
+        </details>
+        <details>
+          <summary>Geht das auch mit verschiedenen Faktoren je Platz?</summary>
+          <p>Ja. Unter „Faktor oder FP je Platz“ bekommt jeder Platz auf Wunsch einen eigenen Arche-Faktor oder einen festen FP-Betrag, etwa wenn ein Förderer mit anderer Arche einzahlt oder einen Platz schon genommen hat. Ist ein Platz schon vergeben, schaltest du sein Häkchen per Tipp auf den Strich: Er bleibt in der Rechnung, fällt aber aus der Chat-Zeile.</p>
+        </details>
+        <details>
+          <summary>Welche Legendären Bauwerke kennt cipher?</summary>
+          <p>Knapp 50 Legendäre Bauwerke aus allen Zeitaltern von der Bronzezeit bis in den Weltraum, dazu Observatorium, Relikttempel und Orakel von Delphi. Du findest sie über die Suche nach Name, Kürzel oder Zeitalter. Die Daten stammen aus dem Forge of Empires Wiki; im Zweifel gilt, was das Spiel anzeigt.</p>
+        </details>
+        <details>
+          <summary>Kostet cipher etwas, und brauche ich ein Konto?</summary>
+          <p>Nein. cipher ist kostenlos, braucht keine Anmeldung und rechnet komplett in deinem Browser; es wird nichts an einen Server geschickt. Deine Einstellungen und Gemerktes bleiben auf deinem Gerät. cipher ist ein inoffizielles Fan-Projekt und steht in keiner Verbindung zur InnoGames GmbH.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <!-- Die Bauwerksauswahl. Ein echtes <dialog> mit showModal(): der Browser
@@ -288,7 +474,9 @@
   <hr>
   <p><strong>Ohne Gewähr.</strong> cipher rechnet nach bestem Wissen, kann sich aber irren — durch veraltete Daten, Spielbalance-Änderungen oder schlicht einen Fehler. Alle Angaben sind unverbindlich, eine Haftung für Richtigkeit, Vollständigkeit und Aktualität ist ausgeschlossen. Im Zweifel gilt immer das, was das Spiel anzeigt.</p>
   <p>cipher ist ein inoffizielles Fan-Projekt und steht in keiner Verbindung zur InnoGames GmbH; es wird von ihr weder betrieben, unterstützt noch geprüft. „Forge of Empires“ sowie alle zugehörigen Bezeichnungen und Logos sind Marken der InnoGames GmbH. Ihre Nennung dient allein der Beschreibung, wofür dieses Werkzeug gedacht ist.</p>
-  <nav class="foot-links" aria-label="Rechtliches">
+  <!-- Der einzige Verweis auf den Rundgang: ganz unten, nicht im Weg. -->
+  <nav class="foot-links" aria-label="Weiteres">
+    <a href="/rundgang">Rundgang durch den Förderrechner</a>
     <a href="./impressum.html">Impressum</a>
     <a href="./datenschutz.html">Datenschutz</a>
     <a href="https://github.com/iniist/cipher" target="_blank" rel="noopener noreferrer">Quelltext</a>

@@ -522,7 +522,7 @@ index.html        Die Anwendung
 impressum.html    Impressum
 datenschutz.html  Datenschutzerklärung
 404.html          Fehlerseite
-rundgang.html     Vorstellungsseite zum Teilen (nicht aus der App verlinkt)
+rundgang.html     Vorstellungsseite zum Teilen (aus der App nur im Footer verlinkt)
 rundgang.css      Darstellung des Rundgangs, fest im Schmiede-Look
 rundgang.js       Bewegung des Rundgangs: Einblenden, Funken, Wechsel
 bilder/           Bildschirmfotos für den Rundgang (WebP, generiert)
@@ -549,8 +549,8 @@ test/             Einheitentests (node:test) und Browsertests (Playwright)
 Einstellungen mit Bildschirmfotos, im Schmiede-Look und leicht animiert —
 Hammer und Amboss, aufsteigende Glut, Einblenden beim Scrollen, der
 Förderplan wechselt von selbst zwischen „Sichern“ und „Summe“. Die Seite ist
-zum Teilen gedacht und wird aus dem Rechner bewusst **nicht** verlinkt; ein
-Browsertest hält das fest.
+zum Teilen gedacht; der Rechner verlinkt sie nur einmal, ganz unten im
+Footer — ein Browsertest hält das fest.
 
 Sie hält dieselben Regeln ein wie der Rest: keine fremden Anfragen, kein
 Inline-Stil, kein Speicher. Ohne JavaScript und bei
@@ -593,7 +593,7 @@ nackte URL.
 Bewusst **ohne Bild**: ein `og:image`, das auf eine fehlende Datei zeigt,
 erzeugt eine kaputte Karte — eine reine Textkarte ist dagegen vollständig.
 
-`canonical` und `og:url` zeigen auf <https://cipher-calc.netlify.app/>. Die
+`canonical` und `og:url` zeigen auf <https://foe-foerderrechner.com/>. Die
 Rechtsseiten bekommen bewusst kein `canonical`: sie stehen auf `noindex`, und
 beides nebeneinander wäre ein widersprüchliches Signal. Bei einem Umzug auf
 eine eigene Domain sind beide Angaben in `index.html` anzupassen — ein Test
