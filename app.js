@@ -1493,7 +1493,9 @@
 
     $("rows").innerHTML = plan.rows.map(function (row, index) {
       var changed = previous.length && previous[index] !== row.contribution;
-      if (row.offered) running += row.secure;
+      // Vergebene Plaetze zaehlen mit: ihre Absicherung ist eingezahlt, und
+      // die Summe soll der Stand sein, den das Spiel als eigene FP zeigt.
+      if (row.offered || row.taken) running += row.secure;
       var secureCell = secureText(row, running);
 
       return '<tr class="' + (row.offered ? "" : row.taken ? "taken" : "off") + '">' +
@@ -1617,9 +1619,22 @@
     $("lumpText").innerHTML = plan.remainder > 0
       ? "Damit sind " + range + " sicher, wenn sie der Reihe nach belegt werden; einzahlen also Platz für Platz, " +
         "nicht die ganze Summe vorweg. Die letzten <b>" +
-        formatNumber(plan.remainder) + " FP</b> zahlst du danach selbst ein und levelst damit."
+        formatNumber(plan.remainder) + " FP</b> zahlst du danach selbst ein und levelst damit." +
+        alreadyIn(plan)
       : "Achtung: Auf dieser Stufe schließt " + labels[labels.length - 1] +
         " die Stufe ab, du kannst nicht selbst leveln.";
+  }
+
+  /**
+   * Der Satz ueber die Absicherung vergebener Plaetze. Der Kasten nennt nur,
+   * was noch aussteht; die Spalte "Summe" zaehlt das schon Eingezahlte mit.
+   * Ohne diesen Satz passen beide Zahlen scheinbar nicht zusammen.
+   */
+  function alreadyIn(plan) {
+    var paid = plan.upfront - plan.upfrontOpen;
+    if (paid <= 0) return "";
+    return " Für die vergebenen Plätze hast du schon <b>" + formatNumber(paid) +
+      " FP</b> eingezahlt, zusammen also " + formatNumber(plan.upfront) + " FP.";
   }
 
   function renderTotals(plan) {

@@ -156,6 +156,28 @@ test.describe("Vergebene Plaetze", () => {
     await expect(page.locator("#warn")).not.toContainText("zahlst du so selbst");
   });
 
+  test("die Summe zaehlt ihre Absicherung mit, der Schritt nicht", async ({ page }) => {
+    // Rueckmeldung: Waren P1 und P2 mit 51.474 FP abgesichert, muss bei P3
+    // die Summe 52.704 stehen, nicht die Differenz 1.230.
+    await page.fill("#level", "80");
+    await page.locator("#level").blur();
+    const sichern = (n) => page.locator("#rows tr").nth(n).locator("td.pre");
+    const zahl = async (n) => Number((await sichern(n).textContent()).replace(/\D/g, ""));
+
+    await page.click("#secureMode");
+    const summeP3 = await zahl(2);
+    await page.click("#secureMode");
+    const schrittP3 = await zahl(2);
+
+    await vergeben(page, 0);
+    await vergeben(page, 1);
+    await expect(sichern(2)).toHaveText("+" + schrittP3.toLocaleString("de-DE"));
+
+    await page.click("#secureMode");
+    await expect(sichern(2)).toHaveText(summeP3.toLocaleString("de-DE"));
+    await expect(page.locator("#lumpText")).toContainText("schon");
+  });
+
   test("ueberdauern das Neuladen", async ({ page }) => {
     await vergeben(page, 1);
     await page.reload();
