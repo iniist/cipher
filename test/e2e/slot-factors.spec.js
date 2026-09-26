@@ -7,6 +7,7 @@
  * Der obere Wert zeigt dadurch immer etwas Wahres und wird nie ausgegraut.
  */
 const { test, expect } = require("@playwright/test");
+const { haekchen, abwaehlen } = require("./plaetze");
 
 const row = (page, slot) => page.locator(`.slot-list li[data-slot="${slot}"]`);
 const value = (page, slot) => row(page, slot).locator("input");
@@ -315,11 +316,11 @@ test.describe("Speichern", () => {
     await value(page, 3).fill("1,83");
     await value(page, 3).blur();
 
-    await page.locator('#rows input[data-slot="3"]').uncheck();
+    await abwaehlen(page, 3);
     await expect(value(page, 3)).toHaveValue("1,83");
     await expect(state(page, 3)).toHaveText("eigen");
 
-    await page.locator('#rows input[data-slot="3"]').check();
+    await haekchen(page, 3).click();
     await expect(value(page, 3)).toHaveValue("1,83");
   });
 

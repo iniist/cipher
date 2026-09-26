@@ -7,6 +7,7 @@
  * dasteht — und die Beschriftung nennt sie, damit niemand die falsche liest.
  */
 const { test, expect } = require("@playwright/test");
+const { abwaehlen } = require("./plaetze");
 
 const kopf = (page) => page.locator("#secureModeLabel");
 const spalte = (page) => page.locator("#rows .pre");
@@ -50,7 +51,7 @@ test.describe("Umschalten", () => {
     // Die Haekchen liegen in der ersten Spalte; wer einen Platz abwaehlt,
     // will nicht nebenbei die Lesart wechseln.
     await frontenac(page);
-    await page.uncheck('#rows input[data-slot="2"]');
+    await abwaehlen(page, 2);
 
     await expect(kopf(page)).toHaveText("Sichern");
   });
@@ -136,7 +137,7 @@ test.describe('"Sicher" in beiden Lesarten', () => {
 test.describe("Nicht angebotene Plaetze", () => {
   test("bleiben in beiden Lesarten ein Strich", async ({ page }) => {
     await frontenac(page);
-    await page.uncheck('#rows input[data-slot="2"]');
+    await abwaehlen(page, 2);
     await expect(spalte(page).nth(2)).toHaveText("–");
 
     await page.click("#secureMode");
@@ -147,7 +148,7 @@ test.describe("Nicht angebotene Plaetze", () => {
     // Eine laufende Summe auf einem Platz, den du gar nicht ausschreibst,
     // waere eine Zahl, die du nie zahlst.
     await frontenac(page);
-    await page.uncheck('#rows input[data-slot="2"]');
+    await abwaehlen(page, 2);
     await page.click("#secureMode");
 
     const alle = await werte(page);

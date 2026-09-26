@@ -6,6 +6,7 @@
  * und nicht erst nach dem Deploy.
  */
 const { test, expect } = require("@playwright/test");
+const { abwaehlen } = require("./plaetze");
 const path = require("node:path");
 
 const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html", "/rundgang.html"];
@@ -93,7 +94,7 @@ test.describe("Content-Security-Policy im Betrieb", () => {
     await page.fill("#playerName", "Dani");
     await page.click("#favSave");
     await page.locator('#factorChips button[data-factor="200"]').click();
-    await page.locator('#rows input[data-slot="4"]').uncheck();
+    await abwaehlen(page, 4);
 
     await expect(page.locator("#rows tr")).toHaveCount(5);
     await expect(page.locator("#favList li")).toHaveCount(1);

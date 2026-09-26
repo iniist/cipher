@@ -296,6 +296,49 @@ test("buildPlan laesst abgewaehlte Plaetze aus", () => {
   assert.equal(plan.external + plan.ownShare, plan.total);
 });
 
+test("buildPlan: vergebene Plaetze bleiben Fremdkapital", () => {
+  // Der Fall aus der Rueckmeldung: P1 und P2 sind ausgeschrieben und belegt,
+  // jetzt geht es nur noch um P3 bis P5. Der Eigenanteil darf sich dadurch
+  // nicht aendern — gezahlt haben P1 und P2 ja andere.
+  const base = { total: 10000, p1: 1000, factor: 190, enabled: allOn };
+  const all = Calc.buildPlan(base);
+  const rest = Calc.buildPlan({ ...base, taken: [true, true, false, false, false] });
+
+  assert.deepEqual(rest.rows.map((row) => row.taken), [true, true, false, false, false]);
+  assert.deepEqual(rest.rows.map((row) => row.offered), [false, false, true, true, true]);
+  assert.equal(rest.external, all.external);
+  assert.equal(rest.ownShare, all.ownShare);
+  assert.equal(rest.upfront, all.upfront);
+  // Die Absicherung der offenen Plaetze rechnet ab dem Stand nach P2.
+  assert.deepEqual(rest.rows.map((row) => row.secure), all.rows.map((row) => row.secure));
+  assert.equal(rest.upfrontOpen, all.rows[2].secure + all.rows[3].secure + all.rows[4].secure);
+  assert.equal(all.upfrontOpen, all.upfront);
+});
+
+test("buildPlan: vergeben zaehlt nur fuer angebotene Plaetze", () => {
+  const plan = Calc.buildPlan({
+    total: 10000,
+    p1: 800,
+    factor: 190,
+    enabled: [false, true, true, true, true],
+    taken: [true, false, false, false, false]
+  });
+  assert.equal(plan.rows[0].taken, false);
+  assert.equal(plan.rows[0].offered, false);
+  assert.equal(plan.rows[0].secure, null);
+});
+
+test("chatLine laesst vergebene Plaetze weg", () => {
+  const plan = Calc.buildPlan({
+    total: 10000,
+    p1: 1000,
+    factor: 190,
+    enabled: allOn,
+    taken: [true, true, false, false, false]
+  });
+  assert.equal(Calc.chatLine(plan, "Dani", false), "Dani P5 P4 P3");
+});
+
 test("buildPlan bietet Plaetze ohne Belohnung nicht an", () => {
   // P5 faellt bei kleinem P1 auf 0 und ist damit kein Angebot wert
   const plan = Calc.buildPlan({ total: 5000, p1: 50, factor: 190, enabled: allOn });
