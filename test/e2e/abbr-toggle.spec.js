@@ -21,6 +21,31 @@ async function orangerie(page) {
   await page.fill("#playerName", "Dani");
 }
 
+test.describe("Der zweite Schalter am Foerderchat", () => {
+  const unten = (page) => page.locator("#useAbbrChat");
+
+  test("schaltet dasselbe und zeigt denselben Stand", async ({ page }) => {
+    await orangerie(page);
+    await expect(unten(page)).not.toBeChecked();
+
+    await unten(page).check();
+    await expect(chat(page)).toContainText("Dani AO");
+    await expect(schalter(page)).toBeChecked();
+    expect((await zustand(page)).useAbbr).toBe(true);
+
+    await schalter(page).uncheck();
+    await expect(unten(page)).not.toBeChecked();
+    await expect(chat(page)).toContainText("Dani Arktische Orangerie");
+  });
+
+  test("steht nach dem Neuladen wie der obere", async ({ page }) => {
+    await orangerie(page);
+    await schalter(page).check();
+    await page.reload();
+    await expect(unten(page)).toBeChecked();
+  });
+});
+
 test.describe("Der Schalter", () => {
   test("ist anfangs aus, und alles steht beim vollen Namen", async ({ page }) => {
     await orangerie(page);
@@ -66,7 +91,7 @@ test.describe("Der Schalter", () => {
   test("ist auch ueber seine Beschriftung erreichbar", async ({ page }) => {
     await orangerie(page);
     await expect(schalter(page)).toHaveAccessibleName(/Kürzel statt Namen verwenden/);
-    await page.locator(".abbr-toggle").click();
+    await page.locator(".sel-head .abbr-toggle").click();
     await expect(schalter(page)).toBeChecked();
   });
 });

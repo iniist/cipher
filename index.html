@@ -218,7 +218,12 @@
   </section>
 
   <section class="panel">
-    <h2>Förderchat</h2>
+    <!-- Derselbe Schalter wie beim Bauwerk, ein zweites Mal: hier sieht man,
+         was er bewirkt, und hier wird kopiert. Beide zeigen denselben Stand. -->
+    <div class="chat-head">
+      <h2>Förderchat</h2>
+      <label class="abbr-toggle" title="Im Chat „AO“ statt „Arktische Orangerie“ schreiben"><input type="checkbox" id="useAbbrChat"> Kürzel<span class="sr-only"> statt Namen verwenden</span></label>
+    </div>
     <div class="copy"><div class="t" id="chatPlain"></div><button type="button" data-copy="chatPlain">Nur Plätze kopieren</button></div>
     <div class="copy"><div class="t" id="chatPoints"></div><button type="button" data-copy="chatPoints">Mit FP kopieren</button></div>
 
