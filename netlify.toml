@@ -82,6 +82,20 @@
   [headers.values]
     X-Robots-Tag = "noindex"
 
+# ------------------------------------------------------ Eigene Domain
+
+# Netlify leitet die *.netlify.app-Adresse nicht von selbst auf die eigene
+# Domain um; ohne diese Regel liefe der Rechner unter zwei Adressen. 301 mit
+# Pfad: alte Links, Lesezeichen und Suchtreffer landen auf der neuen Domain,
+# und Google uebertraegt die Bewertung. Steht als erste Weiterleitung, damit
+# keine andere Regel vorher greift. Deploy-Vorschauen haben einen eigenen
+# Host (deploy-preview-…--cipher-calc.netlify.app) und bleiben unberuehrt.
+[[redirects]]
+  from = "https://cipher-calc.netlify.app/*"
+  to = "https://foe-foerderrechner.com/:splat"
+  status = 301
+  force = true
+
 # --------------------------------------- Auslieferung: was nicht mit muss
 
 # Testdateien und Werkzeuge gehören nicht auf die Website.
