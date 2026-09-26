@@ -453,6 +453,23 @@ Die Einzahlung ist `floor((Belohnung × Faktor + 50) / 100)`.
 Der ganze Rechenkern steckt in [`calc.js`](./calc.js) und besteht nur aus reinen
 Funktionen — ohne DOM, ohne Speicherzugriff, vollständig getestet.
 
+## Als App installieren
+
+cipher lässt sich auf dem Telefon als App installieren — in Chrome auf
+Android über das Menü „App installieren“ (bzw. „Zum Startbildschirm
+hinzufügen“), auf dem iPhone in Safari über „Teilen → Zum Home-Bildschirm“.
+Danach startet es mit eigenem Icon und ohne Adressleiste.
+
+Dafür sorgt `manifest.webmanifest` mit Name, Start-URL, `standalone` und
+Icons in 192 und 512 Pixeln, dazu einer „maskable“-Variante mit etwas mehr
+Rand, die Android rund oder eckig zuschneiden kann. Die Icons in `icons/`
+zeichnet `node tools/icons.js` aus demselben Pfad wie das Favicon.
+
+Einen Service Worker gibt es bewusst noch nicht: installierbar ist die
+Seite ohne ihn, und ein Cache im Browser bräuchte eine saubere
+Aktualisierung — sonst hängt jemand auf einer alten Version mit altem
+Datensatz fest. Offline braucht cipher deshalb vorerst Netz zum Start.
+
 ## Keine externen Anfragen
 
 cipher lädt **nichts** von Drittanbietern:
