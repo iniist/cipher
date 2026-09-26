@@ -1080,24 +1080,6 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 .coll-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px }
 .coll-copy { flex: 1 }
 
-/* ------------------------------------------------------- Zwischenstopp */
-
-/* Unter dem Rechner steht seit der Erklaerung viel Text. Ein kraeftiger
-   Wisch auf dem Telefon soll nicht am Rechner vorbei in die Fragen
-   schiessen, sondern am Ende des Foerderchats (Kopierknoepfe, Sammlung)
-   anhalten. Von dort geht es mit einem zweiten Wisch weiter.
-
-   proximity statt mandatory: gerastet wird nur in der Naehe eines Punkts,
-   alles dazwischen bleibt frei erreichbar. scroll-snap-stop: always sorgt
-   dafuer, dass ein Wisch diesen einen Punkt nicht ueberspringt. Oben und
-   am Anfang der Erklaerung liegen weitere Punkte, damit die Seite dort
-   sauber zur Ruhe kommt. scroll-padding laesst unten etwas Luft, damit die
-   Knoepfe nicht an der Kante kleben. */
-html { scroll-snap-type: y proximity; scroll-padding: 0 0 14px }
-body { scroll-snap-align: start }
-#chatPanel { scroll-snap-align: end; scroll-snap-stop: always }
-.info { scroll-snap-align: start; scroll-margin-top: 12px }
-
 /* ----------------------------------------------------------------- Fuss */
 
 .foot { color: var(--dim); font-size: .85rem; margin-top: 20px }
