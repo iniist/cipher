@@ -141,6 +141,14 @@ test.describe("Werkzeuge nicht öffentlich", () => {
     }
   });
 
+  test("die Netlify-Adresse leitet dauerhaft auf die eigene Domain um", async () => {
+    // Nur auf Netlify pruefbar; hier steht fest, dass die Regel da ist, als
+    // erste Weiterleitung, mit Pfad, 301 und force.
+    const toml = fs.readFileSync(path.resolve(__dirname, "../../netlify.toml"), "utf8");
+    const first = toml.slice(toml.indexOf("[[redirects]]"));
+    expect(first).toMatch(/^\[\[redirects\]\]\s+from = "https:\/\/cipher-calc\.netlify\.app\/\*"\s+to = "https:\/\/foe-foerderrechner\.com\/:splat"\s+status = 301\s+force = true/);
+  });
+
   test("der Importer läuft direkt als Datei und lädt nichts von Dritten", async ({ page }) => {
     // Ueber den Server ist er absichtlich nicht mehr erreichbar; zum
     // Arbeiten oeffnet man ihn als Datei. Das Wiki antwortet mit CORS fuer
