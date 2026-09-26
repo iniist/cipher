@@ -57,6 +57,13 @@ ein Tipp auf P1 heißt meist „ist weg“, nicht „zahl ich selbst“. Hat der
 Förderer eines vergebenen Platzes mit anderem Faktor gezahlt, trägst du
 seinen Betrag wie gewohnt im Block je Platz ein.
 
+„Nicht angeboten“ bleibt trotzdem nötig — nur eben unten. P5 und oft P4
+bringen wenig und kosten eine weitere Runde Ausschreiben; sie lässt man weg
+und levelt selbst. Oben ergibt es keinen Sinn: P1 oder P2 selbst zu zahlen,
+während P3 angeboten wird, macht niemand mit Absicht. Steht ein Platz auf
+„aus“, während ein kleinerer darunter noch im Spiel ist, sagt cipher das
+und zeigt den Weg zu „vergeben“.
+
 ### Schritt oder Summe
 
 Dieselbe Spalte, zwei verbreitete Lesarten. Manche wollen wissen, was

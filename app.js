@@ -1417,12 +1417,43 @@
     if (plan.anyOutOfOrder) {
       warnings.push("Ein Platz kostet mehr als ein besser bezahlter über ihm. Prüf die eingetragenen Beträge — so vergibt das Spiel die Plätze nicht.");
     }
+    var skipped = skippedAbove(plan);
+    if (skipped.length) {
+      warnings.push(joinSlots(skipped) + " zahlst du so selbst, obwohl darunter noch Plätze angeboten werden. Schon belegt? Dann aufs Häkchen tippen, bis ein Strich erscheint — „vergeben“.");
+    }
     $("warn").innerHTML = warnings.map(function (text) {
       return '<div class="warnline">' + escapeHtml(text) + "</div>";
     }).join("");
 
     maybeStamp(plan);
     persistState();
+  }
+
+  /**
+   * Plaetze, die aus sind, obwohl ein kleinerer darunter noch im Spiel ist.
+   *
+   * P5 oder P4 wegzulassen ist ueblich: sie bringen wenig und kosten eine
+   * weitere Runde Ausschreiben. P1 oder P2 selbst zu zahlen, waehrend P3
+   * angeboten wird, tut dagegen niemand mit Absicht — gemeint ist fast
+   * immer "schon belegt", und das heisst hier "vergeben".
+   * @returns {string[]} z. B. ["P1", "P2"]
+   */
+  function skippedAbove(plan) {
+    var skipped = [];
+    plan.rows.forEach(function (row, index) {
+      if (state.enabled[index] || row.reward <= 0) return;
+      var lowerInPlay = plan.rows.slice(index + 1).some(function (below) {
+        return below.offered || below.taken;
+      });
+      if (lowerInPlay) skipped.push("P" + row.slot);
+    });
+    return skipped;
+  }
+
+  /** "P1", "P1 und P2", "P1, P2 und P3". */
+  function joinSlots(labels) {
+    if (labels.length < 2) return labels.join("");
+    return labels.slice(0, -1).join(", ") + " und " + labels[labels.length - 1];
   }
 
   function renderEmpty() {

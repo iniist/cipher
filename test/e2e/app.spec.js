@@ -135,6 +135,27 @@ test.describe("Vergebene Plaetze", () => {
     await expect(page.locator("#chatPlain")).toHaveText(/P2 P1$/);
   });
 
+  test("ein oberer Platz auf aus bekommt einen Hinweis auf vergeben", async ({ page }) => {
+    await abwaehlen(page, 0);
+    await expect(page.locator("#warn")).toContainText("P1 zahlst du so selbst");
+
+    await abwaehlen(page, 1);
+    await expect(page.locator("#warn")).toContainText("P1 und P2 zahlst du so selbst");
+
+    // Ein Tipp weiter ist P1 wieder angeboten, noch einer: vergeben.
+    await vergeben(page, 0);
+    await vergeben(page, 0);
+    await vergeben(page, 1);
+    await vergeben(page, 1);
+    await expect(page.locator("#warn")).not.toContainText("zahlst du so selbst");
+  });
+
+  test("unten weglassen ist ueblich und bleibt ohne Hinweis", async ({ page }) => {
+    await abwaehlen(page, 4);
+    await abwaehlen(page, 3);
+    await expect(page.locator("#warn")).not.toContainText("zahlst du so selbst");
+  });
+
   test("ueberdauern das Neuladen", async ({ page }) => {
     await vergeben(page, 1);
     await page.reload();
