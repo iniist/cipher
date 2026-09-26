@@ -547,7 +547,7 @@ test/             Einheitentests (node:test) und Browsertests (Playwright)
 
 `rundgang.html` (live unter `/rundgang`) stellt cipher vor: alle
 Einstellungen mit Bildschirmfotos, im Schmiede-Look und leicht animiert —
-Hammer und Amboss, aufsteigende Glut, Einblenden beim Scrollen, der
+das Video im Kopf, aufsteigende Glut, Einblenden beim Scrollen, der
 Förderplan wechselt von selbst zwischen „Sichern“ und „Summe“. Die Seite ist
 zum Teilen gedacht; der Rechner verlinkt sie nur einmal, ganz unten im
 Footer — ein Browsertest hält das fest.
