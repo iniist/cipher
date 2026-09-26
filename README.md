@@ -50,7 +50,14 @@ längst eingezahlt sind. Das kam als Rückmeldung, und sie hatte recht.
 Darum „vergeben“: der Platz bleibt mit seiner Einzahlung in der Rechnung,
 Eigenanteil und Fremdkapital ändern sich nicht, die Spalte zeigt „vergeben“
 statt einer Zahl, und nur die Chatzeile lässt ihn weg. Der Kasten „vorab
-einzahlen“ nennt nur noch, was für die offenen Plätze aussteht.
+einzahlen“ nennt nur noch, was für die offenen Plätze aussteht, und sagt
+dazu, wie viel für die vergebenen schon drin ist.
+
+Die Spalte „Summe“ zählt die Absicherung vergebener Plätze dagegen mit —
+auch das kam als Rückmeldung. Sie soll der Stand deiner eigenen FP im
+Bauwerk sein, wie ihn das Spiel zeigt: Waren P1 und P2 mit 51.474 FP
+abgesichert, steht bei P3 52.704 und nicht die Differenz von 1.230. Die
+steht in der Lesart „Sichern“.
 
 Der Zustand kommt direkt nach „angeboten“, weil das der häufige Weg ist:
 ein Tipp auf P1 heißt meist „ist weg“, nicht „zahl ich selbst“. Hat der
@@ -82,7 +89,8 @@ umschalten statt entscheiden, und die Beschriftung sagt, was dasteht. Eine
 fünfte Spalte wäre der naheliegende Weg gewesen — bei 320 Pixeln ist die
 vorhandene aber 68 Pixel breit, eine weitere passt schlicht nicht.
 
-Die Summe endet beim Betrag aus dem Kasten darunter, nicht beim Eigenanteil:
+Die Summe endet beim Betrag aus dem Kasten darunter, nicht beim Eigenanteil
+(sind Plätze vergeben, bei dem Betrag plus dem, was davor schon drin ist):
 die letzten FP zahlst du ein, wenn alle Plätze vergeben sind.
 
 Der Hinweis dazu im Fußtext hat den Satz über den Zeitpunkt verdrängt
