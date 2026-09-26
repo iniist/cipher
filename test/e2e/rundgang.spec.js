@@ -1,13 +1,19 @@
 /**
  * Browsertests fuer die Vorstellungsseite (rundgang.html).
  *
- * Die Seite wird geteilt, nicht aus dem Rechner verlinkt — das halten die
- * Tests fest, ebenso dass sie ohne Bewegung und ohne Skript vollstaendig ist.
+ * Die Seite wird geteilt; der Rechner verlinkt sie nur im Footer — das halten
+ * die Tests fest, ebenso dass sie ohne Bewegung und ohne Skript vollstaendig ist.
  */
 const { test, expect } = require("@playwright/test");
 
-test("der Rechner verlinkt den Rundgang nicht", async ({ page }) => {
-  for (const path of ["/index.html", "/impressum.html", "/datenschutz.html"]) {
+test("der Rechner verlinkt den Rundgang nur einmal, ganz unten im Footer", async ({ page }) => {
+  await page.goto("/index.html");
+  const links = page.locator('a[href*="rundgang"]');
+  await expect(links).toHaveCount(1);
+  await expect(page.locator('.site-foot a[href*="rundgang"]')).toHaveCount(1);
+  const response = await page.request.get(new URL(await links.getAttribute("href"), page.url()).href);
+  expect(response.ok()).toBe(true);
+  for (const path of ["/impressum.html", "/datenschutz.html"]) {
     await page.goto(path);
     await expect(page.locator('a[href*="rundgang"]')).toHaveCount(0);
   }
@@ -15,8 +21,12 @@ test("der Rechner verlinkt den Rundgang nicht", async ({ page }) => {
 
 test("der Rundgang fuehrt zum Rechner und laedt alle Bilder", async ({ page }) => {
   await page.goto("/rundgang.html", { waitUntil: "networkidle" });
-  await expect(page.locator("h1")).toHaveText("cipher");
-  await expect(page.locator('a.btn[href="./index.html"]').first()).toBeVisible();
+  // Sichtbar steht nur die Wortmarke; der Zusatz ist fuer Screenreader
+  // und Suchmaschinen und darf die Optik nicht veraendern.
+  await expect(page.locator("h1")).toHaveText(/^cipher — Förderrechner/);
+  expect(await page.locator("h1 .sr-only").evaluate((element) => element.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
+  // Auf die Startadresse, nicht auf /index.html: dort steht das canonical.
+  await expect(page.locator('a.btn[href="./"]').first()).toBeVisible();
 
   // Lazy geladene Bilder durch Scrollen anstossen, dann jedes pruefen.
   const height = await page.evaluate(() => document.documentElement.scrollHeight);

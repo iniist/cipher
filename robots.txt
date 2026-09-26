@@ -7,3 +7,5 @@ Allow: /
 # ohnehin mit 404; das hier ist die zweite Sicherung.
 Disallow: /tools/
 Disallow: /test/
+
+Sitemap: https://foe-foerderrechner.com/sitemap.xml

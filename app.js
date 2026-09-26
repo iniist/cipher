@@ -2523,6 +2523,57 @@
     }, 500 + label.length * 70 + 100);
   }
 
+  // ----------------------------------------------------------- Zwischenstopp
+
+  /*
+   * Unter dem Rechner stehen Erklaerung und Fragen. Ein kraeftiger Wisch auf
+   * dem Telefon soll nicht daran vorbeischiessen, sondern am Ende des
+   * Foerderchats anhalten, bei den Kopierknoepfen. Scroll-Snap allein reicht
+   * nicht: mit "proximity" ueberspringt Chromium den Punkt trotz
+   * scroll-snap-stop, und "mandatory" machte lange Abschnitte unerreichbar.
+   *
+   * Darum: Hat der Finger oberhalb des Halts losgelassen und laeuft die Seite
+   * nur noch vom Schwung weiter, haelt sie dort an — einmal je Geste. Wer den
+   * Finger auf dem Glas hat, scrollt frei; wer am Halt neu ansetzt, auch.
+   * Mausrad, Tastatur und Sprungmarken bleiben unberuehrt. Keine Animation:
+   * der Schwung endet einfach frueher.
+   */
+  function watchStopover() {
+    var chat = $("chatPanel");
+    var info = document.querySelector(".info");
+    if (!chat || !info) return;
+
+    var touching = false;
+    var armed = false; // Geste begann oberhalb des Halts
+
+    /** Scrollposition, bei der das Chat-Panel unten buendig steht. */
+    function stopAt() {
+      // Quer ist die Erklaerung ausgeblendet — dann gibt es nichts zu bremsen.
+      if (!info.getClientRects().length) return -1;
+      var pad = parseFloat(window.getComputedStyle(document.documentElement).scrollPaddingBottom) || 0;
+      return Math.round(chat.getBoundingClientRect().bottom + window.scrollY + pad - window.innerHeight);
+    }
+
+    function release() { touching = false; }
+
+    window.addEventListener("touchstart", function () {
+      touching = true;
+      armed = window.scrollY < stopAt() - 8;
+    }, { passive: true });
+    window.addEventListener("touchend", release, { passive: true });
+    window.addEventListener("touchcancel", release, { passive: true });
+
+    window.addEventListener("scroll", function () {
+      if (!armed) return;
+      var stop = stopAt();
+      if (stop <= 0 || window.scrollY <= stop) return;
+      armed = false;
+      // Mit dem Finger ueber den Halt gezogen: gewollt, nicht bremsen.
+      if (touching) return;
+      window.scrollTo(0, stop);
+    }, { passive: true });
+  }
+
   // ------------------------------------------------------------------- Start
 
   buildBuildingSelect();
@@ -2539,6 +2590,7 @@
   bindEvents();
   watchKonami();
   watchWordmark();
+  watchStopover();
   renderCollection();
   render();
 })(window, document);

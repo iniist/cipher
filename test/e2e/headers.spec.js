@@ -8,6 +8,7 @@
 const { test, expect } = require("@playwright/test");
 const { abwaehlen } = require("./plaetze");
 const path = require("node:path");
+const fs = require("node:fs");
 
 const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html", "/rundgang.html"];
 
@@ -132,7 +133,8 @@ test.describe("Werkzeuge nicht öffentlich", () => {
   test("die Regeln tragen force — ohne das würden sie von den Dateien überdeckt", async ({ request }) => {
     // Der Text der Regel ist hier zweite Sicherung: der Testserver liest
     // dieselbe Datei, aber falls jemand den Server ändert, bleibt das hier.
-    const toml = await (await request.get("/netlify.toml")).text();
+    // Von der Platte gelesen — über den Server ist netlify.toml selbst 404.
+    const toml = fs.readFileSync(path.resolve(__dirname, "../../netlify.toml"), "utf8");
     for (const prefix of ["/tools/*", "/test/*"]) {
       const block = toml.slice(toml.indexOf(`from = "${prefix}"`));
       expect(block.slice(0, 120)).toMatch(/force = true/);
@@ -167,22 +169,32 @@ test.describe("Teilen-Vorschau", () => {
     expect(await meta('meta[property="og:locale"]')).toBe("de_DE");
     expect(await meta('meta[property="og:title"]')).toMatch(/^cipher —/);
     expect((await meta('meta[property="og:description"]')).length).toBeGreaterThan(60);
-    expect(await meta('meta[name="twitter:card"]')).toBe("summary");
+    expect(["summary", "summary_large_image"]).toContain(await meta('meta[name="twitter:card"]'));
   });
 
-  test("ohne Bilddatei wird auch kein Bild versprochen", async ({ page }) => {
-    await page.goto("/index.html");
-    // Ein og:image, das ins Leere zeigt, erzeugt eine kaputte Karte.
-    // Solange keine Datei da ist, darf die Angabe nicht existieren.
-    await expect(page.locator('meta[property="og:image"]')).toHaveCount(0);
-    await expect(page.locator('meta[name="twitter:image"]')).toHaveCount(0);
-    expect(await page.locator('meta[name="twitter:card"]').getAttribute("content")).not.toBe("summary_large_image");
+  test("ein versprochenes Bild liegt auch da", async ({ page, request }) => {
+    // Ein og:image, das ins Leere zeigt, erzeugt eine kaputte Karte. Jede
+    // Bildangabe muss darum auf eine Datei dieser Seite zeigen, und die
+    // grosse Karte gibt es nur mit Bild.
+    for (const pagePath of ["/index.html", "/rundgang.html"]) {
+      await page.goto(pagePath);
+      const images = await page.locator('meta[property="og:image"], meta[name="twitter:image"]')
+        .evaluateAll((elements) => elements.map((element) => element.content));
+      for (const url of images) {
+        expect(url, pagePath).toMatch(/^https:\/\/foe-foerderrechner\.com\//);
+        const response = await request.get(new URL(url).pathname);
+        expect(response.status(), url).toBe(200);
+        expect(response.headers()["content-type"], url).toMatch(/^image\//);
+      }
+      const card = await page.locator('meta[name="twitter:card"]').getAttribute("content");
+      if (card === "summary_large_image") expect(images.length, pagePath).toBeGreaterThan(0);
+    }
   });
 
   test("die eigene Adresse ist eingetragen und überall dieselbe", async ({ page }) => {
     await page.goto("/index.html");
 
-    const SITE = "https://cipher-calc.netlify.app/";
+    const SITE = "https://foe-foerderrechner.com/";
     expect(await page.locator('link[rel="canonical"]').getAttribute("href")).toBe(SITE);
     expect(await page.locator('meta[property="og:url"]').getAttribute("content")).toBe(SITE);
   });
@@ -205,10 +217,13 @@ test.describe("Teilen-Vorschau", () => {
   });
 
   test("die Rechtsseiten bleiben auf noindex", async ({ page }) => {
+    // "follow": aus dem Index heraus, die Links darauf zaehlen trotzdem.
     for (const path of ["/impressum.html", "/datenschutz.html"]) {
       await page.goto(path);
-      expect(await page.locator('meta[name="robots"]').getAttribute("content")).toBe("noindex");
+      expect(await page.locator('meta[name="robots"]').getAttribute("content")).toBe("noindex, follow");
     }
+    await page.goto("/404.html");
+    expect(await page.locator('meta[name="robots"]').getAttribute("content")).toBe("noindex");
   });
 });
 

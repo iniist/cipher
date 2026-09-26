@@ -34,6 +34,7 @@ const TYPES = {
   ".webm": "video/webm",
   ".ico": "image/x-icon",
   ".txt": "text/plain; charset=utf-8",
+  ".xml": "application/xml; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".webmanifest": "application/manifest+json",
   ".toml": "text/plain; charset=utf-8",
@@ -142,6 +143,10 @@ function localFile(pathname) {
   return file.startsWith(ROOT + path.sep) ? file : null;
 }
 
+function isFile(file) {
+  return fs.existsSync(file) && fs.statSync(file).isFile();
+}
+
 function send(response, status, file, pathname) {
   fs.readFile(file, (error, content) => {
     if (error) {
@@ -166,13 +171,19 @@ const server = http.createServer((request, response) => {
   }
   if (pathname.endsWith("/")) pathname += "index.html";
 
-  const file = localFile(pathname);
+  let file = localFile(pathname);
   if (!file) {
     response.writeHead(403, { "content-type": "text/plain; charset=utf-8" }).end("Forbidden");
     return;
   }
 
-  const exists = fs.existsSync(file) && fs.statSync(file).isFile();
+  let exists = isFile(file);
+  // Netlifys "Pretty URLs": /rundgang liefert rundgang.html aus, ohne
+  // Weiterleitung. So laesst sich die Adresse aus sitemap.xml hier pruefen.
+  if (!exists && !path.extname(pathname) && isFile(file + ".html")) {
+    file = file + ".html";
+    exists = true;
+  }
   const redirect = redirectFor(pathname, exists);
   if (redirect) {
     const target = localFile(redirect.to);
