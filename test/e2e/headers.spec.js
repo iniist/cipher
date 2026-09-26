@@ -221,6 +221,53 @@ test.describe("404", () => {
   });
 });
 
+test.describe("Installierbare App", () => {
+  // Chrome auf Android bietet "App installieren" nur an, wenn ein Manifest
+  // mit Namen, Start-URL, standalone und Icons in 192 und 512 Pixeln
+  // verlinkt ist — sonst bleibt es beim Lesezeichen auf dem Startbildschirm.
+  test("das Manifest ist vorhanden und vollstaendig", async ({ request }) => {
+    const response = await request.get("/manifest.webmanifest");
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toBe("application/manifest+json");
+
+    const manifest = await response.json();
+    expect(manifest.name).toBeTruthy();
+    expect(manifest.short_name).toBe("cipher");
+    expect(manifest.start_url).toBe("/");
+    expect(manifest.display).toBe("standalone");
+
+    const sizes = manifest.icons.map((icon) => icon.sizes);
+    expect(sizes).toContain("192x192");
+    expect(sizes).toContain("512x512");
+    expect(manifest.icons.some((icon) => icon.purpose === "maskable")).toBe(true);
+  });
+
+  test("jedes Icon im Manifest ist ein PNG in der angegebenen Groesse", async ({ request, page }) => {
+    const manifest = await (await request.get("/manifest.webmanifest")).json();
+    for (const icon of manifest.icons) {
+      const response = await request.get(icon.src);
+      expect(response.status(), icon.src).toBe(200);
+      expect(response.headers()["content-type"]).toBe("image/png");
+
+      await page.goto("/index.html");
+      const size = await page.evaluate(async (src) => {
+        const image = new Image();
+        image.src = src;
+        await image.decode();
+        return image.naturalWidth + "x" + image.naturalHeight;
+      }, icon.src);
+      expect(size, icon.src).toBe(icon.sizes);
+    }
+  });
+
+  test("jede Seite verweist auf das Manifest", async ({ page }) => {
+    for (const path of PAGES.concat(["/404.html"])) {
+      await page.goto(path);
+      await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/manifest.webmanifest");
+    }
+  });
+});
+
 test.describe("Icons auf Verdacht", () => {
   // Browser nehmen das Favicon aus der Daten-URI im HTML. Crawler,
   // Link-Vorschauen und iOS fragen die klassischen Pfade trotzdem ab —

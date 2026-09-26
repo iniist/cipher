@@ -33,6 +33,7 @@ const TYPES = {
   ".ico": "image/x-icon",
   ".txt": "text/plain; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".webmanifest": "application/manifest+json",
   ".toml": "text/plain; charset=utf-8",
   ".md": "text/markdown; charset=utf-8"
 };

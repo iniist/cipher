@@ -1,0 +1,19 @@
+{
+  "name": "cipher — Förder-Dashboard",
+  "short_name": "cipher",
+  "description": "Mäzen-Plätze sicher belegen, FP-Einsatz planen und die Zeile für den Förderchat gleich mitnehmen. Inoffizielles Fan-Tool für Forge of Empires.",
+  "lang": "de",
+  "dir": "ltr",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1f4a7a",
+  "theme_color": "#1f4a7a",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
