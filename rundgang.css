@@ -172,64 +172,9 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 40px }
 
 .hero-art { position: relative; display: grid; justify-items: center }
 
-/* Hammer und Amboss */
-.forge-mark {
-  position: absolute;
-  width: 190px;
-  left: -30px;
-  bottom: 40px;
-  z-index: 2;
-  filter: drop-shadow(0 4px 0 var(--wood-deep)) drop-shadow(0 10px 16px rgba(0, 0, 0, .45));
-}
 @media (min-width: 860px) {
   .hero-art .phone { justify-self: end; margin-right: 12px }
-  .forge-mark { left: -10px; bottom: 24px }
 }
-/* Schmal steht die Schmiede ueber dem Telefon, nicht auf ihm. */
-@media (max-width: 859px) { .forge-mark { position: static; width: 130px; margin: 0 0 -8px } }
-
-.anvil path { fill: #3b3f45 }
-.anvil .anvil-face { fill: #6b7079 }
-.anvil .glow { fill: var(--ember); opacity: 0 }
-.hammer .handle { stroke: #9a5a24; stroke-width: 8; stroke-linecap: round; fill: none }
-.hammer .head { fill: #7d828b }
-.hammer .face { fill: #b3a590 }
-.hammer {
-  transform-box: view-box;
-  transform-origin: 182px 76px;
-  transform: rotate(0deg);
-}
-.sparks circle { fill: #ffd27a; opacity: 0 }
-
-.js .hammer { animation: strike 2.6s cubic-bezier(.5, 0, .75, 0) infinite }
-.js .sparks circle { animation: spark 2.6s ease-out infinite }
-.js .anvil .glow { animation: glow 2.6s ease-out infinite }
-@keyframes strike {
-  0%   { transform: rotate(52deg); animation-timing-function: cubic-bezier(.6, 0, .9, .4) }
-  40%  { transform: rotate(52deg); animation-timing-function: cubic-bezier(.6, 0, .9, .4) }
-  56%  { transform: rotate(0deg); animation-timing-function: ease-out }
-  62%  { transform: rotate(7deg) }
-  68%  { transform: rotate(0deg); animation-timing-function: ease-in-out }
-  100% { transform: rotate(52deg) }
-}
-@keyframes spark {
-  0%, 55% { transform: translate(0, 0); opacity: 0 }
-  56%     { transform: translate(0, 0); opacity: 1 }
-  78%     { transform: translate(var(--sx), var(--sy)); opacity: 0 }
-  100%    { opacity: 0 }
-}
-@keyframes glow {
-  0%, 55% { opacity: 0 }
-  57%     { opacity: .8 }
-  80%, 100% { opacity: 0 }
-}
-.sparks circle:nth-child(1) { --sx: -34px; --sy: -30px }
-.sparks circle:nth-child(2) { --sx: -18px; --sy: -44px }
-.sparks circle:nth-child(3) { --sx: 22px;  --sy: -40px }
-.sparks circle:nth-child(4) { --sx: 40px;  --sy: -22px }
-.sparks circle:nth-child(5) { --sx: -46px; --sy: -8px }
-.sparks circle:nth-child(6) { --sx: 8px;   --sy: -52px }
-.sparks circle:nth-child(7) { --sx: 50px;  --sy: -6px }
 
 /* ------------------------------------------------------- Telefonrahmen */
 
@@ -628,5 +573,4 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 40px }
   .js .reveal, .js .fan figure.reveal:not(.in) { opacity: 1; transform: none }
   .js .promise:not(.in) svg .tick { stroke-dashoffset: 0 }
   .embers { display: none }
-  .hammer { transform: rotate(18deg) }
 }
