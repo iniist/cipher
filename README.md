@@ -301,6 +301,12 @@ dem Auswahlfeld wechselt zwischen vollem Namen und Kürzel: aus, heißt ein
 Bauwerk wie im Spiel („Arktische Orangerie“); an, mit seinem Kürzel aus
 [`abbr.js`](./abbr.js) — `Obsi`, `AO`, `TA`, `Inno`. Die Wahl wird gemerkt.
 
+Denselben Schalter gibt es ein zweites Mal rechts neben „Förderchat“. Oben
+sitzt er beim Bauwerk, dessen Namen er betrifft; unten dort, wo man sieht,
+was er bewirkt, und gleich kopiert — wer erst beim Kopieren merkt, dass er
+lieber „AO“ hätte, muss nicht mehr nach oben scrollen. Beide zeigen immer
+denselben Stand.
+
 Der Schalter wirkt überall, wo cipher ein Bauwerk kurz nennt: in beiden
 Chat-Zeilen, in der Sammlung, am Merken-Knopf, auf den Favoriten-Chips und
 als Platzhalter im Feld „Eigenes Kürzel“. Das Auswahlfeld bleibt beim vollen Namen,

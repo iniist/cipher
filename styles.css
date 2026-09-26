@@ -356,6 +356,9 @@ select, .pick {
 }
 .abbr-toggle input { width: 16px; height: 16px; margin: 0; padding: 0; accent-color: var(--gold); cursor: pointer }
 .abbr-toggle:has(input:checked) { color: var(--ink) }
+/* Am Foerderchat steht der Schalter rechts neben der Ueberschrift. */
+.chat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px }
+.chat-head .abbr-toggle { margin: 0 0 10px }
 
 /* Dieselbe Zahl heisst fuer die einen "steht auf 80", fuer die anderen
    "wird auf 81 gezogen". Umschalter und erklaerende Zeile stehen zusammen

@@ -1371,6 +1371,7 @@
     if (document.activeElement !== $("playerName")) $("playerName").value = state.name;
     renderShortField(building);
     $("useAbbr").checked = state.useAbbr;
+    $("useAbbrChat").checked = state.useAbbr;
     if (relabelCollection()) renderCollection();
 
     syncFavoriteLevel();
@@ -2179,9 +2180,12 @@
       persistState();
     });
 
-    $("useAbbr").addEventListener("change", function (event) {
-      state.useAbbr = event.target.checked;
-      render();
+    // Zwei Schalter, ein Zustand: beim Bauwerk und am Foerderchat.
+    ["useAbbr", "useAbbrChat"].forEach(function (id) {
+      $(id).addEventListener("change", function (event) {
+        state.useAbbr = event.target.checked;
+        render();
+      });
     });
 
     $("playerName").addEventListener("input", function (event) {
