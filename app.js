@@ -204,8 +204,54 @@
     }
   }
 
+  /** Obergrenze fuer den mitgebrachten Speicher, gegen absurde Links. */
+  var MOVE_LIMIT = 500000;
+
+  /**
+   * Daten von der alten Adresse uebernehmen.
+   *
+   * cipher lief zuerst unter cipher-calc.netlify.app. Browser trennen den
+   * Speicher je Adresse; umzug.js haengt ihn dort beim Weiterleiten hinter
+   * "#umzug=". Hier wird er einmal uebernommen und der Anhang sofort aus
+   * der Adresse entfernt — er soll weder in Lesezeichen noch beim Teilen
+   * landen.
+   *
+   * Nur bekannte Schluessel und nur, wo hier noch nichts steht: wer die neue
+   * Adresse schon benutzt hat, behaelt seinen Stand. Die Werte laufen danach
+   * durch dieselben Pruefungen wie alles, was aus dem Speicher kommt.
+   * @returns {boolean} ob etwas uebernommen wurde
+   */
+  function importMovedStorage() {
+    var match = /^#umzug=(.*)$/.exec(window.location.hash);
+    if (!match) return false;
+    try {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    } catch (error) { /* Dann bleibt der Anhang stehen — schadet nicht. */ }
+    if (match[1].length > MOVE_LIMIT) return false;
+
+    var payload;
+    try { payload = JSON.parse(decodeURIComponent(match[1])); } catch (error) { return false; }
+    if (!payload || payload.v !== 1 || !payload.d || typeof payload.d !== "object") return false;
+
+    var known = Object.keys(KEY).map(function (name) { return KEY[name]; })
+      .concat(Object.keys(LEGACY_KEY).map(function (name) { return LEGACY_KEY[name]; }));
+    var moved = false;
+    known.forEach(function (key) {
+      var value = payload.d[key];
+      if (typeof value !== "string") return;
+      try { JSON.parse(value); } catch (error) { return; }
+      try {
+        if (window.localStorage.getItem(key) !== null) return;
+        window.localStorage.setItem(key, value);
+        moved = true;
+      } catch (error) { /* Speicher gesperrt — dann eben nicht. */ }
+    });
+    return moved;
+  }
+
   // ------------------------------------------------------------------ Zustand
 
+  var movedIn = importMovedStorage();
   migrateLegacyStorage();
 
   var byId = {};
@@ -2541,4 +2587,5 @@
   watchWordmark();
   renderCollection();
   render();
+  if (movedIn) toast("Deine Daten von der alten Adresse sind übernommen.");
 })(window, document);

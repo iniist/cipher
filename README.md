@@ -593,6 +593,34 @@ nackte URL.
 Bewusst **ohne Bild**: ein `og:image`, das auf eine fehlende Datei zeigt,
 erzeugt eine kaputte Karte — eine reine Textkarte ist dagegen vollständig.
 
+### Umzug von cipher-calc.netlify.app
+
+cipher lief zuerst unter `cipher-calc.netlify.app`. Die alte Adresse bleibt
+erreichbar, leitet aber auf `foe-foerderrechner.com` weiter — und nimmt dabei
+mit, was der Browser dort gespeichert hat. Browser trennen den localStorage
+je Adresse; ohne das begänne jeder auf der neuen Adresse leer, ohne
+Favoriten, eigene Werte und Sammlung.
+
+Eine 301 auf dem Server kann das nicht, sie greift, bevor ein Skript läuft.
+Darum beantwortet `netlify.toml` jeden Pfad der alten Adresse mit
+`umzug.html` (Status 200). Deren Skript `umzug.js` liest die Einträge mit
+`cipher:` (und `lgr-` vom Vorgänger) und springt mit
+`location.replace` zur neuen Domain, Pfad inklusive. Für die Startseite hängt
+es die Einträge hinter `#umzug=` an — der Teil hinter dem `#` geht nie an
+einen Server. `app.js` übernimmt sie dort, bevor es irgendetwas liest:
+
+- nur bekannte Schlüssel, nur mit lesbarem JSON, danach dieselben Prüfungen
+  wie für alles aus dem Speicher;
+- nichts wird überschrieben — wer die neue Adresse schon benutzt, behält
+  seinen Stand, bekommt aber, was dort noch fehlt;
+- der Anhang verschwindet sofort per `history.replaceState` aus der Adresse,
+  damit er weder in Lesezeichen noch beim Teilen landet;
+- ein kurzer Hinweis bestätigt die Übernahme.
+
+Für Suchmaschinen steht der Umzug in `noindex` und `canonical` von
+`umzug.html` und im `canonical` der Seiten selbst; die 301 fehlt dafür.
+`test/e2e/umzug.spec.js` prüft beide Seiten des Umzugs.
+
 `canonical` und `og:url` zeigen auf <https://foe-foerderrechner.com/>. Die
 Rechtsseiten bekommen bewusst kein `canonical`: sie stehen auf `noindex`, und
 beides nebeneinander wäre ein widersprüchliches Signal. Bei einem Umzug auf
