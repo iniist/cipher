@@ -285,6 +285,11 @@
     // In welcher Einheit die Zeilen des Blocks gelesen und getippt werden.
     slotUnit: stored.slotUnit === "fp" ? "fp" : "factor",
     slotsOpen: stored.slotsOpen === true,
+    // Was du selbst schon im Bauwerk hast; null heisst "der Reihe nach
+    // gesichert" wie bisher. Gilt nur fuer das Bauwerk und die Stufe in
+    // ownPaidFor — auf der naechsten Stufe faengt der Stand wieder bei null an.
+    ownPaid: Number(stored.ownPaid) >= 0 && stored.ownPaid !== null && stored.ownPaid !== "" ? Math.floor(stored.ownPaid) : null,
+    ownPaidFor: typeof stored.ownPaidFor === "string" ? stored.ownPaidFor : "",
     // Ob Bauwerke mit ihrem Kuerzel aus abbr.js genannt werden ("AO") oder
     // mit vollem Namen ("Arktische Orangerie"). Aus ist die Vorgabe.
     useAbbr: stored.useAbbr === true
@@ -1435,6 +1440,9 @@
       return;
     }
 
+    // Ein eingetragener Stand gehoert zu genau einer Stufe.
+    if (state.ownPaidFor !== ownPaidKey()) state.ownPaid = null;
+
     var plan = Calc.buildPlan({
       total: total.value,
       p1: p1.value,
@@ -1443,10 +1451,12 @@
       factors: state.slotFactors,
       payments: state.slotPays,
       enabled: state.enabled,
-      taken: state.taken
+      taken: state.taken,
+      ownPaid: state.ownPaid
     });
 
     lastPlan = plan;
+    renderOwnPaid(plan);
     renderSlots(plan);
     renderRows(plan);
     renderBar(plan);
@@ -1474,6 +1484,24 @@
 
     maybeStamp(plan);
     persistState();
+  }
+
+  /** Zu welchem Bauwerk und welcher Stufe ein eingetragener Stand gehoert. */
+  function ownPaidKey() {
+    return state.building + ":" + state.level;
+  }
+
+  /**
+   * Das Feld "Deine FP schon im Bauwerk". Es zeigt sich nur, solange ein
+   * Platz vergeben ist — nur dann kann die Reihenfolge der Einzahlungen
+   * von der Annahme abweichen, mit der cipher sonst rechnet.
+   */
+  function renderOwnPaid(plan) {
+    var anyTaken = plan.rows.some(function (row) { return row.taken; });
+    $("ownIn").hidden = !anyTaken && state.ownPaid == null;
+    if (document.activeElement !== $("ownPaid")) {
+      $("ownPaid").value = state.ownPaid == null ? "" : formatNumber(state.ownPaid);
+    }
   }
 
   /**
@@ -1536,7 +1564,8 @@
     previousContributions = plan.rows.map(function (row) { return row.contribution; });
 
     renderSecureHead();
-    var running = 0;
+    // Mit eingetragenem Stand beginnt die Summe bei dem, was schon drin ist.
+    var running = plan.ownPaid || 0;
 
     $("rows").innerHTML = plan.rows.map(function (row, index) {
       var changed = previous.length && previous[index] !== row.contribution;
@@ -1680,6 +1709,10 @@
   function alreadyIn(plan) {
     var paid = plan.upfront - plan.upfrontOpen;
     if (paid <= 0) return "";
+    if (plan.ownPaid) {
+      return " Du hast schon <b>" + formatNumber(paid) + " FP</b> im Bauwerk, zusammen also " +
+        formatNumber(plan.upfront) + " FP.";
+    }
     return " Für die vergebenen Plätze hast du schon <b>" + formatNumber(paid) +
       " FP</b> eingezahlt, zusammen also " + formatNumber(plan.upfront) + " FP.";
   }
@@ -2233,6 +2266,16 @@
         render();
       });
     });
+
+    // Leer heisst: wieder der Reihe nach gesichert rechnen. Punkte und
+    // Leerzeichen aus "10.000" stoeren nicht.
+    $("ownPaid").addEventListener("input", function (event) {
+      var digits = event.target.value.replace(/[^0-9]/g, "");
+      state.ownPaid = digits === "" ? null : Number(digits);
+      state.ownPaidFor = ownPaidKey();
+      render();
+    });
+    $("ownPaid").addEventListener("blur", function () { render(); });
 
     $("playerName").addEventListener("input", function (event) {
       state.name = event.target.value;
