@@ -6,6 +6,7 @@
  * Frueher war der Umweg dafuer eine Notiz ausserhalb von cipher.
  */
 const { test, expect } = require("@playwright/test");
+const { nameEintragen } = require("./menue");
 
 const eintraege = (page) => page.locator("#collList li");
 
@@ -28,7 +29,7 @@ test("ohne gesammelte Zeile fehlt der Kasten", async ({ page }) => {
 });
 
 test("was kopiert wird, landet in der Sammlung", async ({ page }) => {
-  await page.fill("#playerName", "Dani");
+  await nameEintragen(page, "Dani");
   const zeile = await page.locator("#chatPlain").textContent();
 
   await page.click('button[data-copy="chatPlain"]');

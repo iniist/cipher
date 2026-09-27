@@ -4,6 +4,7 @@
  * Anfrage an einen fremden Host stellen.
  */
 const { test, expect } = require("@playwright/test");
+const { nameEintragen, themaWaehlen } = require("./menue");
 
 const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html", "/rundgang.html"];
 
@@ -52,6 +53,7 @@ test.describe("nichts wird gespeichert, bevor du etwas tust", () => {
     await page.goto("/impressum.html");
     expect(await page.evaluate(() => localStorage.getItem("cipher:state"))).toBeNull();
 
+    // Die Rechtsseiten haben ihre Theme-Leiste noch offen im Kopf.
     await page.click('.modes button[data-mode="contrast"]');
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("cipher:state")));
     expect(stored.theme).toBe("contrast");
@@ -75,7 +77,7 @@ test.describe("nichts wird gespeichert, bevor du etwas tust", () => {
 
 test("es werden keine Cookies gesetzt", async ({ page, context }) => {
   await page.goto("/index.html");
-  await page.fill("#playerName", "Dani");
+  await nameEintragen(page, "Dani");
   await page.click("#favSave");
   expect(await context.cookies()).toEqual([]);
 });
@@ -102,7 +104,7 @@ test("die Schrift kommt aus dem eigenen Verzeichnis", async ({ page, baseURL }) 
 
 test("cipher speichert nur unter eigenen Schluesseln", async ({ page }) => {
   await page.goto("/index.html");
-  await page.fill("#playerName", "Dani");
+  await nameEintragen(page, "Dani");
   await page.click("#favSave");
 
   const keys = await page.evaluate(() => Object.keys(localStorage).sort());
@@ -147,7 +149,7 @@ test("die Anwendung laeuft auch ohne nutzbaren localStorage", async ({ page }) =
   await expect(page.locator("#rows tr")).toHaveCount(5);
   await page.click("#favSave");
   await expect(page.locator("#favList li")).toHaveCount(1);
-  await page.click('.modes button[data-mode="light"]');
+  await themaWaehlen(page, "light");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
@@ -268,7 +270,7 @@ test.describe("Rechtstexte", () => {
 
   test("der Loeschknopf raeumt den lokalen Speicher auf", async ({ page }) => {
     await page.goto("/index.html");
-    await page.fill("#playerName", "Dani");
+    await nameEintragen(page, "Dani");
     await page.click("#favSave");
     expect((await page.evaluate(() => Object.keys(localStorage))).length).toBeGreaterThan(0);
 
@@ -326,7 +328,7 @@ test.describe("Barrierefreiheit", () => {
 
   test("der Kontrastmodus schaltet auf Schwarz auf Weiss", async ({ page }) => {
     await page.goto("/index.html");
-    await page.click('.modes button[data-mode="contrast"]');
+    await themaWaehlen(page, "contrast");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "contrast");
 
     const colors = await page.evaluate(() => {
@@ -342,11 +344,21 @@ test.describe("Barrierefreiheit", () => {
     await page.locator("#wordmark").focus();
     await expect(page.locator("#wordmark")).toBeFocused();
 
-    // Nach der Wortmarke kommt die Weltenwahl, danach kommen die Themes.
+    // Nach der Wortmarke kommen die Weltenwahl und das Menue.
     await page.keyboard.press("Tab");
     await expect(page.locator("#worldPick")).toBeFocused();
     await page.keyboard.press("Tab");
+    await expect(page.locator("#settingsPick")).toBeFocused();
+    // Enter oeffnet das Menue, darin sind die Themes per Tab erreichbar.
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#settings")).toBeVisible();
+    await page.keyboard.press("Tab");
+    await expect(page.locator("#playerName")).toBeFocused();
+    await page.keyboard.press("Tab");
     const next = await page.evaluate(() => document.activeElement.dataset.mode);
     expect(next).toBe("light");
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#settings")).toBeHidden();
+    await expect(page.locator("#settingsPick")).toBeFocused();
   });
 });

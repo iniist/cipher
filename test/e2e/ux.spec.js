@@ -4,6 +4,7 @@
  * Favoritenliste, der Leerzustand ohne Daten.
  */
 const { test, expect } = require("@playwright/test");
+const { themaWaehlen } = require("./menue");
 const { mitTestdaten, OHNE_DATEN } = require("./testdaten");
 
 /** Zwoelf Favoriten, also die volle Liste. */
@@ -124,7 +125,7 @@ test.describe("Favoritenliste", () => {
     await seedFavorites(page, FULL_LIST);
 
     for (const theme of ["dark", "light", "contrast", "writer", "space", "forge"]) {
-      await page.click(`.modes button[data-mode="${theme}"]`);
+      await themaWaehlen(page, theme);
       // Der Wechsel laeuft als Uebergang: erst messen, wenn das Theme steht.
       await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
 
@@ -451,7 +452,7 @@ test.describe("Zurückhaltung der Stepper", () => {
 
   test("im Kontrastmodus senkt der Grenzfall den Kontrast nicht", async ({ page }) => {
     await page.goto("/index.html");
-    await page.click('.modes button[data-mode="contrast"]');
+    await themaWaehlen(page, "contrast");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "contrast");
     await page.locator('#factorChips button[data-factor="200"]').click();
     await expect(page.locator("#factorUp")).toBeDisabled();

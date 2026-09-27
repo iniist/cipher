@@ -1543,6 +1543,7 @@
       chip.classList.toggle("on", Number(chip.dataset.factor) === state.factor);
     });
     if (document.activeElement !== $("playerName")) $("playerName").value = state.name;
+    $("nameHint").hidden = Boolean(state.name.trim());
     renderShortField(building);
     $("useAbbr").checked = state.useAbbr;
     $("useAbbrChat").checked = state.useAbbr;
@@ -2885,6 +2886,55 @@
     });
   }
 
+  // --------------------------------------------------------------------- Menue
+
+  /**
+   * Das Menue haelt, was man einmal einstellt: Name, Darstellung, Kuerzel.
+   * Dasselbe Blatt wie die Weltenauswahl; `focus` sagt, wohin der Fokus
+   * beim Oeffnen geht — der Hinweis im Foerderchat schickt ihn gleich ins
+   * Namensfeld.
+   */
+  /** Wohin der Fokus nach dem Schliessen zurueckkehrt. */
+  var settingsReturn = null;
+
+  function openSettings(focus, returnTo) {
+    var dialog = $("settings");
+    if (dialog.open) return;
+    document.documentElement.classList.add("picker-open");
+    dialog.showModal();
+    $("settingsPick").setAttribute("aria-expanded", "true");
+    settingsReturn = returnTo || $("settingsPick");
+    (focus || $("settingsClose")).focus({ preventScroll: true });
+  }
+
+  function bindSettings() {
+    var dialog = $("settings");
+    var opener = $("settingsPick");
+    opener.addEventListener("click", function () { openSettings(); });
+    $("nameHintGo").addEventListener("click", function () {
+      openSettings($("playerName"), $("nameHintGo"));
+    });
+    $("settingsClose").addEventListener("click", function () { dialog.close(); });
+    dialog.addEventListener("close", function () {
+      document.documentElement.classList.remove("picker-open");
+      opener.setAttribute("aria-expanded", "false");
+      // Zurueck dorthin, wo man herkam. Ist der Hinweis inzwischen weg,
+      // weil ein Name drinsteht, gilt der Menueknopf.
+      var back = settingsReturn && !settingsReturn.closest("[hidden]") ? settingsReturn : opener;
+      back.focus({ preventScroll: true });
+    });
+    var downOnBackdrop = false;
+    dialog.addEventListener("pointerdown", function (event) { downOnBackdrop = event.target === dialog; });
+    dialog.addEventListener("click", function (event) {
+      if (event.target === dialog && downOnBackdrop) dialog.close();
+      downOnBackdrop = false;
+    });
+    // Enter im Namensfeld heisst "fertig".
+    $("playerName").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") dialog.close();
+    });
+  }
+
   // ------------------------------------------------------------------- Start
 
   buildBuildingSelect();
@@ -2900,6 +2950,7 @@
   $("dataDate").textContent = formatDate(DATA.generated);
   bindEvents();
   bindWorlds();
+  bindSettings();
   renderWorldPick();
   watchKonami();
   watchWordmark();
