@@ -45,27 +45,50 @@ test("nur Leerzeichen zaehlen nicht als Name", async ({ page }) => {
   await expect(page.locator("#nameNeedTop")).toBeVisible();
 });
 
-test("der Schalter zeigt die gewaehlte Fassung, und genau die wird gesammelt", async ({ page }) => {
+test("mit FP ist die Vorgabe, der Schalter zeigt die gewaehlte Fassung, und genau die wird gesammelt", async ({ page }) => {
   await nameEintragen(page, "Dani");
+  await expect(page.locator('[data-chat-mode="points"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#chatPoints")).toBeVisible();
+  await expect(page.locator("#chatPlain")).toBeHidden();
+  expect(await page.locator("#chatPoints").textContent()).toMatch(/P1\(\d+\)/);
+
+  await page.click('[data-chat-mode="plain"]');
   await expect(page.locator('[data-chat-mode="plain"]')).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("#chatPlain")).toBeVisible();
   await expect(page.locator("#chatPoints")).toBeHidden();
 
-  await page.click('[data-chat-mode="points"]');
-  await expect(page.locator('[data-chat-mode="points"]')).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator("#chatPoints")).toBeVisible();
-  await expect(page.locator("#chatPlain")).toBeHidden();
-
-  const mitFp = await page.locator("#chatPoints").textContent();
-  expect(mitFp).toMatch(/P1\(\d+\)/);
+  const nurPlaetze = await page.locator("#chatPlain").textContent();
+  expect(nurPlaetze).not.toMatch(/\(/);
   await knopf(page).click();
-  await expect(page.locator(".coll-t").first()).toHaveText(mitFp);
+  await expect(page.locator(".coll-t").first()).toHaveText(nurPlaetze);
+});
+
+test("wer schon einen Namen hatte, muss ihn nicht neu eintragen", async ({ page }) => {
+  // Ein Stand von vor dem Menue: der Name liegt, wo er immer lag.
+  await page.evaluate(() => localStorage.setItem("cipher:state", JSON.stringify({ name: "Altbestand" })));
+  await page.reload();
+  await expect(page.locator("#nameNeedTop")).toBeHidden();
+  await expect(knopf(page)).toHaveText("Zeile kopieren");
+  await expect(page.locator("#chatPoints")).toContainText("Altbestand ");
+  await page.click("#settingsPick");
+  await expect(page.locator("#playerName")).toHaveValue("Altbestand");
+});
+
+test("das Menue rueckt ueber die Bildschirmtastatur", async ({ page }) => {
+  // Die Tastatur selbst laesst sich hier nicht aufrufen; geprueft wird, dass
+  // das Menue dieselbe Groesse vom sichtbaren Ausschnitt bekommt wie die
+  // Bauwerksauswahl — daran haengt, dass es nicht hinter der Tastatur liegt.
+  await page.click("#nameNeedTop .name-go");
+  const hoehe = await page.evaluate(() => document.getElementById("settings").style.getPropertyValue("--vvh"));
+  expect(hoehe).toBe(`${await page.evaluate(() => Math.round(window.visualViewport.height))}px`);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#settings")).toBeHidden();
 });
 
 test("die Wahl bleibt nach dem Neuladen", async ({ page }) => {
-  await page.click('[data-chat-mode="points"]');
-  expect((await zustand(page)).chatMode).toBe("points");
+  await page.click('[data-chat-mode="plain"]');
+  expect((await zustand(page)).chatMode).toBe("plain");
   await page.reload();
-  await expect(page.locator('[data-chat-mode="points"]')).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator("#chatPoints")).toBeVisible();
+  await expect(page.locator('[data-chat-mode="plain"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#chatPlain")).toBeVisible();
 });

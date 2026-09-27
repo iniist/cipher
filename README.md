@@ -474,7 +474,8 @@ anderes einzustellen.
 Früher standen „Nur Plätze“ und „Mit FP“ als zwei Kästen mit je einem großen
 Knopf untereinander. Jetzt gibt es eine Zeile und einen Knopf „Zeile kopieren“;
 welche Fassung es ist, stellt der Schalter **Nur Plätze | Mit FP** darüber ein.
-Er merkt sich die Wahl je Welt, denn jede Gilde hält es anders.
+Vorgabe ist „Mit FP“, die meisten Gilden wollen die Beträge sehen. Er merkt
+sich die Wahl je Welt, denn jede Gilde hält es anders.
 
 ### Welten
 

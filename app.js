@@ -396,8 +396,9 @@
     // mit vollem Namen ("Arktische Orangerie"). Aus ist die Vorgabe.
     useAbbr: stored.useAbbr === true,
     // Welche Fassung der Chat-Zeile kopiert wird: nur die Plaetze oder
-    // mit den FP je Platz. "plain" ist die Vorgabe.
-    chatMode: stored.chatMode === "points" ? "points" : "plain"
+    // mit den FP je Platz. "points" ist die Vorgabe — die meisten Gilden
+    // wollen die Betraege sehen.
+    chatMode: stored.chatMode === "plain" ? "plain" : "points"
   };
 
   // Ein Platz traegt entweder einen Faktor oder einen Betrag, nie beides —
@@ -1030,16 +1031,24 @@
    * Ausschnitt, nicht das Fenster — ein unten verankertes Blatt laege sonst
    * zur Haelfte hinter ihr.
    */
+  /** Das Blatt, das gerade ueber der Tastatur gehalten wird. */
+  var viewportSheet = null;
+
   function syncPickerViewport() {
     var viewport = window.visualViewport;
-    if (!viewport) return;
-    var dialog = $("picker");
+    if (!viewport || !viewportSheet) return;
+    var dialog = viewportSheet;
     var below = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
     dialog.style.setProperty("--kb", Math.round(below) + "px");
     dialog.style.setProperty("--vvh", Math.round(viewport.height) + "px");
   }
 
-  function watchPickerViewport(on) {
+  /**
+   * Gilt fuer jedes Blatt mit Eingabefeld: die Bauwerksauswahl und das Menue,
+   * in dem der Name getippt wird. Ohne `dialog` ist die Bauwerksauswahl gemeint.
+   */
+  function watchPickerViewport(on, dialog) {
+    viewportSheet = on ? (dialog || $("picker")) : null;
     var viewport = window.visualViewport;
     if (!viewport) return;
     var method = on ? "addEventListener" : "removeEventListener";
@@ -2937,6 +2946,10 @@
     var dialog = $("settings");
     if (dialog.open) return;
     document.documentElement.classList.add("picker-open");
+    // Wer den Namen tippt, hat die Bildschirmtastatur offen; das Blatt
+    // rueckt darueber wie bei der Bauwerksauswahl, sonst laege das Feld
+    // dahinter.
+    watchPickerViewport(true, dialog);
     dialog.showModal();
     $("settingsPick").setAttribute("aria-expanded", "true");
     settingsReturn = returnTo || $("settingsPick");
@@ -2953,6 +2966,7 @@
     $("settingsClose").addEventListener("click", function () { dialog.close(); });
     dialog.addEventListener("close", function () {
       document.documentElement.classList.remove("picker-open");
+      watchPickerViewport(false);
       opener.setAttribute("aria-expanded", "false");
       // Zurueck dorthin, wo man herkam. Ist der Hinweis inzwischen weg,
       // weil ein Name drinsteht, gilt der Menueknopf.

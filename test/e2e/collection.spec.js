@@ -35,7 +35,8 @@ test("ohne gesammelte Zeile fehlt der Kasten", async ({ page }) => {
 
 test("was kopiert wird, landet in der Sammlung", async ({ page }) => {
   await nameEintragen(page, "Dani");
-  const zeile = await page.locator("#chatPlain").textContent();
+  // Mit FP ist die Vorgabe.
+  const zeile = await page.locator("#chatPoints").textContent();
 
   await page.click("#chatCopy");
 

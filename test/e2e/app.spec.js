@@ -334,7 +334,8 @@ test("der Kopierknopf quittiert den Kopiervorgang", async ({ page, context, brow
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
 
   await nameEintragen(page, "Dani");
-  const expected = await page.locator("#chatPlain").textContent();
+  // Mit FP ist die Vorgabe.
+  const expected = await page.locator("#chatPoints").textContent();
 
   const button = page.locator("#chatCopy");
   await button.click();
