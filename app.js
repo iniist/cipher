@@ -254,10 +254,111 @@
   var movedIn = importMovedStorage();
   migrateLegacyStorage();
 
+  // ------------------------------------------------------------------ Welten
+
+  /**
+   * Die deutschen Spielwelten. Wer auf mehreren spielt, foerdert dort andere
+   * Bauwerke mit einem anderen Faktor — darum hat jede Welt ihren eigenen
+   * Stand. Seit Yorkton im Juli 2024 ist keine dazugekommen; kommt eine,
+   * reicht eine Zeile hier.
+   */
+  var WORLDS = [
+    { id: "de1", name: "Arvahall" }, { id: "de2", name: "Brisgard" },
+    { id: "de3", name: "Cirgard" }, { id: "de4", name: "Dinegu" },
+    { id: "de5", name: "Eldenborough" }, { id: "de6", name: "Fel Dranghyr" },
+    { id: "de7", name: "Greifental" }, { id: "de8", name: "Houndsmoor" },
+    { id: "de9", name: "Jaims" }, { id: "de10", name: "Korch" },
+    { id: "de11", name: "Langendorn" }, { id: "de12", name: "Mount Killmore" },
+    { id: "de13", name: "Noarsil" }, { id: "de14", name: "Odhrorvar" },
+    { id: "de15", name: "Parkog" }, { id: "de16", name: "Qunrir" },
+    { id: "de17", name: "Rugnir" }, { id: "de18", name: "Sinerania" },
+    { id: "de19", name: "Tuulech" }, { id: "de20", name: "Uceria" },
+    { id: "de21", name: "Vingrid" }, { id: "de22", name: "Walstrand" },
+    { id: "de23", name: "Xyr" }, { id: "de24", name: "Yorkton" }
+  ];
+  var worldById = {};
+  WORLDS.forEach(function (world) { worldById[world.id] = world; });
+
+  /** Welche Welt gerade offen ist und welcher die alten Schluessel gehoeren. */
+  var WORLD_KEY = "cipher:world";
+
+  /**
+   * Die Felder von `cipher:state`, die zur Welt gehoeren. Alles andere —
+   * Theme, Spielername, Kuerzel-Schalter, die Lesarten von Stufe, Sichern
+   * und Plaetzen — gilt ueberall gleich.
+   */
+  var WORLD_FIELDS = ["building", "level", "factor", "enabled", "taken",
+    "slotFactors", "slotPays", "ownPaid", "ownPaidFor"];
+
+  /**
+   * Die Welt, die zuerst gewaehlt wurde ("home"), behaelt die Schluessel, die
+   * es schon vor den Welten gab. Nichts wird dafuer umkopiert: wer nie eine
+   * zweite Welt aufmacht, hat genau den Speicher wie vorher, und fiele der
+   * Umschalter wieder weg, laege alles noch an seinem Platz. Jede weitere
+   * Welt legt ihren Teil unter "cipher:w:<welt>:" ab.
+   *
+   * Ohne Eintrag ist noch keine Welt gewaehlt; dann laeuft alles wie immer.
+   */
+  function normaliseWorld(value) {
+    if (!value || !worldById[value.home]) return null;
+    return { home: value.home, active: worldById[value.active] ? value.active : value.home };
+  }
+
+  var world = normaliseWorld(read(WORLD_KEY, null));
+
+  /** Liegt die offene Welt unter eigenen Schluesseln? */
+  var awayFromHome = Boolean(world && world.active !== world.home);
+
+  function worldPrefix(id) { return "cipher:w:" + id + ":"; }
+
+  /** Der Schluessel, unter dem die offene Welt `key` ablegt. */
+  function inWorld(key) {
+    return awayFromHome ? worldPrefix(world.active) + key.slice("cipher:".length) : key;
+  }
+
+  /** Schluessel fuer Favoriten und Sammlung der offenen Welt. */
+  var HERE = { favorites: inWorld(KEY.favorites), collection: inWorld(KEY.collection) };
+
+  /** Hat diese Welt schon etwas gespeichert? Fuer den Hinweis in der Liste. */
+  function worldInUse(id) {
+    if (world && world.home === id) return true;
+    try {
+      return window.localStorage.getItem(worldPrefix(id) + "state") !== null ||
+        window.localStorage.getItem(worldPrefix(id) + "favorites") !== null ||
+        window.localStorage.getItem(worldPrefix(id) + "collection") !== null;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /** Die gespeicherten Felder der offenen Welt mit den allgemeinen vereinen. */
+  function readStoredState() {
+    var shared = read(KEY.state, {});
+    if (!awayFromHome) return shared;
+    var own = read(inWorld(KEY.state), {});
+    var merged = {};
+    Object.keys(shared).forEach(function (field) {
+      if (WORLD_FIELDS.indexOf(field) < 0) merged[field] = shared[field];
+    });
+    WORLD_FIELDS.forEach(function (field) {
+      if (own && field in own) merged[field] = own[field];
+    });
+    return merged;
+  }
+
+  /** Teil des Zustands, der nur zur Welt oder nur nicht zur Welt gehoert. */
+  function pickFields(source, ofWorld) {
+    var part = {};
+    Object.keys(source).forEach(function (field) {
+      if ((WORLD_FIELDS.indexOf(field) >= 0) === ofWorld) part[field] = source[field];
+    });
+    return part;
+  }
+
   var byId = {};
   DATA.buildings.forEach(function (building) { byId[building.id] = building; });
 
-  var stored = read(KEY.state, {});
+  var stored = readStoredState();
   var state = {
     // Zuletzt gewaehltes Bauwerk, sonst die Voreinstellung — und falls es
     // die im Datensatz einmal nicht geben sollte, das erste ueberhaupt.
@@ -427,13 +528,13 @@
 
   var ownTotals = read(KEY.totals, {});
   var ownP1 = read(KEY.p1, {});
-  var favorites = normaliseFavorites(read(KEY.favorites, []));
+  var favorites = normaliseFavorites(read(HERE.favorites, []));
 
   /**
    * Die gesammelten Chat-Zeilen, in der Reihenfolge, in der sie gesammelt
    * wurden — das ist die Reihenfolge, in der sie spaeter im Chat stehen.
    */
-  var collection = normaliseCollection(read(KEY.collection, []));
+  var collection = normaliseCollection(read(HERE.collection, []));
 
   /**
    * Selbst vergebene Kuerzel, nach Bauwerk-Schluessel.
@@ -562,11 +663,33 @@
    */
   var lastPersisted = JSON.stringify(state);
 
+  // Auf einer weiteren Welt zerfaellt der Zustand in zwei Teile: die Felder
+  // der Welt unter ihrem eigenen Schluessel, der Rest in `cipher:state`. Dort
+  // liegen auch die Weltfelder der ersten Welt, und die bleiben unberuehrt.
+  var lastShared = JSON.stringify(pickFields(state, false));
+  var lastOwn = JSON.stringify(pickFields(state, true));
+
   function persistState() {
     var next = JSON.stringify(state);
     if (next === lastPersisted) return;
-    write(KEY.state, state);
     lastPersisted = next;
+    if (!awayFromHome) {
+      write(KEY.state, state);
+      return;
+    }
+
+    var shared = pickFields(state, false);
+    var own = pickFields(state, true);
+    if (JSON.stringify(shared) !== lastShared) {
+      var base = read(KEY.state, {});
+      Object.keys(shared).forEach(function (field) { base[field] = shared[field]; });
+      write(KEY.state, base);
+      lastShared = JSON.stringify(shared);
+    }
+    if (JSON.stringify(own) !== lastOwn) {
+      write(inWorld(KEY.state), own);
+      lastOwn = JSON.stringify(own);
+    }
   }
 
   // -------------------------------------------------------------------- Theme
@@ -1790,7 +1913,7 @@
 
     if (collection.length > MAX_COLLECTED) collection.shift();
 
-    write(KEY.collection, collection);
+    write(HERE.collection, collection);
     renderCollection(at >= 0 ? at : collection.length - 1);
   }
 
@@ -1810,7 +1933,7 @@
       entry.label = label;
       changed = true;
     });
-    if (changed) write(KEY.collection, collection);
+    if (changed) write(HERE.collection, collection);
     return changed;
   }
 
@@ -1991,7 +2114,7 @@
     var index = favoriteIndex(state.building);
     if (index < 0 || favorites[index].level === state.level) return;
     favorites[index].level = state.level;
-    write(KEY.favorites, favorites);
+    write(HERE.favorites, favorites);
   }
 
   /**
@@ -2077,7 +2200,7 @@
   function moveFavoriteToFront(index) {
     if (index <= 0 || index >= favorites.length) return;
     favorites.unshift(favorites.splice(index, 1)[0]);
-    write(KEY.favorites, favorites);
+    write(HERE.favorites, favorites);
   }
 
   function toggleFavorite() {
@@ -2088,7 +2211,7 @@
       if (favorites.length >= MAX_FAVORITES) favorites.pop();
       favorites.unshift({ id: state.building, level: state.level });
     }
-    write(KEY.favorites, favorites);
+    write(HERE.favorites, favorites);
     renderFavorites();
   }
 
@@ -2350,7 +2473,7 @@
 
       if (button.dataset.delete != null) {
         favorites.splice(Number(button.dataset.delete), 1);
-        write(KEY.favorites, favorites);
+        write(HERE.favorites, favorites);
         renderFavorites();
       }
     });
@@ -2411,7 +2534,7 @@
 
     $("collClear").addEventListener("click", function () {
       collection = [];
-      write(KEY.collection, collection);
+      write(HERE.collection, collection);
       renderCollection();
     });
 
@@ -2419,7 +2542,7 @@
       var button = event.target.closest("[data-drop]");
       if (!button) return;
       collection.splice(Number(button.dataset.drop), 1);
-      write(KEY.collection, collection);
+      write(HERE.collection, collection);
       renderCollection();
     });
   }
@@ -2612,6 +2735,156 @@
     }, 500 + label.length * 70 + 100);
   }
 
+  // --------------------------------------------------------- Weltenauswahl
+
+  function renderWorldPick() {
+    $("worldName").textContent = world ? worldById[world.active].name : "Welt";
+  }
+
+  /**
+   * Die Liste hat zwei Stellungen. Gewoehnlich wechselt sie die Welt. Wer
+   * bei der ersten Wahl danebengetippt hat, haengt seinen Stand sonst an die
+   * falsche Welt — "Umbenennen" gibt ihn der richtigen. Zur Wahl stehen dann
+   * nur Welten, die noch nichts gespeichert haben; zwei Staende zu
+   * verschmelzen, hiesse einen davon wegzuwerfen.
+   */
+  var renamingWorld = false;
+
+  function renderWorlds() {
+    var active = world && worldById[world.active];
+    $("worldsTitle").textContent = renamingWorld ? "Welt umbenennen" : "Welt wählen";
+    $("worldsNote").textContent = renamingWorld
+      ? "Zu welcher Welt gehört der Stand von " + active.name + " wirklich? Welten, die schon etwas gespeichert haben, stehen nicht zur Wahl."
+      : world
+        ? "Jede Welt hat eigene Bauwerke, Faktoren, Favoriten und eine eigene Sammlung. Name, Darstellung und Kürzel gelten überall."
+        : "Was du bisher eingestellt und gemerkt hast, gehört dann zu der Welt, die du jetzt wählst.";
+    $("worldRename").hidden = !world;
+    if (world) {
+      $("worldRename").textContent = renamingWorld ? "Doch nicht umbenennen" : "Falsche Welt? " + active.name + " umbenennen";
+    }
+    $("worldList").innerHTML = WORLDS.map(function (entry) {
+      var current = world && world.active === entry.id;
+      var used = !current && worldInUse(entry.id);
+      var blocked = renamingWorld && (current || used);
+      return '<li><button type="button" class="picker-opt world-opt" data-world="' + entry.id + '"' +
+        (current ? ' aria-current="true"' : "") + (blocked ? " disabled" : "") + ">" +
+        "<b>" + escapeHtml(entry.name) + "</b>" +
+        "<span>" + (used ? "genutzt · " : "") + entry.id + "</span></button></li>";
+    }).join("");
+  }
+
+  function openWorlds() {
+    var dialog = $("worlds");
+    if (dialog.open) return;
+    renamingWorld = false;
+    renderWorlds();
+    document.documentElement.classList.add("picker-open");
+    dialog.showModal();
+    $("worldPick").setAttribute("aria-expanded", "true");
+    focusWorldList();
+  }
+
+  function focusWorldList() {
+    var list = $("worldList");
+    var target = list.querySelector('[aria-current="true"]:not(:disabled)') ||
+      list.querySelector(".world-opt:not(:disabled)");
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ block: "center" });
+  }
+
+  function onWorldsClosed() {
+    document.documentElement.classList.remove("picker-open");
+    $("worldPick").setAttribute("aria-expanded", "false");
+    $("worldPick").focus({ preventScroll: true });
+  }
+
+  /**
+   * Die erste Wahl benennt nur, was schon da ist — die Daten bleiben, wo
+   * sie sind. Jeder spaetere Wechsel laedt die Seite neu: der Start liest
+   * dann alles aus den Schluesseln der neuen Welt und prueft es wie immer.
+   * Den ganzen Zustand im laufenden Betrieb auszutauschen, waere mehr Code
+   * an mehr Stellen, die sich irren koennen.
+   */
+  function chooseWorld(id) {
+    var dialog = $("worlds");
+    if (!worldById[id]) return;
+    if (!world) {
+      world = { home: id, active: id };
+      write(WORLD_KEY, world);
+      renderWorldPick();
+      dialog.close();
+      toast("Deine bisherigen Daten gehören jetzt zu " + worldById[id].name + ".");
+      return;
+    }
+    if (id === world.active) { dialog.close(); return; }
+    persistState();
+    write(WORLD_KEY, { home: world.home, active: id });
+    window.location.reload();
+  }
+
+  /**
+   * Den Stand der offenen Welt einer anderen, noch leeren Welt geben.
+   *
+   * Die erste Welt liegt unter den alten Schluesseln; fuer sie aendert sich
+   * nur der Name in `cipher:world`. Jede andere zieht mit ihren Schluesseln
+   * um: erst kopieren, dann die Wahl umstellen, dann das Alte loeschen — so
+   * ist in keinem Moment ein Stand nur noch halb da.
+   */
+  function renameWorld(id) {
+    if (!world || !worldById[id] || id === world.active || worldInUse(id)) return;
+    var from = worldById[world.active].name;
+    persistState();
+
+    if (!awayFromHome) {
+      world = { home: id, active: id };
+      write(WORLD_KEY, world);
+      renderWorldPick();
+      $("worlds").close();
+      toast(from + " heißt jetzt " + worldById[id].name + ".");
+      return;
+    }
+
+    var oldPrefix = worldPrefix(world.active);
+    var moved = [];
+    try {
+      Object.keys(window.localStorage).forEach(function (key) {
+        if (key.indexOf(oldPrefix) !== 0) return;
+        window.localStorage.setItem(worldPrefix(id) + key.slice(oldPrefix.length), window.localStorage.getItem(key));
+        moved.push(key);
+      });
+    } catch (error) {
+      toast("Umbenennen ging nicht — der Speicher ist gesperrt.");
+      return;
+    }
+    write(WORLD_KEY, { home: world.home, active: id });
+    moved.forEach(remove);
+    window.location.reload();
+  }
+
+  function bindWorlds() {
+    var dialog = $("worlds");
+    $("worldPick").addEventListener("click", openWorlds);
+    $("worldsClose").addEventListener("click", function () { dialog.close(); });
+    dialog.addEventListener("close", onWorldsClosed);
+    var downOnBackdrop = false;
+    dialog.addEventListener("pointerdown", function (event) { downOnBackdrop = event.target === dialog; });
+    dialog.addEventListener("click", function (event) {
+      if (event.target === dialog && downOnBackdrop) dialog.close();
+      downOnBackdrop = false;
+    });
+    $("worldList").addEventListener("click", function (event) {
+      var button = event.target.closest("[data-world]");
+      if (!button || button.disabled) return;
+      if (renamingWorld) renameWorld(button.dataset.world);
+      else chooseWorld(button.dataset.world);
+    });
+    $("worldRename").addEventListener("click", function () {
+      renamingWorld = !renamingWorld;
+      renderWorlds();
+      focusWorldList();
+    });
+  }
+
   // ------------------------------------------------------------------- Start
 
   buildBuildingSelect();
@@ -2626,6 +2899,8 @@
   setTheme(state.theme);
   $("dataDate").textContent = formatDate(DATA.generated);
   bindEvents();
+  bindWorlds();
+  renderWorldPick();
   watchKonami();
   watchWordmark();
   renderCollection();

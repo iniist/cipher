@@ -342,6 +342,9 @@ test.describe("Barrierefreiheit", () => {
     await page.locator("#wordmark").focus();
     await expect(page.locator("#wordmark")).toBeFocused();
 
+    // Nach der Wortmarke kommt die Weltenwahl, danach kommen die Themes.
+    await page.keyboard.press("Tab");
+    await expect(page.locator("#worldPick")).toBeFocused();
     await page.keyboard.press("Tab");
     const next = await page.evaluate(() => document.activeElement.dataset.mode);
     expect(next).toBe("light");

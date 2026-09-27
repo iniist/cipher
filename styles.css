@@ -285,7 +285,34 @@ h1 {
 
 .sub { color: var(--dim); margin: 0; max-width: 42ch; font-size: .98rem }
 
-.modes { display: flex; border: 1.5px solid var(--frame); align-self: flex-end }
+/* Die Kopfleiste: links die Welt, rechts die Themes. Im Hochformat stand
+   links neben den Themes ohnehin nichts. Der Weltname darf schrumpfen, die
+   Theme-Knoepfe nicht. */
+.head-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 10px }
+.head-bar .modes { flex: 0 0 auto; margin-left: auto }
+/* Schmale Telefone: die Themes ruecken zusammen, damit der Weltname
+   daneben passt. Passt er trotzdem nicht, bricht die Leiste um — lieber
+   eine Zeile mehr als ein abgeschnittener Name. */
+@media (max-width: 400px) {
+  .modes button { width: 32px }
+  .head-bar .world-pick { padding: 0 8px; gap: 5px }
+}
+/* Unter 380px reicht es selbst dann nicht fuer "Mount Killmore"; der
+   Globus geht, der Rahmen sagt weiter, dass es ein Knopf ist. */
+@media (max-width: 380px) {
+  .head-bar .world-pick svg { display: none }
+}
+.world-pick {
+  display: flex; flex: 0 0 auto; align-items: center; gap: 6px;
+  height: 34px; padding: 0 10px;
+  font: inherit; font-size: .9rem; font-weight: 600;
+  background: transparent; color: var(--ink);
+  border: 1.5px solid var(--frame); cursor: pointer;
+}
+.world-pick svg { flex: 0 0 auto; width: 18px; height: 18px }
+.world-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+
+.modes { display: flex; border: 1.5px solid var(--frame) }
 .modes button {
   width: 36px; height: 34px;
   display: grid; place-items: center;
@@ -797,6 +824,29 @@ html.picker-open { overflow: hidden; scrollbar-gutter: stable }
   .picker[open]::backdrop, .picker.closing::backdrop { animation: none; transition: none }
 }
 
+/* Die Weltenauswahl leiht sich das Blatt der Bauwerksauswahl. Ohne
+   Suchfeld reicht ein kuerzeres. */
+.worlds { height: auto; max-height: calc(var(--vvh, 100dvh) * .88) }
+.worlds-note { margin: 0 16px 4px; font-size: .88rem; color: var(--dim) }
+.worlds .picker-list li { list-style: none }
+.world-opt {
+  width: 100%; text-align: left;
+  font: inherit; color: inherit; background: transparent;
+}
+.world-opt[aria-current="true"] b { color: var(--gold) }
+.world-opt:disabled { cursor: default; opacity: .45 }
+.world-opt:disabled:hover { background: transparent }
+.worlds-foot { margin: 0; padding: 10px 16px 14px; border-top: 1px solid var(--field-border); font-size: .9rem }
+.world-opt[aria-current="true"]::before {
+  content: "✓";
+  content: "✓" / "";
+  position: absolute; left: 12px;
+  color: var(--gold); font-weight: 700;
+}
+@media (min-width: 641px) {
+  .worlds { height: fit-content; max-height: min(640px, calc(var(--vvh, 100dvh) - 32px)) }
+}
+
 /* ------------------------------------------------------------ Favoriten */
 
 /* Der Streifen stand frueher ganz unten im Panel, hinter Suche, Stufe, Name
@@ -1296,13 +1346,23 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
   main > .panel:nth-of-type(2) { grid-column: 2; grid-row: 2 / span 2 } /* Foerderplan */
   main > .panel:nth-of-type(3) { grid-column: 1; grid-row: 3 }   /* Foerderchat */
 
-  /* Der Kopf stand hochkant untereinander; quer passt er in eine Zeile. */
+  /* Quer ist Hoehe knapp: eine eigene Zeile fuer die Welt kostete das
+     iPhone SE einen Zehntel-Bildschirm. Darum eine Zeile fuer alles — Welt
+     oben links vor der Wortmarke, Themes rechts, der Untertitel darunter.
+     Die beiden Huellen treten dafuer zurueck, ihre Kinder ordnet das Raster. */
   header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    grid-template-areas: "world title . modes" "sub sub sub modes";
+    align-items: center;
+    gap: 2px 10px;
     margin: 0 0 12px;
   }
+  header > div, .head-bar { display: contents }
+  .world-pick { grid-area: world; height: 30px }
+  h1 { grid-area: title; margin: 0 }
+  .sub { grid-area: sub }
+  .head-bar .modes { grid-area: modes; align-self: start }
   h1 { font-size: 1.9rem }
   /* Die Zeilenbreite von 42 Zeichen ist fuer schmale Geraete gedacht; quer
      steht daneben ohnehin nur der Themenwechsler. */
@@ -1334,7 +1394,7 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
    und --shadow-sm; hier steht nur, wer sie bekommt. */
 .panel, .card { border-radius: var(--r); box-shadow: var(--shadow) }
 
-select, input, .pick, .seg, .step, .modes,
+select, input, .pick, .seg, .step, .modes, .world-pick,
 .chips button, .fav-save, .fav-list li, .filter-hit, .slot-reset,
 .copy .t, .copy button, .coll-copy, .coll-list li,
 .lump, .note, .note .go, .highlight, .bar, .fac-gauge,
@@ -1350,18 +1410,18 @@ select, input, .pick, .seg, .step, .modes,
 .filter button { border-radius: 0 var(--r-sm) var(--r-sm) 0 }
 
 /* Gefuellte Flaechen heben sich ein wenig ab. */
-.modes, .chips button.on, .copy button, .coll-copy, .note .go,
+.modes, .world-pick, .chips button.on, .copy button, .coll-copy, .note .go,
 .fav-list li[aria-current="true"] { box-shadow: var(--shadow-sm) }
 
 /* Weiche Uebergaenge und ein kleines Nachgeben beim Druecken. Die Stepper-
    Knoepfe bleiben aussen vor: an der Grenze soll ihr Zeichen sofort
    verblassen, nicht erst nach einer Blende. */
 .modes button, .seg button, .chips button, .fav-save, .fav-go, .filter-hit,
-.copy button, .coll-copy, .note .go, .slot-reset, select, input, .pick {
+.copy button, .coll-copy, .note .go, .slot-reset, select, input, .pick, .world-pick {
   transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s, transform .1s;
 }
 .chips button:active, .fav-save:active, .copy button:active:not(:disabled),
-.coll-copy:active, .note .go:active, .modes button:active { transform: translateY(1px) }
+.coll-copy:active, .note .go:active, .modes button:active, .world-pick:active { transform: translateY(1px) }
 .chips button:hover:not(.on), .fav-save:hover { border-color: var(--frame) }
 .copy button:hover:not(:disabled), .coll-copy:hover, .note .go:hover { filter: brightness(1.07) }
 select:hover, input:hover:not(:focus), .pick:hover { border-color: var(--frame) }
@@ -1414,9 +1474,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .safe, td.chg, .stamp, .scan, .wordmark.plotting > span, .toast { animation: none }
   .coll-list li.fresh { animation: none }
   .modes button, .seg button, .chips button, .fav-save, .fav-go, .filter-hit,
-  .copy button, .coll-copy, .note .go, .slot-reset, select, input, .pick { transition: none }
+  .copy button, .coll-copy, .note .go, .slot-reset, select, input, .pick, .world-pick { transition: none }
   .chips button:active, .fav-save:active, .copy button:active,
-  .coll-copy:active, .note .go:active, .modes button:active { transform: none }
+  .coll-copy:active, .note .go:active, .modes button:active, .world-pick:active { transform: none }
   /* Der Stempel wuerde sonst dauerhaft stehen bleiben — er wird in diesem
      Modus gar nicht erst eingeblendet (siehe app.js). */
 }

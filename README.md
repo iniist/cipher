@@ -454,6 +454,32 @@ die neue Zeile ersetzt darum die alte an deren Platz, und die Reihenfolge der
 Sammlung bleibt die Reihenfolge des Sammelns. Mehr als 15 Zeilen hält sie
 nicht; läuft sie über, fällt die älteste heraus.
 
+### Welten
+
+Wer auf mehreren Welten spielt, fördert dort andere Bauwerke mit einem anderen
+Faktor. Der Knopf oben links öffnet die Liste der 24 deutschen Welten,
+von Arvahall (de1) bis Yorkton (de24). Jede Welt hat ihren **eigenen Stand**:
+Bauwerk, Stufe, Faktoren, Plätze, Favoriten und Sammlung. **Überall gleich**
+bleiben Spielername, Darstellung, der Kürzel-Schalter, eigene Kürzel,
+selbst eingetragene Kosten und P1 sowie die Lesarten von Stufe, Sichern und
+Plätzen.
+
+Die Welt, die zuerst gewählt wird, übernimmt, was schon da ist, und behält
+dafür die Schlüssel von vorher. Nichts wird umkopiert: Wer nie eine zweite
+Welt öffnet, hat genau denselben Speicher wie vorher, und fiele der Umschalter
+wieder weg, läge alles noch an seinem Platz. Jede weitere Welt legt ihren Teil
+unter `cipher:w:<welt>:` ab, die Wahl selbst steht in `cipher:world`. Ein
+Wechsel lädt die Seite neu; der Start liest dann aus den Schlüsseln der neuen
+Welt und prüft alles wie immer. Solange keine Welt gewählt ist, speichert
+cipher dazu nichts.
+
+Wer bei der ersten Wahl danebengetippt hat, findet unter der Liste
+„Falsche Welt? … umbenennen“. Der Stand der offenen Welt geht dann an eine
+andere — aber nur an eine, die noch nichts gespeichert hat, denn zwei Stände
+zu verschmelzen hieße einen davon wegzuwerfen. Bei der ersten Welt ändert sich
+dafür nur der Name in `cipher:world`; jede weitere zieht mit ihren Schlüsseln
+um: erst kopieren, dann die Wahl umstellen, dann das Alte löschen.
+
 ### Wenn Daten fehlen
 
 Für sehr hohe Stufen und für neue Bauwerke kennt der Datensatz nicht immer

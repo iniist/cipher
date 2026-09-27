@@ -10,7 +10,9 @@
 
   var STATE_KEY = "cipher:state";
   var CIPHER_KEYS = ["cipher:state", "cipher:favorites", "cipher:totals", "cipher:p1",
-                     "cipher:collection", "cipher:shorts"];
+                     "cipher:collection", "cipher:shorts", "cipher:world"];
+  /** Jede weitere Spielwelt legt ihren Teil unter diesem Anfang ab. */
+  var WORLD_PREFIX = "cipher:w:";
   var LEGACY_KEYS = ["lgr-state", "lgr-t", "lgr-p1"];
   var THEMES = ["light", "dark", "contrast", "writer", "space", "forge"];
 
@@ -69,7 +71,13 @@
   if (wipeButton) {
     wipeButton.addEventListener("click", function () {
       var removed = 0;
-      CIPHER_KEYS.concat(LEGACY_KEYS).forEach(function (key) {
+      var worldKeys = [];
+      try {
+        worldKeys = Object.keys(window.localStorage).filter(function (key) {
+          return key.indexOf(WORLD_PREFIX) === 0;
+        });
+      } catch (error) { /* Speicher gesperrt — dann gibt es nichts zu finden. */ }
+      CIPHER_KEYS.concat(LEGACY_KEYS, worldKeys).forEach(function (key) {
         try {
           if (window.localStorage.getItem(key) !== null) removed += 1;
           window.localStorage.removeItem(key);
