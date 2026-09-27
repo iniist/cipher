@@ -464,14 +464,15 @@ select, .pick {
 .step button:last-child { border-left: 1.5px solid var(--field-border) }
 :root[data-theme="contrast"] .step button:first-child { border-right-width: 2px }
 :root[data-theme="contrast"] .step button:last-child { border-left-width: 2px }
-.step button:hover:not(:disabled) { color: var(--ink) }
+.step button:hover:not(:disabled):not([aria-disabled="true"]) { color: var(--ink) }
 /* An der Grenze war bisher nichts zu sehen, der Knopf reagierte nur nicht.
    Gedaempft wird die Schriftfarbe, nicht der Knopf: opacity haette seine
    Trennlinie mit abblassen lassen. */
-.step button:disabled { color: var(--field-border); cursor: default }
+.step button:disabled, .step button[aria-disabled="true"] { color: var(--field-border); cursor: default }
 /* Im Kontrastmodus ist --field-border schwarz, ein blasses Zeichen gibt es
    dort also nicht. Statt den Kontrast zu senken verschwindet das Zeichen. */
-:root[data-theme="contrast"] .step button:disabled { color: transparent }
+:root[data-theme="contrast"] .step button:disabled,
+:root[data-theme="contrast"] .step button[aria-disabled="true"] { color: transparent }
 
 /* Der Faktor lief frueher ueber einen Schieberegler. Auf dem Telefon sprang
    sein Wert schon beim Aufsetzen des Fingers dorthin, wo man ihn hinsetzte —
@@ -1363,6 +1364,9 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
   font-weight: 600; font-size: .9rem; letter-spacing: .04em;
   padding: 8px 16px;
   border: 1.5px solid var(--frame);
+  /* Laengere Meldungen brechen um, statt auf dem Telefon ueberzustehen. */
+  width: max-content; max-width: calc(100vw - 32px);
+  text-align: center;
   animation: toast-in .25s ease-out, toast-out .4s ease-in 2.1s forwards;
 }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 12px) } }

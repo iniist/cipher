@@ -881,7 +881,7 @@
     return !query.trim()
       ? ""
       : matches.length === 0
-        ? "Kein Bauwerk gefunden."
+        ? searchEgg(query) || "Kein Bauwerk gefunden."
         : matches.length === 1
           ? "1 Bauwerk gefunden."
           : matches.length + " Bauwerke gefunden.";
@@ -1555,8 +1555,11 @@
     if (document.activeElement !== $("factor")) $("factor").value = formatFactor(state.factor);
     $("factorGauge").style.width =
       ((state.factor - FACTOR_MIN) / (FACTOR_MAX - FACTOR_MIN) * 100) + "%";
-    $("factorDown").disabled = state.factor <= FACTOR_MIN;
-    $("factorUp").disabled = state.factor >= FACTOR_MAX;
+    // aria-disabled statt disabled: ein abgeschalteter Knopf nimmt keinen
+    // Tipp mehr an, und wer am Anschlag weiterdrueckt, soll eine Antwort
+    // bekommen (Egg 4).
+    $("factorDown").setAttribute("aria-disabled", String(state.factor <= FACTOR_MIN));
+    $("factorUp").setAttribute("aria-disabled", String(state.factor >= FACTOR_MAX));
     document.querySelectorAll("#factorChips button").forEach(function (chip) {
       chip.classList.toggle("on", Number(chip.dataset.factor) === state.factor);
     });
@@ -2601,7 +2604,8 @@
   /** Den Faktor um eine Stufe verschieben und das Feld mitziehen. */
   function stepFactor(delta) {
     var next = clampFactor(state.factor + delta);
-    if (!next || next === state.factor) return;
+    if (next === state.factor) { pushedPastLimit(delta); return; }
+    if (!next) return;
     state.factor = next;
     $("factor").value = formatFactor(next);
     render();
@@ -2784,6 +2788,52 @@
       wordmark.classList.remove("plotting");
       wordmark.textContent = label;
     }, 500 + label.length * 70 + 100);
+  }
+
+  /*
+   * Egg 4 — Anschlag.
+   * Wer beim Arche-Faktor schon an der Grenze steht und trotzdem weiter-
+   * drueckt, bekommt eine Antwort. Nur beim Faktor, die Stufe bleibt stumm.
+   */
+  function pushedPastLimit(delta) {
+    toast(delta > 0
+      ? "Großzügiger wird’s nicht. Die Arche hat auch ihren Stolz."
+      : "Noch knapper, und keiner fördert mehr mit.");
+  }
+
+  /*
+   * Egg 5 — Suchwoerter.
+   * Ein paar Begriffe, die kein Bauwerk treffen, bekommen in der Suche eine
+   * eigene Antwort statt "Kein Bauwerk gefunden." Greift nur, wenn es
+   * wirklich keinen Treffer gibt.
+   */
+  var SEARCH_EGGS = {
+    osterei: "Kein Bauwerk, aber ein Ei. Gut gesucht!",
+    ostereier: "Kein Bauwerk, aber ein Ei. Gut gesucht!",
+    easteregg: "Kein Bauwerk, aber ein Ei. Gut gesucht!",
+    cipher: "Kein Bauwerk. Nur ich.",
+    "42": "Kein Bauwerk, aber die Antwort."
+  };
+
+  function searchEgg(query) {
+    var key = normalise(query).replace(/[\s\-]/g, "");
+    return Object.prototype.hasOwnProperty.call(SEARCH_EGGS, key) ? SEARCH_EGGS[key] : "";
+  }
+
+  /*
+   * Egg 6 — Gruss in der Konsole.
+   * Wer die Entwicklerwerkzeuge oeffnet, findet dort die Wortmarke und den
+   * Weg zum Quelltext.
+   */
+  function greetConsole() {
+    if (!window.console || typeof console.log !== "function") return;
+    console.log(
+      "%c cipher %c\n\nNeugierig? Der ganze Quelltext liegt offen:\n" +
+      "https://github.com/iniist/cipher\n\n" +
+      "Und hier auf der Seite gibt es noch mehr zu finden.",
+      "font: 700 28px/1.4 Georgia, serif; letter-spacing: .12em; color: #d9a441; background: #13233a; padding: 4px 14px",
+      "font: 13px/1.5 sans-serif; color: inherit"
+    );
   }
 
   // --------------------------------------------------------- Weltenauswahl
@@ -3044,6 +3094,7 @@
   renderWorldPick();
   watchKonami();
   watchWordmark();
+  greetConsole();
   renderCollection();
   render();
   if (movedIn) toast("Deine Daten von der alten Adresse sind übernommen.");
