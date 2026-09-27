@@ -36,7 +36,7 @@ const speicher = (page, key) => page.evaluate((k) => localStorage.getItem(k), ke
 
 test("ohne Wahl bleibt alles wie vorher und nichts wird gespeichert", async ({ page }) => {
   await page.goto("/index.html");
-  await expect(page.locator("#worldName")).toHaveText("Welt");
+  await expect(page.locator("#worldName")).toHaveText("Server");
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
 });
 
