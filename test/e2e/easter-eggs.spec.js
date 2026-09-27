@@ -1,5 +1,5 @@
 /**
- * Browsertests fuer die drei Easter Eggs.
+ * Browsertests fuer die Easter Eggs.
  * Sie duerfen Spass machen, aber niemanden stoeren: bei
  * prefers-reduced-motion bleibt alles ruhig.
  */
@@ -66,6 +66,64 @@ test("der Freigabe-Stempel erscheint bei einem Plan ohne Vorleistung", async ({ 
   await page.locator("#level").blur();
   await page.waitForTimeout(200);
   await expect(page.locator(".stamp")).toHaveCount(0);
+});
+
+test("am Anschlag des Faktors weiterdruecken gibt eine Antwort", async ({ page }) => {
+  await page.goto("/index.html");
+  await page.locator('#factorChips button[data-factor="200"]').click();
+
+  // Der Knopf sieht abgeschaltet aus (aria-disabled), nimmt den Tipp aber an.
+  await page.click("#factorUp", { force: true });
+  await expect(page.locator(".toast")).toHaveText(/Großzügiger wird’s nicht/);
+  await expect(page.locator("#factor")).toHaveValue("2,00");
+
+  await page.locator('#factorChips button[data-factor="180"]').click();
+  await page.locator("#factor").focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(page.locator(".toast")).toHaveText(/Noch knapper/);
+  await expect(page.locator("#factor")).toHaveValue("1,80");
+});
+
+test("mitten im Bereich und bei der Stufe bleibt es still", async ({ page }) => {
+  await page.goto("/index.html");
+  await page.click("#factorUp");
+  await expect(page.locator("#factor")).toHaveValue("1,91");
+
+  await page.fill("#level", "1");
+  await page.locator("#level").blur();
+  await page.click("#levelDown", { force: true });
+  await page.waitForTimeout(200);
+  await expect(page.locator(".toast")).toHaveCount(0);
+});
+
+test("ein paar Suchwoerter bekommen eine eigene Antwort", async ({ page }) => {
+  await page.goto("/index.html");
+  const count = page.locator("#filterCount");
+
+  await page.fill("#buildingFilter", "Osterei");
+  await expect(count).toHaveText("Kein Bauwerk, aber ein Ei. Gut gesucht!");
+  await page.fill("#buildingFilter", "easter egg");
+  await expect(count).toHaveText("Kein Bauwerk, aber ein Ei. Gut gesucht!");
+  await page.fill("#buildingFilter", "cipher");
+  await expect(count).toHaveText("Kein Bauwerk. Nur ich.");
+  await page.fill("#buildingFilter", "42");
+  await expect(count).toHaveText("Kein Bauwerk, aber die Antwort.");
+
+  // Alles andere ohne Treffer bleibt beim gewohnten Satz
+  await page.fill("#buildingFilter", "xyzzy");
+  await expect(count).toHaveText("Kein Bauwerk gefunden.");
+
+  // Auch in der Bauwerksauswahl
+  await page.click("#buildingPick");
+  await page.fill("#pickerFilter", "osterei");
+  await expect(page.locator("#pickerCount")).toHaveText("Kein Bauwerk, aber ein Ei. Gut gesucht!");
+});
+
+test("die Konsole gruesst mit dem Weg zum Quelltext", async ({ page }) => {
+  const messages = [];
+  page.on("console", (message) => messages.push(message.text()));
+  await page.goto("/index.html");
+  await expect.poll(() => messages.join("\n")).toContain("https://github.com/iniist/cipher");
 });
 
 test.describe("mit prefers-reduced-motion", () => {

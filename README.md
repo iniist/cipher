@@ -792,10 +792,12 @@ Polster unverändert sind.
 
 ## Easter Eggs
 
-Drei Stück, alle harmlos und alle stumm bei `prefers-reduced-motion`. Sie zu
+Sechs Stück, alle harmlos und alle stumm bei `prefers-reduced-motion`. Sie zu
 finden ist der Punkt, deshalb hier nur so viel: einer belohnt einen wirklich gut
 zugeschnittenen Förderplan (in rund einem von tausend Fällen), einer hört auf
-eine sehr alte Tastenfolge, und einer sitzt im Namen selbst.
+eine sehr alte Tastenfolge, und einer sitzt im Namen selbst. Die übrigen drei
+sind leichter: einer wartet dort, wo es nicht mehr weitergeht, einer in der
+Suche, und einer grüßt alle, die einen Blick unter die Haube werfen.
 
 ## Daten
 
