@@ -182,20 +182,17 @@
     <div class="head-bar">
       <!-- Welche Spielwelt gerade offen ist. Jede Welt hat ihre eigenen
            Bauwerke, Faktoren, Favoriten und ihre eigene Sammlung; die Liste
-           öffnet sich als Blatt wie die Bauwerksauswahl. Oben links, in
-           derselben Zeile wie die Themes: dort war ohnehin Platz frei. -->
+           öffnet sich als Blatt wie die Bauwerksauswahl. -->
       <button type="button" class="world-pick" id="worldPick" aria-haspopup="dialog" aria-expanded="false" aria-controls="worlds">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
         <span class="sr-only">Spielwelt: </span><span class="world-name" id="worldName">Welt</span>
       </button>
-      <div class="modes" role="group" aria-label="Darstellung">
-        <button type="button" data-mode="light" aria-label="Hell" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
-        <button type="button" data-mode="dark" aria-label="Dunkel" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
-        <button type="button" data-mode="contrast" aria-label="Kontrast" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button>
-        <button type="button" data-mode="writer" aria-label="Papier" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4C11 4 6 10 6 18M6 18l-3 3M6 18c6 0 11-4 12-9M9.5 13H15"/></svg></button>
-        <button type="button" data-mode="space" aria-label="Weltall" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3l1.8 5.7L17.5 10.5l-5.7 1.8L10 18l-1.8-5.7L2.5 10.5l5.7-1.8z"/><path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></button>
-        <button type="button" data-mode="forge" aria-label="Schmiede" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 2.8l7.6 7.6-2.8 2.8-7.6-7.6z"/><path d="M11.4 8.1l4.5 4.5-9.2 9.2a1.6 1.6 0 0 1-2.3 0l-2.2-2.2a1.6 1.6 0 0 1 0-2.3z"/></svg></button>
-      </div>
+      <!-- Alles, was man einmal einstellt und dann in Ruhe lässt: Name,
+           Darstellung, Kürzel. Die Welt bleibt draußen und sichtbar — wer
+           sie nicht sieht, fördert irgendwann mit dem Stand der falschen. -->
+      <button type="button" class="settings-pick" id="settingsPick" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings" aria-label="Einstellungen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
     </div>
   </header>
 
@@ -210,6 +207,13 @@
   <section class="panel">
     <h2>Bauwerk</h2>
 
+    <!-- Solange kein Spielername eingetragen ist: hier oben, wo man anfängt.
+         Wer cipher zum ersten Mal öffnet, sucht den Namen nicht im Menü. -->
+    <div class="name-need" id="nameNeedTop" hidden>
+      <p><b>Wie heißt du im Spiel?</b> Ohne Namen kein Kopieren.</p>
+      <button type="button" class="name-go">Namen eintragen</button>
+    </div>
+
     <!-- Gemerktes zuerst: wer wiederkommt, will meistens genau dorthin
          zurück. Solange nichts gemerkt ist, fällt der Streifen ganz weg —
          ein leerer Platzhalter an der prominentesten Stelle wäre schlechter
@@ -219,12 +223,8 @@
       <ul class="fav-list" id="favList" aria-labelledby="favsLabel"></ul>
     </div>
 
-    <!-- Der Schalter gilt überall, wo cipher ein Bauwerk kurz nennt: Chat-
-         Zeilen, Sammlung, Merken-Knopf, Favoriten. Das Auswahlfeld selbst
-         bleibt beim vollen Namen — dort wird gesucht, nicht getippt. -->
     <div class="sel-head">
       <label class="l" for="buildingPick">Legendäres Bauwerk</label>
-      <label class="abbr-toggle" title="Im Chat „AO“ statt „Arktische Orangerie“ schreiben"><input type="checkbox" id="useAbbr"> Kürzel<span class="sr-only"> statt Namen verwenden</span></label>
     </div>
 
     <!-- Die native Liste des Browsers ist auf dem Telefon bei 49 Einträgen
@@ -265,18 +265,11 @@
         </div>
       </div>
       <div>
-        <label class="l" for="playerName">Dein Name</label>
-        <input id="playerName" autocomplete="nickname" placeholder="Spielername">
-
-        <!-- Die Chat-Zeile lautet „[Dein Name] [Bauwerk] P5 P4 P3“ — die
-             beiden Felder, die sie füllen, stehen darum untereinander. Der
-             Platz war ohnehin da: diese Spalte wird auf die Höhe der Stufen-
-             spalte gestreckt und stand darunter leer.
-
-             Was im Feld steht, gilt nur für das gewählte Bauwerk; der
+        <!-- Was im Feld steht, gilt nur für das gewählte Bauwerk; der
              Platzhalter zeigt den Namen aus dem Datensatz, leer lassen
-             heißt also „den nehmen“. -->
-        <label class="l lbl-short" for="buildingShort">Eigenes Kürzel<span class="sr-only"> für das gewählte Bauwerk</span></label>
+             heißt also „den nehmen“. Der Spielername stand früher darüber;
+             er gilt für alles und steht darum im Menü. -->
+        <label class="l" for="buildingShort">Eigenes Kürzel<span class="sr-only"> für das gewählte Bauwerk</span></label>
         <input id="buildingShort" autocomplete="off" maxlength="24" spellcheck="false">
       </div>
     </div>
@@ -365,14 +358,27 @@
   </section>
 
   <section class="panel">
-    <!-- Derselbe Schalter wie beim Bauwerk, ein zweites Mal: hier sieht man,
-         was er bewirkt, und hier wird kopiert. Beide zeigen denselben Stand. -->
+    <!-- Derselbe Schalter wie im Menü, ein zweites Mal: hier sieht man, was
+         er bewirkt, und hier wird kopiert. Beide zeigen denselben Stand. -->
     <div class="chat-head">
       <h2>Förderchat</h2>
       <label class="abbr-toggle" title="Im Chat „AO“ statt „Arktische Orangerie“ schreiben"><input type="checkbox" id="useAbbrChat"> Kürzel<span class="sr-only"> statt Namen verwenden</span></label>
     </div>
-    <div class="copy"><div class="t" id="chatPlain"></div><button type="button" data-copy="chatPlain">Nur Plätze kopieren</button></div>
-    <div class="copy"><div class="t" id="chatPoints"></div><button type="button" data-copy="chatPoints">Mit FP kopieren</button></div>
+    <!-- Eine Zeile, eine Wahl: ob die Beträge mitgehen, stellt der Schalter
+         ein, und er merkt es sich je Welt — jede Gilde hält es anders. Früher
+         standen beide Fassungen mit je einem großen Knopf untereinander. -->
+    <div class="seg chat-mode" id="chatMode" role="group" aria-label="Was die Zeile enthält">
+      <button type="button" data-chat-mode="plain" aria-pressed="true">Nur Plätze</button>
+      <button type="button" data-chat-mode="points" aria-pressed="false">Mit FP</button>
+    </div>
+    <div class="copy">
+      <div class="t" id="chatPlain"></div>
+      <div class="t" id="chatPoints" hidden></div>
+      <!-- Ohne Namen weiß die Gilde nicht, von wem die Förderung ist. Bis
+           einer eingetragen ist, kopiert der Knopf nicht, sondern führt
+           ins Namensfeld im Menü — ein eigener Hinweis kostete eine Zeile. -->
+      <button type="button" id="chatCopy">Zeile kopieren</button>
+    </div>
 
     <!-- Wer mehrere Bauwerke gleichzeitig in die Fördergruppe stellt, hat
          bisher jede kopierte Zeile in einer Notiz zwischengeparkt. Der
@@ -502,6 +508,43 @@
     <p class="worlds-note" id="worldsNote"></p>
     <ul class="picker-list" id="worldList" aria-labelledby="worldsTitle"></ul>
     <p class="worlds-foot"><button type="button" class="link" id="worldRename" hidden>Falsche Welt? Umbenennen</button></p>
+  </div>
+</dialog>
+
+<!-- Das Menü. Dasselbe Blatt wie die Welten- und die Bauwerksauswahl. -->
+<dialog class="picker settings" id="settings" aria-labelledby="settingsTitle">
+  <div class="picker-sheet">
+    <div class="picker-head">
+      <h2 id="settingsTitle">Einstellungen</h2>
+      <button type="button" class="picker-close" id="settingsClose" aria-label="Schließen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="settings-body">
+      <div class="setting">
+        <label class="l" for="playerName">Dein Name</label>
+        <input id="playerName" autocomplete="nickname" placeholder="Spielername" aria-describedby="playerNameHint">
+        <p class="setting-hint" id="playerNameHint">Steht vorn in jeder Chat-Zeile, in allen Welten gleich.</p>
+      </div>
+      <div class="setting">
+        <span class="l" id="modesLabel">Darstellung</span>
+        <div class="modes" role="group" aria-labelledby="modesLabel">
+          <button type="button" data-mode="light" aria-label="Hell" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
+          <button type="button" data-mode="dark" aria-label="Dunkel" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+          <button type="button" data-mode="contrast" aria-label="Kontrast" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button>
+          <button type="button" data-mode="writer" aria-label="Papier" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4C11 4 6 10 6 18M6 18l-3 3M6 18c6 0 11-4 12-9M9.5 13H15"/></svg></button>
+          <button type="button" data-mode="space" aria-label="Weltall" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3l1.8 5.7L17.5 10.5l-5.7 1.8L10 18l-1.8-5.7L2.5 10.5l5.7-1.8z"/><path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></button>
+          <button type="button" data-mode="forge" aria-label="Schmiede" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 2.8l7.6 7.6-2.8 2.8-7.6-7.6z"/><path d="M11.4 8.1l4.5 4.5-9.2 9.2a1.6 1.6 0 0 1-2.3 0l-2.2-2.2a1.6 1.6 0 0 1 0-2.3z"/></svg></button>
+        </div>
+      </div>
+      <div class="setting">
+        <!-- Gilt überall, wo cipher ein Bauwerk kurz nennt: Chat-Zeilen,
+             Sammlung, Merken-Knopf, Favoriten. Das Auswahlfeld selbst bleibt
+             beim vollen Namen — dort wird gesucht, nicht getippt. -->
+        <label class="setting-check"><input type="checkbox" id="useAbbr" aria-describedby="useAbbrHint"> Bauwerke mit Kürzel nennen</label>
+        <p class="setting-hint" id="useAbbrHint">„AO“ statt „Arktische Orangerie“ – im Chat, im Merken-Knopf, bei Favoriten und in der Sammlung.</p>
+      </div>
+    </div>
   </div>
 </dialog>
 

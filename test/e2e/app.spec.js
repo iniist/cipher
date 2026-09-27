@@ -3,6 +3,7 @@
  * Ausfuehren mit: npm run test:e2e
  */
 const { test, expect } = require("@playwright/test");
+const { nameEintragen, themaWaehlen } = require("./menue");
 const { haekchen, vergeben, abwaehlen } = require("./plaetze");
 const DATA = require("../../data.js");
 const Calc = require("../../calc.js");
@@ -71,7 +72,7 @@ test("ein abgewaehlter Platz verschwindet aus dem Foerderchat", async ({ page })
   // Stufe 40 ist hoch genug, dass auch P5 noch eine Belohnung abwirft.
   await page.fill("#level", "40");
   await page.locator("#level").blur();
-  await page.fill("#playerName", "Dani");
+  await nameEintragen(page, "Dani");
   await expect(page.locator("#chatPlain")).toHaveText(/Dani .* P5 P4 P3 P2 P1$/);
 
   await abwaehlen(page, 4);
@@ -86,7 +87,7 @@ test.describe("Vergebene Plaetze", () => {
   test.beforeEach(async ({ page }) => {
     await page.fill("#level", "40");
     await page.locator("#level").blur();
-    await page.fill("#playerName", "Dani");
+    await nameEintragen(page, "Dani");
   });
 
   test("fallen aus dem Chat, aber nicht aus der Rechnung", async ({ page }) => {
@@ -189,12 +190,12 @@ test.describe("Vergebene Plaetze", () => {
 test("der Foerderchat nennt auf Wunsch die Einzahlungen", async ({ page }) => {
   await page.fill("#level", "40");
   await page.locator("#level").blur();
-  await page.fill("#playerName", "Dani");
+  await nameEintragen(page, "Dani");
   await expect(page.locator("#chatPoints")).toHaveText(/P5\(\d+\) P4\(\d+\) P3\(\d+\) P2\(\d+\) P1\(\d+\)$/);
 });
 
 test("das Theme laesst sich wechseln und ueberlebt einen Neuladen", async ({ page }) => {
-  await page.click('.modes button[data-mode="light"]');
+  await themaWaehlen(page, "light");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 
   await page.reload();
@@ -206,7 +207,7 @@ test("Bauwerk, Stufe und Name ueberleben einen Neuladen", async ({ page }) => {
   await page.locator("#building").selectOption("Notre_Dame", { force: true });
   await page.fill("#level", "63");
   await page.locator("#level").blur();
-  await page.fill("#playerName", "Testspielerin");
+  await nameEintragen(page, "Testspielerin");
   await expect(page.locator("#chatPlain")).toContainText("Testspielerin");
 
   await page.reload();
@@ -332,17 +333,18 @@ test("der Kopierknopf quittiert den Kopiervorgang", async ({ page, context, brow
   test.skip(browserName !== "chromium", "Zwischenablage-Rechte gibt es hier nur in Chromium");
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
 
-  await page.fill("#playerName", "Dani");
-  const expected = await page.locator("#chatPlain").textContent();
+  await nameEintragen(page, "Dani");
+  // Mit FP ist die Vorgabe.
+  const expected = await page.locator("#chatPoints").textContent();
 
-  const button = page.locator('button[data-copy="chatPlain"]');
+  const button = page.locator("#chatCopy");
   await button.click();
   await expect(button).toHaveText("Kopiert");
 
   const clipboard = await page.evaluate(() => navigator.clipboard.readText());
   expect(clipboard).toBe(expected);
 
-  await expect(button).toHaveText("Nur Plätze kopieren", { timeout: 3000 });
+  await expect(button).toHaveText("Zeile kopieren", { timeout: 3000 });
 });
 
 test.describe("Datum der Datenquelle", () => {

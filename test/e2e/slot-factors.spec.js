@@ -7,6 +7,7 @@
  * Der obere Wert zeigt dadurch immer etwas Wahres und wird nie ausgegraut.
  */
 const { test, expect } = require("@playwright/test");
+const { nameEintragen } = require("./menue");
 const { haekchen, abwaehlen } = require("./plaetze");
 
 const row = (page, slot) => page.locator(`.slot-list li[data-slot="${slot}"]`);
@@ -270,7 +271,7 @@ test.describe("Wirkung auf den Plan", () => {
   });
 
   test("die Foerderchat-Zeile nennt die Betraege je Platz", async ({ page }) => {
-    await page.fill("#playerName", "Dani");
+    await nameEintragen(page, "Dani");
     const before = await page.locator("#chatPoints").textContent();
 
     await value(page, 1).fill("1,80");
@@ -576,7 +577,7 @@ test.describe("Der Block passt auch auf schmale Telefone", () => {
       await value(page, 0).fill("1,85");
       await unit(page, "fp").click();
       await value(page, 1).fill("10000");
-      await page.locator("#playerName").click();
+      await page.locator("#buildingShort").click();
 
       const ueberbreite = await page.evaluate(() =>
         document.documentElement.scrollWidth - document.documentElement.clientWidth);

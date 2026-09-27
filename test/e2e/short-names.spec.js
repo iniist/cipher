@@ -7,6 +7,7 @@
  * Kuerzel je Bauwerk selbst setzen; leer heisst "die Vorgabe".
  */
 const { test, expect } = require("@playwright/test");
+const { nameEintragen } = require("./menue");
 
 const feld = (page) => page.locator("#buildingShort");
 const chat = (page) => page.locator("#chatPlain");
@@ -18,7 +19,7 @@ const gespeichert = (page) =>
 async function orangerie(page) {
   await page.goto("/index.html");
   await page.locator("#building").selectOption("Arctic_Orangery", { force: true });
-  await page.fill("#playerName", "Dani");
+  await nameEintragen(page, "Dani");
 }
 
 test.describe("Ohne eigenes Kuerzel", () => {
@@ -62,7 +63,7 @@ test.describe("Ein Kuerzel vergeben", () => {
   test("wirkt es auf dem Eintrag in der Sammlung", async ({ page }) => {
     await orangerie(page);
     await feld(page).fill("AO");
-    await page.click('[data-copy="chatPlain"]');
+    await page.click("#chatCopy");
 
     await expect(page.locator(".coll-del").first())
       .toHaveAttribute("aria-label", "AO aus der Sammlung entfernen");

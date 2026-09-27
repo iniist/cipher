@@ -21,7 +21,7 @@ test("Konami-Code laesst einen Scan ueber die Blaupause laufen", async ({ page }
 
 test("der Konami-Code greift nicht, waehrend man tippt", async ({ page }) => {
   await page.goto("/index.html");
-  await page.locator("#playerName").focus();
+  await page.locator("#buildingShort").focus();
 
   for (const key of ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"]) {
     await page.keyboard.press(key);

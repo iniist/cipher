@@ -313,16 +313,15 @@ wird genau die Stelle hervorgehoben, die getroffen hat.
 ### Kürzel statt Namen
 
 Im Förderchat schreibt kaum jemand „Arktische Orangerie“ aus — die einen
-schreiben „Orangerie“, die anderen „AO“. Der Schalter **Kürzel** rechts über
-dem Auswahlfeld wechselt zwischen vollem Namen und Kürzel: aus, heißt ein
+schreiben „Orangerie“, die anderen „AO“. Der Schalter **Bauwerke mit Kürzel
+nennen** im Menü wechselt zwischen vollem Namen und Kürzel: aus, heißt ein
 Bauwerk wie im Spiel („Arktische Orangerie“); an, mit seinem Kürzel aus
 [`abbr.js`](./abbr.js) — `Obsi`, `AO`, `TA`, `Inno`. Die Wahl wird gemerkt.
 
-Denselben Schalter gibt es ein zweites Mal rechts neben „Förderchat“. Oben
-sitzt er beim Bauwerk, dessen Namen er betrifft; unten dort, wo man sieht,
-was er bewirkt, und gleich kopiert — wer erst beim Kopieren merkt, dass er
-lieber „AO“ hätte, muss nicht mehr nach oben scrollen. Beide zeigen immer
-denselben Stand.
+Denselben Schalter gibt es ein zweites Mal als **Kürzel** rechts neben
+„Förderchat“ — dort, wo man sieht, was er bewirkt, und gleich kopiert: wer
+erst beim Kopieren merkt, dass er lieber „AO“ hätte, muss nicht erst ins Menü.
+Beide zeigen immer denselben Stand.
 
 Der Schalter wirkt überall, wo cipher ein Bauwerk kurz nennt: in beiden
 Chat-Zeilen, in der Sammlung, am Merken-Knopf, auf den Favoriten-Chips und
@@ -363,9 +362,8 @@ Voller Name und Kürzel aus `abbr.js` treffen nicht jede Runde: „AO“ für di
 Arktische Orangerie versteht die eine sofort und die nächste gar nicht, die
 dritte schreibt „Orangerie“.
 
-Das Feld **Eigenes Kürzel** unter „Dein Name“ setzt darum je Bauwerk einen eigenen
-Namen. Die beiden stehen zusammen, weil sie zusammen eine Zeile ergeben:
-`[Dein Name] [Bauwerk] P5 P4 P3`. Der Platzhalter zeigt immer, was ohne
+Das Feld **Eigenes Kürzel** neben der Stufe setzt darum je Bauwerk einen eigenen
+Namen für die Zeile `[Dein Name] [Bauwerk] P5 P4 P3`. Der Platzhalter zeigt immer, was ohne
 eigenes gilt, leer lassen heißt also „das nehmen“ — es braucht kein
 Zurücksetzen, und es wird auch nichts gespeichert, solange niemand etwas
 vergeben hat.
@@ -437,7 +435,7 @@ bisher über eine Notiz außerhalb: kopieren, wegschreiben, nächstes Bauwerk,
 wieder kopieren.
 
 Die Sammlung ist diese Notiz, nur an der Stelle, an der die Zeilen ohnehin
-entstehen. Unter den beiden Kopierkästen sammelt sie jede Zeile, die du
+entstehen. Unter dem Kopierkasten sammelt sie jede Zeile, die du
 kopierst; „Alle kopieren“ gibt sie am Ende untereinander zurück. Jede Zeile
 lässt sich einzeln wieder herausnehmen, „Sammlung leeren“ räumt alles weg.
 Sie liegt im `localStorage` und überdauert damit das Schließen des Browsers.
@@ -445,7 +443,7 @@ Solange nichts gesammelt ist, fällt der Kasten ganz weg.
 
 Gesammelt wird **beim Kopieren** und nicht über einen eigenen Knopf. Der Grund
 ist die Wahl zwischen „Nur Plätze“ und „Mit FP“: ein Knopf „Sammeln“ müsste sie
-ein zweites Mal stellen. Der Kopierknopf hat sie schon beantwortet, also nimmt
+ein zweites Mal stellen. Der Schalter über der Zeile hat sie schon beantwortet, also nimmt
 die Sammlung genau die Zeile, die auch in der Zwischenablage landet.
 
 Je Bauwerk steht **eine** Zeile in der Sammlung. Wer nach einer Korrektur
@@ -453,6 +451,31 @@ erneut kopiert, meint dieselbe Förderung noch einmal und nicht eine zweite —
 die neue Zeile ersetzt darum die alte an deren Platz, und die Reihenfolge der
 Sammlung bleibt die Reihenfolge des Sammelns. Mehr als 15 Zeilen hält sie
 nicht; läuft sie über, fällt die älteste heraus.
+
+### Menü
+
+Was man einmal einstellt und dann in Ruhe lässt, steht im **Menü** oben rechts:
+der Spielername, die Darstellung (sechs Themes) und der Schalter für Kürzel.
+Früher belegten die Themes die Kopfzeile und der Name ein eigenes Feld im
+Bauwerk-Kasten — Platz, der beim Fördern fehlte. Die Welt bleibt dagegen als
+eigener Knopf oben links sichtbar: wer nicht sieht, in welcher Welt er ist,
+fördert irgendwann mit dem Stand der falschen.
+
+**Kopiert wird erst mit Namen** — ohne ihn weiß die Gilde nicht, von wem die
+Förderung ist. Bis einer eingetragen ist, steht oben im Bauwerk-Kasten ein
+knapper Hinweis, und der Kopierknopf heißt „Erst Namen eintragen“: beide
+öffnen das Menü gleich im Namensfeld, Enter schließt es wieder. Wer cipher zum
+ersten Mal benutzt, sucht den Namen sonst nicht im Menü. Impressum und
+Datenschutzerklärung behalten ihre Theme-Leiste im Kopf; dort gibt es nichts
+anderes einzustellen.
+
+### Eine Chat-Zeile
+
+Früher standen „Nur Plätze“ und „Mit FP“ als zwei Kästen mit je einem großen
+Knopf untereinander. Jetzt gibt es eine Zeile und einen Knopf „Zeile kopieren“;
+welche Fassung es ist, stellt der Schalter **Nur Plätze | Mit FP** darüber ein.
+Vorgabe ist „Mit FP“, die meisten Gilden wollen die Beträge sehen. Er merkt
+sich die Wahl je Welt, denn jede Gilde hält es anders.
 
 ### Welten
 

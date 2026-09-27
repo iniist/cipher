@@ -283,12 +283,13 @@
   var WORLD_KEY = "cipher:world";
 
   /**
-   * Die Felder von `cipher:state`, die zur Welt gehoeren. Alles andere —
+   * Die Felder von `cipher:state`, die zur Welt gehoeren — auch, ob die
+   * Chat-Zeile mit FP kopiert wird: das haelt jede Gilde anders. Alles andere —
    * Theme, Spielername, Kuerzel-Schalter, die Lesarten von Stufe, Sichern
    * und Plaetzen — gilt ueberall gleich.
    */
   var WORLD_FIELDS = ["building", "level", "factor", "enabled", "taken",
-    "slotFactors", "slotPays", "ownPaid", "ownPaidFor"];
+    "slotFactors", "slotPays", "ownPaid", "ownPaidFor", "chatMode"];
 
   /**
    * Die Welt, die zuerst gewaehlt wurde ("home"), behaelt die Schluessel, die
@@ -393,7 +394,11 @@
     ownPaidFor: typeof stored.ownPaidFor === "string" ? stored.ownPaidFor : "",
     // Ob Bauwerke mit ihrem Kuerzel aus abbr.js genannt werden ("AO") oder
     // mit vollem Namen ("Arktische Orangerie"). Aus ist die Vorgabe.
-    useAbbr: stored.useAbbr === true
+    useAbbr: stored.useAbbr === true,
+    // Welche Fassung der Chat-Zeile kopiert wird: nur die Plaetze oder
+    // mit den FP je Platz. "points" ist die Vorgabe — die meisten Gilden
+    // wollen die Betraege sehen.
+    chatMode: stored.chatMode === "plain" ? "plain" : "points"
   };
 
   // Ein Platz traegt entweder einen Faktor oder einen Betrag, nie beides —
@@ -1026,16 +1031,24 @@
    * Ausschnitt, nicht das Fenster — ein unten verankertes Blatt laege sonst
    * zur Haelfte hinter ihr.
    */
+  /** Das Blatt, das gerade ueber der Tastatur gehalten wird. */
+  var viewportSheet = null;
+
   function syncPickerViewport() {
     var viewport = window.visualViewport;
-    if (!viewport) return;
-    var dialog = $("picker");
+    if (!viewport || !viewportSheet) return;
+    var dialog = viewportSheet;
     var below = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
     dialog.style.setProperty("--kb", Math.round(below) + "px");
     dialog.style.setProperty("--vvh", Math.round(viewport.height) + "px");
   }
 
-  function watchPickerViewport(on) {
+  /**
+   * Gilt fuer jedes Blatt mit Eingabefeld: die Bauwerksauswahl und das Menue,
+   * in dem der Name getippt wird. Ohne `dialog` ist die Bauwerksauswahl gemeint.
+   */
+  function watchPickerViewport(on, dialog) {
+    viewportSheet = on ? (dialog || $("picker")) : null;
     var viewport = window.visualViewport;
     if (!viewport) return;
     var method = on ? "addEventListener" : "removeEventListener";
@@ -1543,6 +1556,7 @@
       chip.classList.toggle("on", Number(chip.dataset.factor) === state.factor);
     });
     if (document.activeElement !== $("playerName")) $("playerName").value = state.name;
+    $("nameNeedTop").hidden = Boolean(state.name.trim());
     renderShortField(building);
     $("useAbbr").checked = state.useAbbr;
     $("useAbbrChat").checked = state.useAbbr;
@@ -1853,15 +1867,37 @@
     setChatLine("chatPoints", Calc.chatLine(plan, heading, true));
   }
 
-  /**
-   * Eine Chat-Zeile setzen und den zugehoerigen Knopf mitschalten. Ein
-   * aktiver Knopf ueber einem leeren Kasten sieht bedienbar aus, tut aber
-   * nichts — das ist keine gute Rueckmeldung.
-   */
   function setChatLine(id, text) {
     $(id).textContent = text;
-    var button = document.querySelector('[data-copy="' + id + '"]');
-    if (button) button.disabled = !text;
+    renderChatCopy();
+  }
+
+  /** Die Zeile, die der Schalter gerade meint. */
+  function chatSource() {
+    return $(state.chatMode === "points" ? "chatPoints" : "chatPlain");
+  }
+
+  /**
+   * Schalter, sichtbare Fassung und Knopf auf den Stand bringen. Kopiert
+   * wird erst mit Namen: ohne ihn weiss die Gilde nicht, von wem die
+   * Foerderung ist. Bis dahin fuehrt der Knopf ins Namensfeld. Und ein
+   * aktiver Kopierknopf ueber einem leeren Kasten sieht bedienbar aus, tut
+   * aber nichts — der bleibt aus.
+   */
+  function renderChatCopy() {
+    var points = state.chatMode === "points";
+    $("chatPlain").hidden = points;
+    $("chatPoints").hidden = !points;
+    document.querySelectorAll("[data-chat-mode]").forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.dataset.chatMode === state.chatMode));
+    });
+    var button = $("chatCopy");
+    var named = Boolean(state.name.trim());
+    button.classList.toggle("needs-name", !named);
+    if (!button.classList.contains("done")) {
+      button.textContent = named ? "Zeile kopieren" : "Erst Namen eintragen";
+    }
+    button.disabled = named && !chatSource().textContent;
   }
 
   // ---------------------------------------------------------------- Sammlung
@@ -1875,9 +1911,9 @@
    *
    * Gesammelt wird beim Kopieren und nicht ueber einen eigenen Knopf. Der
    * Grund ist die Wahl zwischen "Nur Plaetze" und "Mit FP": ein Knopf
-   * "Sammeln" muesste sie ein zweites Mal stellen. Der Kopierknopf hat sie
-   * schon beantwortet, also nimmt die Sammlung genau die Zeile, die auch
-   * in der Zwischenablage landet.
+   * "Sammeln" muesste sie ein zweites Mal stellen. Der Schalter ueber der
+   * Zeile hat sie schon beantwortet, also nimmt die Sammlung genau die
+   * Zeile, die auch in der Zwischenablage landet.
    */
 
   /**
@@ -2519,13 +2555,23 @@
       }
     });
 
-    document.querySelectorAll("[data-copy]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        var source = $(button.dataset.copy);
-        var text = source.textContent;
-        copyToClipboard(button, text, source);
-        collect(state.building, text);
-      });
+    $("chatCopy").addEventListener("click", function () {
+      if (!state.name.trim()) {
+        openSettings($("playerName"), $("chatCopy"));
+        return;
+      }
+      var source = chatSource();
+      var text = source.textContent;
+      if (!text) return;
+      copyToClipboard($("chatCopy"), text, source);
+      collect(state.building, text);
+    });
+
+    $("chatMode").addEventListener("click", function (event) {
+      var button = event.target.closest("[data-chat-mode]");
+      if (!button) return;
+      state.chatMode = button.dataset.chatMode;
+      render();
     });
 
     $("collCopy").addEventListener("click", function () {
@@ -2885,6 +2931,65 @@
     });
   }
 
+  // --------------------------------------------------------------------- Menue
+
+  /**
+   * Das Menue haelt, was man einmal einstellt: Name, Darstellung, Kuerzel.
+   * Dasselbe Blatt wie die Weltenauswahl; `focus` sagt, wohin der Fokus
+   * beim Oeffnen geht — der Hinweis im Foerderchat schickt ihn gleich ins
+   * Namensfeld.
+   */
+  /** Wohin der Fokus nach dem Schliessen zurueckkehrt. */
+  var settingsReturn = null;
+
+  function openSettings(focus, returnTo) {
+    var dialog = $("settings");
+    if (dialog.open) return;
+    document.documentElement.classList.add("picker-open");
+    // Wer den Namen tippt, hat die Bildschirmtastatur offen; das Blatt
+    // rueckt darueber wie bei der Bauwerksauswahl, sonst laege das Feld
+    // dahinter.
+    watchPickerViewport(true, dialog);
+    dialog.showModal();
+    $("settingsPick").setAttribute("aria-expanded", "true");
+    settingsReturn = returnTo || $("settingsPick");
+    (focus || $("settingsClose")).focus({ preventScroll: true });
+  }
+
+  function bindSettings() {
+    var dialog = $("settings");
+    var opener = $("settingsPick");
+    opener.addEventListener("click", function () { openSettings(); });
+    document.querySelectorAll(".name-go").forEach(function (button) {
+      button.addEventListener("click", function () { openSettings($("playerName"), button); });
+    });
+    $("settingsClose").addEventListener("click", function () { dialog.close(); });
+    dialog.addEventListener("close", function () {
+      document.documentElement.classList.remove("picker-open");
+      watchPickerViewport(false);
+      opener.setAttribute("aria-expanded", "false");
+      // Zurueck dorthin, wo man herkam. Ist der Hinweis inzwischen weg,
+      // weil ein Name drinsteht, gilt der Menueknopf.
+      var back = settingsReturn && !settingsReturn.closest("[hidden]") ? settingsReturn : opener;
+      back.focus({ preventScroll: true });
+    });
+    var downOnBackdrop = false;
+    dialog.addEventListener("pointerdown", function (event) { downOnBackdrop = event.target === dialog; });
+    dialog.addEventListener("click", function (event) {
+      if (event.target === dialog && downOnBackdrop) dialog.close();
+      downOnBackdrop = false;
+    });
+    // Enter im Namensfeld heisst "fertig". Ohne preventDefault landete
+    // derselbe Tastendruck auf dem Knopf, der den Fokus zurueckbekommt —
+    // der Menueknopf oeffnete das Menue gleich wieder, der Kopierknopf
+    // kopierte.
+    $("playerName").addEventListener("keydown", function (event) {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      dialog.close();
+    });
+  }
+
   // ------------------------------------------------------------------- Start
 
   buildBuildingSelect();
@@ -2900,6 +3005,7 @@
   $("dataDate").textContent = formatDate(DATA.generated);
   bindEvents();
   bindWorlds();
+  bindSettings();
   renderWorldPick();
   watchKonami();
   watchWordmark();

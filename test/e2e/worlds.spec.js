@@ -6,6 +6,7 @@
  * eigene unter "cipher:w:<welt>:".
  */
 const { test, expect } = require("@playwright/test");
+const { nameEintragen, themaWaehlen } = require("./menue");
 
 /** Ein Stand, wie er vor den Welten im Speicher lag. */
 const ALTBESTAND = {
@@ -102,9 +103,8 @@ test("Name und Theme gelten in allen Welten", async ({ page }) => {
   await weltWaehlen(page, "Arvahall");
   await weltWaehlen(page, "Xyr");
 
-  await page.fill("#playerName", "Neuer Name");
-  await page.locator("#playerName").blur();
-  await page.click('.modes button[data-mode="contrast"]');
+  await nameEintragen(page, "Neuer Name");
+  await themaWaehlen(page, "contrast");
 
   await weltWaehlen(page, "Arvahall");
   await expect(page.locator("#playerName")).toHaveValue("Neuer Name");

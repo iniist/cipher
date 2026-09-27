@@ -6,8 +6,11 @@
  * Ein selbst vergebenes Kuerzel gilt in beiden Stellungen.
  */
 const { test, expect } = require("@playwright/test");
+const { imMenue, nameEintragen } = require("./menue");
 
 const schalter = (page) => page.locator("#useAbbr");
+/** Der Schalter steht im Menue. */
+const umschalten = (page, an) => imMenue(page, () => (an ? schalter(page).check() : schalter(page).uncheck()));
 const feld = (page) => page.locator("#buildingShort");
 const chat = (page) => page.locator("#chatPlain");
 const merken = (page) => page.locator("#favSaveText");
@@ -18,7 +21,7 @@ const zustand = (page) =>
 async function orangerie(page) {
   await page.goto("/index.html");
   await page.locator("#building").selectOption("Arctic_Orangery", { force: true });
-  await page.fill("#playerName", "Dani");
+  await nameEintragen(page, "Dani");
 }
 
 test.describe("Der zweite Schalter am Foerderchat", () => {
@@ -33,14 +36,14 @@ test.describe("Der zweite Schalter am Foerderchat", () => {
     await expect(schalter(page)).toBeChecked();
     expect((await zustand(page)).useAbbr).toBe(true);
 
-    await schalter(page).uncheck();
+    await umschalten(page, false);
     await expect(unten(page)).not.toBeChecked();
     await expect(chat(page)).toContainText("Dani Arktische Orangerie");
   });
 
-  test("steht nach dem Neuladen wie der obere", async ({ page }) => {
+  test("steht nach dem Neuladen wie der im Menue", async ({ page }) => {
     await orangerie(page);
-    await schalter(page).check();
+    await umschalten(page, true);
     await page.reload();
     await expect(unten(page)).toBeChecked();
   });
@@ -55,7 +58,7 @@ test.describe("Der Schalter", () => {
 
   test("setzt das Kuerzel in Chat-Zeilen, Merken-Knopf und Platzhalter", async ({ page }) => {
     await orangerie(page);
-    await schalter(page).check();
+    await umschalten(page, true);
 
     await expect(chat(page)).toContainText("Dani AO P");
     await expect(page.locator("#chatPoints")).toContainText("Dani AO P");
@@ -65,7 +68,7 @@ test.describe("Der Schalter", () => {
 
   test("laesst das Auswahlfeld beim vollen Namen", async ({ page }) => {
     await orangerie(page);
-    await schalter(page).check();
+    await umschalten(page, true);
     await expect(page.locator("#building option:checked")).toHaveText("Arktische Orangerie");
   });
 
@@ -74,13 +77,13 @@ test.describe("Der Schalter", () => {
     await page.click("#favSave");
     await expect(page.locator("#favList .fav-n").first()).toHaveText("Arktische Orangerie");
 
-    await schalter(page).check();
+    await umschalten(page, true);
     await expect(page.locator("#favList .fav-n").first()).toHaveText("AO");
   });
 
   test("ueberdauert das Neuladen", async ({ page }) => {
     await orangerie(page);
-    await schalter(page).check();
+    await umschalten(page, true);
     expect((await zustand(page)).useAbbr).toBe(true);
 
     await page.reload();
@@ -90,8 +93,10 @@ test.describe("Der Schalter", () => {
 
   test("ist auch ueber seine Beschriftung erreichbar", async ({ page }) => {
     await orangerie(page);
-    await expect(schalter(page)).toHaveAccessibleName(/Kürzel statt Namen verwenden/);
-    await page.locator(".sel-head .abbr-toggle").click();
+    await imMenue(page, async () => {
+      await expect(schalter(page)).toHaveAccessibleName(/Bauwerke mit Kürzel nennen/);
+      await page.locator(".setting-check").click();
+    });
     await expect(schalter(page)).toBeChecked();
   });
 });
@@ -102,7 +107,7 @@ test.describe("Ein eigenes Kuerzel", () => {
     await feld(page).fill("Oran");
     await expect(chat(page)).toContainText("Dani Oran P");
 
-    await schalter(page).check();
+    await umschalten(page, true);
     await expect(chat(page)).toContainText("Dani Oran P");
     await expect(feld(page)).toHaveValue("Oran");
   });
@@ -111,15 +116,15 @@ test.describe("Ein eigenes Kuerzel", () => {
 test.describe("Die Sammlung zieht mit", () => {
   test("tauscht den Namen in gesammelten Zeilen beim Umschalten", async ({ page }) => {
     await orangerie(page);
-    await page.click('[data-copy="chatPlain"]');
+    await page.click("#chatCopy");
     await page.locator("#building").selectOption("Terracotta_Army", { force: true });
-    await page.click('[data-copy="chatPlain"]');
+    await page.click("#chatCopy");
 
     const zeilen = page.locator("#collList .coll-t");
     await expect(zeilen.nth(0)).toContainText("Dani Arktische Orangerie P");
     await expect(zeilen.nth(1)).toContainText("Dani Terrakotta-Armee P");
 
-    await schalter(page).check();
+    await umschalten(page, true);
     await expect(zeilen.nth(0)).toContainText("Dani AO P");
     await expect(zeilen.nth(1)).toContainText("Dani TA P");
 
@@ -129,15 +134,19 @@ test.describe("Die Sammlung zieht mit", () => {
     expect(gespeichert[0]).toMatch(/^Dani AO P/);
     expect(gespeichert[1]).toMatch(/^Dani TA P/);
 
-    await schalter(page).uncheck();
+    await umschalten(page, false);
     await expect(zeilen.nth(0)).toContainText("Dani Arktische Orangerie P");
   });
 
   test("gilt auch ohne Spielernamen", async ({ page }) => {
+    // Ohne Namen wird heute nicht mehr kopiert; Zeilen von damals, in denen
+    // das Bauwerk vorn steht, muessen trotzdem mitziehen.
     await page.goto("/index.html");
-    await page.locator("#building").selectOption("Arctic_Orangery", { force: true });
-    await page.click('[data-copy="chatPlain"]');
-    await schalter(page).check();
+    await page.evaluate(() => localStorage.setItem("cipher:collection", JSON.stringify([
+      { id: "Arctic_Orangery", text: "Arktische Orangerie P5 P4", label: "Arktische Orangerie", at: 0 }
+    ])));
+    await page.reload();
+    await umschalten(page, true);
     await expect(page.locator("#collList .coll-t").first()).toHaveText(/^AO P/);
   });
 
@@ -147,7 +156,7 @@ test.describe("Die Sammlung zieht mit", () => {
       { id: "Arctic_Orangery", text: "Dani Orangerie P5 P4" }
     ])));
     await page.reload();
-    await schalter(page).check();
+    await umschalten(page, true);
     await expect(page.locator("#collList .coll-t").first()).toHaveText("Dani Orangerie P5 P4");
   });
 
@@ -166,7 +175,7 @@ test.describe("Die Sammlung zieht mit", () => {
       { id: "Arctic_Orangery", text: "Dani Orangerie P5", label: "Orangerie", at: 3 }
     ])));
     await page.reload();
-    await schalter(page).check();
+    await umschalten(page, true);
     await expect(page.locator("#collList .coll-t").first()).toHaveText("Dani Orangerie P5");
   });
 });
@@ -186,7 +195,7 @@ test("ein kurzer Name haelt auf dem Chip mindestens fuenf Zeichen Platz", async 
   await page.goto("/index.html");
   await page.locator("#building").selectOption("A.I._Core", { force: true });
   await page.click("#favSave");
-  await schalter(page).check();
+  await umschalten(page, true);
 
   const name = page.locator("#favList .fav-n").first();
   await expect(name).toHaveText("KI");

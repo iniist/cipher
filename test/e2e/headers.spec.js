@@ -6,6 +6,7 @@
  * und nicht erst nach dem Deploy.
  */
 const { test, expect } = require("@playwright/test");
+const { nameEintragen, themaWaehlen } = require("./menue");
 const { abwaehlen } = require("./plaetze");
 const path = require("node:path");
 const fs = require("node:fs");
@@ -76,7 +77,7 @@ test.describe("Content-Security-Policy im Betrieb", () => {
   test("das Inline-Skript fuer das Theme wird ausgefuehrt", async ({ page }) => {
     // Waere der Hash im CSP falsch, bliebe das Theme beim Standard stehen.
     await page.goto("/index.html");
-    await page.click('.modes button[data-mode="light"]');
+    await themaWaehlen(page, "light");
 
     const violations = collectViolations(page);
     await page.goto("/impressum.html");
@@ -92,7 +93,7 @@ test.describe("Content-Security-Policy im Betrieb", () => {
     await page.locator("#building").selectOption("Notre_Dame", { force: true });
     await page.fill("#level", "55");
     await page.locator("#level").blur();
-    await page.fill("#playerName", "Dani");
+    await nameEintragen(page, "Dani");
     await page.click("#favSave");
     await page.locator('#factorChips button[data-factor="200"]').click();
     await abwaehlen(page, 4);

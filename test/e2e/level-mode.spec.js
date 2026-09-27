@@ -8,6 +8,7 @@
  * Plan nicht.
  */
 const { test, expect } = require("@playwright/test");
+const { nameEintragen } = require("./menue");
 
 const modeButton = (page, mode) => page.locator(`#levelMode button[data-level-mode="${mode}"]`);
 
@@ -20,7 +21,7 @@ const planFingerprint = (page) => page.locator("#chatPoints").textContent();
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/index.html");
-  await page.fill("#playerName", "Dani");
+  await nameEintragen(page, "Dani");
 });
 
 test("voreingestellt ist die naechste Stufe", async ({ page }) => {

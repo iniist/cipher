@@ -6,15 +6,21 @@
  * Frueher war der Umweg dafuer eine Notiz ausserhalb von cipher.
  */
 const { test, expect } = require("@playwright/test");
+const { nameEintragen } = require("./menue");
 
 const eintraege = (page) => page.locator("#collList li");
 
-/** Ein Bauwerk einstellen und seine Zeile kopieren. */
+/**
+ * Ein Bauwerk einstellen und seine Zeile kopieren. Kopiert wird erst mit
+ * Namen; fehlt er noch, wird einer eingetragen.
+ */
 async function sammle(page, id, level, welche) {
+  if (!(await page.locator("#playerName").inputValue())) await nameEintragen(page, "Dani");
   await page.locator("#building").selectOption(id, { force: true });
   await page.fill("#level", String(level));
   await page.locator("#level").blur();
-  await page.click(`button[data-copy="${welche || "chatPlain"}"]`);
+  await page.click(`[data-chat-mode="${welche === "chatPoints" ? "points" : "plain"}"]`);
+  await page.click("#chatCopy");
 }
 
 test.beforeEach(async ({ page }) => {
@@ -28,10 +34,11 @@ test("ohne gesammelte Zeile fehlt der Kasten", async ({ page }) => {
 });
 
 test("was kopiert wird, landet in der Sammlung", async ({ page }) => {
-  await page.fill("#playerName", "Dani");
-  const zeile = await page.locator("#chatPlain").textContent();
+  await nameEintragen(page, "Dani");
+  // Mit FP ist die Vorgabe.
+  const zeile = await page.locator("#chatPoints").textContent();
 
-  await page.click('button[data-copy="chatPlain"]');
+  await page.click("#chatCopy");
 
   await expect(page.locator("#collection")).toBeVisible();
   await expect(eintraege(page)).toHaveCount(1);
