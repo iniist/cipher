@@ -29,7 +29,12 @@
   --silver: #cfd8e1;
   --bronze: #e59a66;
   --iron: #9fb0c2;
-  --own: #ff8f7e;
+  /* Gruen heisst ueberall "deine FP": Eigen-Spalte, Kasten, Balken, Eigen
+     unten. "Sicher" ist ein Status, kein Betrag, und bekommt ein helleres
+     Gruen als Flaeche. Rot bleibt fuer Warnen und Loeschen. */
+  --own: #7fe0ad;
+  --danger: #ff8f7e;
+  --safe: #b9f5d3;
   --ok: #7fe0ad;
   --warn: #ffd36e;
   --field-border: var(--grid);
@@ -63,7 +68,9 @@
   --silver: #74818f;
   --bronze: #b0602f;
   --iron: #4f5f71;
-  --own: #c9423a;
+  --own: #1f8a55;
+  --danger: #c9423a;
+  --safe: #1f8a55;
   --ok: #1f8a55;
   --warn: #a86a00;
   --field-border: rgba(31, 74, 122, .3);
@@ -89,6 +96,8 @@
   --bronze: #000;
   --iron: #000;
   --own: #000;
+  --danger: #000;
+  --safe: #000;
   --ok: #000;
   --warn: #000;
   --field-border: #000;
@@ -116,7 +125,9 @@
   --silver: #6b665e;
   --bronze: #9a4a1e;
   --iron: #4e4a44;
-  --own: #a8322a;
+  --own: #3d6b37;
+  --danger: #a8322a;
+  --safe: #3d6b37;
   --ok: #3d6b37;
   --warn: #875600;
   --field-border: rgba(90, 70, 50, .35);
@@ -142,7 +153,9 @@
   --silver: #c9d4ff;
   --bronze: #ff9d5c;
   --iron: #8e97d0;
-  --own: #ff4df0;
+  --own: #39ff9f;
+  --danger: #ff4df0;
+  --safe: #a6ffd2;
   --ok: #39ff9f;
   --warn: #ffb63d;
   --field-border: rgba(0, 229, 255, .35);
@@ -171,7 +184,9 @@
   --silver: #dcd6ca;
   --bronze: #ec945a;
   --iron: #b3a590;
-  --own: #ff8466;
+  --own: #a8cc3c;
+  --danger: #ff8466;
+  --safe: #d2ec7c;
   --ok: #a8cc3c;
   --warn: #ffc94a;
   --field-border: #6c3c18;
@@ -612,7 +627,7 @@ select, .pick {
   padding: 3px 7px; cursor: pointer;
 }
 :root[data-theme="contrast"] .slot-reset { border-width: 2px }
-.slot-reset:hover { color: var(--own) }
+.slot-reset:hover { color: var(--danger) }
 
 #slotsReset { margin-top: 10px; font-size: .85rem; color: var(--dim) }
 
@@ -984,7 +999,7 @@ html.picker-open { overflow: hidden; scrollbar-gutter: stable }
 .fav-list li[aria-current="true"] .fav-go { background: var(--gold); color: var(--on-accent) }
 .fav-list li[aria-current="true"] .fav-go b { color: inherit }
 .fav-del { padding: 4px 7px; color: var(--dim); border-left: 1.5px solid var(--field-border); line-height: 1 }
-.fav-del:hover { color: var(--own) }
+.fav-del:hover { color: var(--danger) }
 
 /* --------------------------------------------------------- Verteilbalken */
 
@@ -1029,7 +1044,8 @@ td { padding: 9px 4px; border-top: 1px solid var(--grid); text-align: right }
 td:first-child { text-align: left; white-space: nowrap }
 td.pay { font-weight: 700; font-size: 1.15rem }
 /* Die Zahl schaltet die Lesart mit um — wer sie antippt, meint sie. */
-td.pre { font-weight: 600; color: var(--warn); cursor: pointer }
+td.pre { font-weight: 600; color: var(--own); cursor: pointer }
+.pre .none { color: var(--dim); font-weight: 500 }
 /* Die Zahl unter "Einzahlen" laesst sich antippen und oeffnet sich in der
    Zeile. Sie sieht aus wie die Zahl, die sie ist; nur die gestrichelte
    Linie verraet, dass sie mehr kann. Traegt der Platz einen eigenen Wert,
@@ -1084,7 +1100,7 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 
 .safe {
   display: inline-block;
-  background: var(--ok); color: var(--on-accent);
+  background: var(--safe); color: var(--on-accent);
   font-weight: 700; font-size: .85rem;
   padding: 2px 8px;
   animation: pop .3s ease-out;
@@ -1119,7 +1135,6 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 }
 .sum div { color: var(--dim); font-size: .9rem }
 .sum b { display: block; font-size: 1.45rem; line-height: 1.1; color: var(--ink) }
-.sum .ext b { color: var(--ok) }
 .sum .own b { color: var(--own) }
 
 /* ----------------------------------------------------------- Vorab-Block */
@@ -1131,7 +1146,7 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 .lump {
   display: flex; gap: 14px; align-items: center;
   margin-top: 12px; padding: 12px;
-  border: 1.5px solid var(--ok);
+  border: 1.5px solid var(--own);
   background: rgba(127, 224, 173, .08);
 }
 :root[data-theme="light"] .lump { background: rgba(31, 138, 85, .06) }
@@ -1141,7 +1156,7 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 :root[data-theme="contrast"] .lump { border-width: 2px; border-color: #000; background: none }
 .lump[hidden] { display: none }
 .lump-n { flex-shrink: 0; text-align: center; min-width: 6.5ch }
-.lump-n b { display: block; font-size: 1.7rem; line-height: 1.05; color: var(--ok) }
+.lump-n b { display: block; font-size: 1.7rem; line-height: 1.05; color: var(--own) }
 .lump-n span { font-size: .8rem; color: var(--dim) }
 .lump p { margin: 0; font-size: .95rem }
 
@@ -1184,7 +1199,7 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 .note .go { font: inherit; font-weight: 600; cursor: pointer; background: var(--warn); color: var(--on-accent); border: 0; padding: 10px 14px }
 
 .link { font: inherit; font-weight: 600; cursor: pointer; background: none; border: 0; color: inherit; text-decoration: underline; padding: 0 }
-.warnline { color: var(--own); font-size: .95rem; margin-top: 8px }
+.warnline { color: var(--danger); font-size: .95rem; margin-top: 8px }
 
 /* ------------------------------------------------------------ Kopiertext */
 
@@ -1234,7 +1249,7 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
   padding: 4px 10px; cursor: pointer;
 }
 :root[data-theme="contrast"] .coll-del { color: #000; border-left: 2px solid #000 }
-.coll-del:hover { color: var(--own) }
+.coll-del:hover { color: var(--danger) }
 
 .coll-note { color: var(--dim); font-size: .82rem; margin: 8px 0 0 }
 .coll-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px }

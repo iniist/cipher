@@ -490,3 +490,52 @@ test.describe("Farbhierarchie", () => {
     expect(starFill).not.toBe("none");
   });
 });
+
+test.describe("Grün heißt deine FP", () => {
+  // Früher war die Zahl im Kasten grün, der Eigenanteil darunter rot und die
+  // Förderer-Summe wieder grün. Jetzt trägt alles, was du zahlst, dieselbe
+  // Farbe, in jedem Theme — und nichts anderes trägt sie.
+  for (const theme of ["dark", "light", "contrast", "writer", "space", "forge"]) {
+    test(`im Theme ${theme} einheitlich`, async ({ page }) => {
+      await page.goto("/index.html");
+      await themaWaehlen(page, theme);
+      await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+      await expect(page.locator("#rows .safe")).toHaveCount(1);
+
+      const farben = await page.evaluate(() => {
+        const color = (sel) => getComputedStyle(document.querySelector(sel)).color;
+        const own = getComputedStyle(document.documentElement).getPropertyValue("--own").trim();
+        const probe = document.createElement("i");
+        probe.style.color = own;
+        document.body.appendChild(probe);
+        const eigen = getComputedStyle(probe).color;
+        probe.remove();
+        return {
+          eigen,
+          kasten: color("#lumpValue"),
+          unten: color("#sumOwn"),
+          spalte: color("#rows tr:first-child td.pre"),
+          balken: getComputedStyle(document.querySelector("#bar .b-own")).backgroundColor,
+          foerderer: color("#sumExternal"),
+          gesamt: color("#sumTotal"),
+          sicher: getComputedStyle(document.querySelector("#rows .safe")).backgroundColor
+        };
+      });
+
+      expect(farben.kasten).toBe(farben.eigen);
+      expect(farben.unten).toBe(farben.eigen);
+      expect(farben.spalte).toBe(farben.eigen);
+      expect(farben.balken).toBe(farben.eigen);
+      // Die Förderer stehen neutral, wie Gesamt.
+      expect(farben.foerderer).toBe(farben.gesamt);
+      // "Sicher" ist ein Status, kein Betrag: auf dunklem Grund ein helleres
+      // Grün als Fläche. Auf hellem Grund steht es im kräftigen Grün mit
+      // weißer Schrift — ein Pastell wäre dort unlesbar.
+      if (theme === "dark" || theme === "space" || theme === "forge") {
+        expect(farben.sicher).not.toBe(farben.eigen);
+      } else {
+        expect(farben.sicher).toBe(farben.eigen);
+      }
+    });
+  }
+});

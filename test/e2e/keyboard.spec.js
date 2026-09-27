@@ -36,7 +36,7 @@ test.describe("Tastatur", () => {
     await page.keyboard.press("Space");
     // Ohne Fokuswiederherstellung landete der Fokus hier auf <body> und
     // Shift+Tab kaeme nie bei P4 an. Zweimal, weil dazwischen die Zahl
-    // unter "Einzahlen" von P4 liegt — sie laesst sich antippen.
+    // unter "Kosten" von P4 liegt — sie laesst sich antippen.
     await page.keyboard.press("Shift+Tab");
     await page.keyboard.press("Shift+Tab");
     await page.keyboard.press("Space");

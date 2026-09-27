@@ -229,22 +229,22 @@
     <div class="swap reveal" id="planSwap">
       <div class="seg" role="group" aria-label="Lesart der letzten Spalte">
         <button type="button" data-plan="sichern" aria-pressed="true">Sichern</button>
-        <button type="button" data-plan="summe" aria-pressed="false">Summe</button>
+        <button type="button" data-plan="summe" aria-pressed="false">Eigen</button>
       </div>
       <figure class="shot stack">
-        <img class="is-on" data-plan-img="sichern" src="./bilder/plan-sichern.webp" width="770" height="1260" loading="lazy" alt="Förderplan für die Arche auf Stufe 80: fünf Mäzenplätze mit Belohnung, Einzahlung und dem Betrag, der jeweils zum Sichern nötig ist. 951 FP vorab, Eigenanteil 18 %.">
-        <img data-plan-img="summe" src="./bilder/plan-summe.webp" width="770" height="1260" loading="lazy" alt="Derselbe Förderplan, die letzte Spalte zeigt nun die laufende Summe: 238, sicher, 666, 875, 951.">
+        <img class="is-on" data-plan-img="sichern" src="./bilder/plan-sichern.webp" width="770" height="1260" loading="lazy" alt="Förderplan für die Arche auf Stufe 80: fünf Mäzenplätze mit Belohnung, Kosten und dem Betrag, der jeweils zum Sichern nötig ist. 951 FP vorab, Eigen 18 %.">
+        <img data-plan-img="summe" src="./bilder/plan-summe.webp" width="770" height="1260" loading="lazy" alt="Derselbe Förderplan, die letzte Spalte zeigt nun deinen laufenden Stand: 238, sicher, 666, 875, 951.">
       </figure>
     </div>
     <div class="feature-text reveal">
       <p class="kicker">Förderplan</p>
       <h3>Was jeder Platz kostet — und was du vorstreckst</h3>
-      <p>Für jeden der fünf Mäzen-Plätze stehen Belohnung und Einzahlung samt Arche-Bonus da. Die letzte Spalte sagt, was du vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann.</p>
-      <p>Ein Tipp auf die Spaltenüberschrift wechselt zwischen zwei verbreiteten Lesarten: <strong>Sichern</strong> zeigt den Schritt je Platz, <strong>Summe</strong> den laufenden Stand.</p>
+      <p>Für jeden der fünf Mäzen-Plätze stehen Belohnung und Kosten samt Arche-Bonus da. Die letzte Spalte sagt, was du vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann.</p>
+      <p>Ein Tipp auf die Spaltenüberschrift wechselt zwischen zwei verbreiteten Lesarten: <strong>Sichern</strong> zeigt den Schritt je Platz, <strong>Eigen</strong> deinen laufenden Stand.</p>
       <ul class="ticks">
-        <li>Häkchen antippen — erst „vergeben“ (Strich): schon belegt, bleibt Fremdkapital, fällt aber aus dem Chat. Noch einmal — der Platz wird nicht angeboten und fällt in deinen Eigenanteil.</li>
-        <li>Ein Balken zeigt die Aufteilung auf Eigenanteil und P1 bis P5.</li>
-        <li>Unter der Tabelle: Gesamt, Fremd, Eigenanteil in FP und Prozent — und ein Kasten, der erklärt, wann du was einzahlst.</li>
+        <li>Häkchen antippen — erst „vergeben“ (Strich): schon belegt, zählt weiter zu den Förderern, fällt aber aus dem Chat. Noch einmal — der Platz wird nicht angeboten und zählt zu deinen eigenen FP.</li>
+        <li>Ein Balken zeigt die Aufteilung auf deine FP (grün) und P1 bis P5.</li>
+        <li>Unter der Tabelle: Gesamt, Förderer, Eigen in FP und Prozent — grün sind überall deine eigenen FP — und ein Kasten, der erklärt, wann du was einzahlst.</li>
         <li>Fehlen dem Datensatz Kosten oder P1 für eine sehr hohe Stufe, sagt cipher das offen und rechnet mit deinen Zahlen aus dem Förderfenster weiter.</li>
       </ul>
     </div>
@@ -349,8 +349,8 @@
       <div class="card reveal">
         <h3>Förderplan</h3>
         <dl>
-          <dt>Platz anbieten</dt><dd>Häkchen je Platz; Strich heißt vergeben (bleibt Fremdkapital), ohne Häkchen zählt er zum Eigenanteil.</dd>
-          <dt>Sichern / Summe</dt><dd>Letzte Spalte als Schritt je Platz oder als laufender Stand.</dd>
+          <dt>Platz anbieten</dt><dd>Häkchen je Platz; Strich heißt vergeben (zählt weiter zu den Förderern), ohne Häkchen zählt er zu Eigen.</dd>
+          <dt>Sichern / Eigen</dt><dd>Letzte Spalte als Schritt je Platz oder als laufender Stand.</dd>
           <dt>Eigene Zahlen</dt><dd>Gesamtkosten und P1 selbst eintragen, wo der Datensatz schweigt.</dd>
         </dl>
       </div>
@@ -397,7 +397,7 @@
     <div class="faq-list">
       <div class="qa reveal">
         <h3>Was rechnet cipher genau?</h3>
-        <p>Du wählst ein Legendäres Bauwerk, die Stufe und deinen Arche-Faktor. cipher zeigt dann für die Mäzenplätze P1 bis P5 die Belohnung, die Einzahlung samt Arche-Bonus und was du vorab einzahlen musst, damit dir niemand einen Platz wegschnappt — dazu Eigenanteil und Fremdkapital in FP.</p>
+        <p>Du wählst ein Legendäres Bauwerk, die Stufe und deinen Arche-Faktor. cipher zeigt dann für die Mäzenplätze P1 bis P5 die Belohnung, die Kosten samt Arche-Bonus und was du vorab einzahlen musst, damit dir niemand einen Platz wegschnappt — dazu Eigenanteil und Fremdkapital in FP.</p>
       </div>
       <div class="qa reveal">
         <h3>Wie wirkt der Arche-Faktor, etwa 1,9?</h3>
@@ -405,7 +405,7 @@
       </div>
       <div class="qa reveal">
         <h3>Was heißt „Mäzenplätze sichern“?</h3>
-        <p>Du zahlst vorab so viele FP ein, dass der Rest der Stufe nicht mehr reicht, um einen Platz zu überbieten. Wie viel das je Platz ist, steht in der letzten Spalte des Förderplans — als Schritt oder als laufende Summe.</p>
+        <p>Du zahlst vorab so viele FP ein, dass der Rest der Stufe nicht mehr reicht, um einen Platz zu überbieten. Wie viel das je Platz ist, steht in der letzten Spalte des Förderplans — als Schritt oder als laufender Stand.</p>
       </div>
       <div class="qa reveal">
         <h3>Welche Bauwerke kennt cipher?</h3>

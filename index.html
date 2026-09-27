@@ -111,7 +111,7 @@
           "name": "Wie viele FP muss ich einzahlen, um einen Platz zu sichern?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "So viele, dass danach höchstens noch das Doppelte dessen offen ist, was der Förderer für den Platz einzahlt. Nach seiner Einzahlung bleibt dann höchstens sein Betrag übrig: Ein Nachzügler kann gleichziehen, aber nicht überbieten, und bei Gleichstand behält der frühere Förderer den Platz. cipher rechnet das für jeden Platz aus und zeigt es in der Spalte „Sichern“, auf Tipp auch als laufende Summe."
+            "text": "So viele, dass danach höchstens noch das Doppelte dessen offen ist, was der Förderer für den Platz einzahlt. Nach seiner Einzahlung bleibt dann höchstens sein Betrag übrig: Ein Nachzügler kann gleichziehen, aber nicht überbieten, und bei Gleichstand behält der frühere Förderer den Platz. cipher rechnet das für jeden Platz aus und zeigt es in der Spalte „Sichern“, auf Tipp als „Eigen“, also als laufender Stand deiner FP."
           }
         },
         {
@@ -127,7 +127,7 @@
           "name": "Was sind Eigenanteil und Fremdkapital?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Fremdkapital ist, was die Förderer für ihre Plätze einzahlen. Eigenanteil ist alles, was du selbst beisteuerst: die FP zum Sichern der Plätze und der Rest, der nach allen Plätzen noch fehlt. Zusammen ergeben beide die Gesamtkosten der Stufe. Plätze, die du nicht anbietest, zählen zum Eigenanteil."
+            "text": "Fremdkapital ist, was die Förderer für ihre Plätze einzahlen; im Plan steht es unter „Förderer“. Eigenanteil ist alles, was du selbst beisteuerst: die FP zum Sichern der Plätze und der Rest, der nach allen Plätzen noch fehlt; im Plan steht er grün unter „Eigen“. Zusammen ergeben beide die Gesamtkosten der Stufe. Plätze, die du nicht anbietest, zählen zum Eigenanteil."
           }
         },
         {
@@ -143,7 +143,7 @@
           "name": "Geht das auch mit verschiedenen Faktoren je Platz?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Ja. Unter „Faktor oder FP je Platz“ bekommt jeder Platz auf Wunsch einen eigenen Arche-Faktor oder einen festen FP-Betrag, etwa wenn ein Förderer mit anderer Arche einzahlt oder einen Platz schon genommen hat. Schneller geht es im Förderplan selbst: Ein Tipp auf die Zahl unter „Einzahlen“ öffnet sie direkt in der Zeile. Ist ein Platz schon vergeben, schaltest du sein Häkchen per Tipp auf den Strich: Er bleibt in der Rechnung, fällt aber aus der Chat-Zeile."
+            "text": "Ja. Unter „Faktor oder FP je Platz“ bekommt jeder Platz auf Wunsch einen eigenen Arche-Faktor oder einen festen FP-Betrag, etwa wenn ein Förderer mit anderer Arche einzahlt oder einen Platz schon genommen hat. Schneller geht es im Förderplan selbst: Ein Tipp auf die Zahl unter „Kosten“ öffnet sie direkt in der Zeile. Ist ein Platz schon vergeben, schaltest du sein Häkchen per Tipp auf den Strich: Er bleibt in der Rechnung, fällt aber aus der Chat-Zeile."
           }
         },
         {
@@ -318,9 +318,9 @@
   <section class="panel">
     <h2>Förderplan</h2>
 
-    <div class="bar" id="bar" role="img" aria-label="Verteilung der Gesamtkosten auf Eigenanteil und Mäzen-Plätze"></div>
+    <div class="bar" id="bar" role="img" aria-label="Verteilung der Gesamtkosten auf deine FP und die Mäzen-Plätze"></div>
     <div class="legend" id="legend">
-      <span><i class="slot-own"></i>Eigenanteil</span>
+      <span><i class="slot-own"></i>Eigen</span>
       <span><i class="slot-1"></i>P1</span>
       <span><i class="slot-2"></i>P2</span>
       <span><i class="slot-3"></i>P3</span>
@@ -328,7 +328,7 @@
     </div>
 
     <table>
-      <thead><tr><th scope="col">Platz</th><th scope="col">Belohnung</th><th scope="col">Einzahlen</th><th scope="col" class="th-pre"><button type="button" id="secureMode"><span id="secureModeLabel">Sichern</span><span class="th-caret" aria-hidden="true">▾</span></button></th></tr></thead>
+      <thead><tr><th scope="col">Platz</th><th scope="col">Belohnung</th><th scope="col">Kosten</th><th scope="col" class="th-pre"><button type="button" id="secureMode"><span id="secureModeLabel">Sichern</span><span class="th-caret" aria-hidden="true">▾</span></button></th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
 
@@ -343,7 +343,7 @@
     </div>
 
     <div class="lump" id="lump" hidden>
-      <div class="lump-n"><b id="lumpValue">0</b><span>vorab einzahlen</span></div>
+      <div class="lump-n"><b id="lumpValue">0</b><span>zum Sichern</span></div>
       <p id="lumpText"></p>
     </div>
 
@@ -352,8 +352,8 @@
 
     <div class="sum">
       <div><b id="sumTotal">–</b>Gesamt</div>
-      <div class="ext"><b id="sumExternal">–</b>Fremd</div>
-      <div class="own"><b id="sumOwn">–</b>Eigenanteil <span id="sumPercent"></span></div>
+      <div class="ext"><b id="sumExternal">–</b>Förderer</div>
+      <div class="own"><b id="sumOwn">–</b>Eigen <span id="sumPercent"></span></div>
     </div>
   </section>
 
@@ -404,7 +404,7 @@
      Zeile hier ein Zwanzigstel Bildschirm, und der Test daneben haelt die
      Seite unter 4,5 Bildschirmen. Wann genau eingezahlt wird, erklaert der
      Kasten ueber der Tabelle ohnehin genauer. -->
-  <p>„Sichern“ ist, was du vorab einzahlen musst, damit der Platz nicht überboten werden kann; „Summe“ zeigt stattdessen den laufenden Stand. Häkchen weg = Eigenanteil, Strich = schon vergeben.</p>
+  <p>„Sichern“ ist, was du vorab einzahlen musst, damit der Platz nicht überboten werden kann; „Eigen“ zeigt deinen laufenden Stand. Grün = deine FP. Häkchen weg = Eigen, Strich = vergeben.</p>
     <p>Daten: <a href="https://forgeofempires.fandom.com/de/wiki/" target="_blank" rel="noopener noreferrer">Forge of Empires Wiki</a> (Fandom, <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.de" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a>), Stand <span id="dataDate">22.9.2026</span>. Kosten per Formel, P2–P5 aus P1 berechnet.</p>
   </div>
 
@@ -422,7 +422,7 @@
       <ol class="info-steps">
         <li><b>Bauwerk und Stufe wählen.</b> Gesamt-FP und die Belohnungen für P1 bis P5 kommen aus dem Datensatz.</li>
         <li><b>Arche-Faktor einstellen.</b> Voreingestellt ist 1,90, die übliche Arche 1,9. Möglich sind Werte von 1,80 bis 2,00.</li>
-        <li><b>Plan ablesen.</b> Je Platz steht da, was ein Förderer einzahlt und was du vorher sichern musst; darunter die Aufteilung in Eigenanteil und Fremdkapital.</li>
+        <li><b>Plan ablesen.</b> Je Platz stehen die Kosten, die ein Förderer einzahlt, und was du vorher sichern musst; darunter die Aufteilung in Eigen und Förderer.</li>
         <li><b>Chat-Zeile kopieren.</b> Ein Tipp, und die Plätze stehen fertig für den Förderchat bereit.</li>
       </ol>
     </div>
@@ -436,7 +436,7 @@
         </details>
         <details>
           <summary>Wie viele FP muss ich einzahlen, um einen Platz zu sichern?</summary>
-          <p>So viele, dass danach höchstens noch das Doppelte dessen offen ist, was der Förderer für den Platz einzahlt. Nach seiner Einzahlung bleibt dann höchstens sein Betrag übrig: Ein Nachzügler kann gleichziehen, aber nicht überbieten, und bei Gleichstand behält der frühere Förderer den Platz. cipher rechnet das für jeden Platz aus und zeigt es in der Spalte „Sichern“, auf Tipp auch als laufende Summe.</p>
+          <p>So viele, dass danach höchstens noch das Doppelte dessen offen ist, was der Förderer für den Platz einzahlt. Nach seiner Einzahlung bleibt dann höchstens sein Betrag übrig: Ein Nachzügler kann gleichziehen, aber nicht überbieten, und bei Gleichstand behält der frühere Förderer den Platz. cipher rechnet das für jeden Platz aus und zeigt es in der Spalte „Sichern“, auf Tipp als „Eigen“, also als laufender Stand deiner FP.</p>
         </details>
         <details>
           <summary>Wie rechnet cipher die Belohnungen der Mäzen-Plätze?</summary>
@@ -444,7 +444,7 @@
         </details>
         <details>
           <summary>Was sind Eigenanteil und Fremdkapital?</summary>
-          <p>Fremdkapital ist, was die Förderer für ihre Plätze einzahlen. Eigenanteil ist alles, was du selbst beisteuerst: die FP zum Sichern der Plätze und der Rest, der nach allen Plätzen noch fehlt. Zusammen ergeben beide die Gesamtkosten der Stufe. Plätze, die du nicht anbietest, zählen zum Eigenanteil.</p>
+          <p>Fremdkapital ist, was die Förderer für ihre Plätze einzahlen; im Plan steht es unter „Förderer“. Eigenanteil ist alles, was du selbst beisteuerst: die FP zum Sichern der Plätze und der Rest, der nach allen Plätzen noch fehlt; im Plan steht er grün unter „Eigen“. Zusammen ergeben beide die Gesamtkosten der Stufe. Plätze, die du nicht anbietest, zählen zum Eigenanteil.</p>
         </details>
         <details>
           <summary>Was schreibe ich in den Förderchat?</summary>
@@ -452,7 +452,7 @@
         </details>
         <details>
           <summary>Geht das auch mit verschiedenen Faktoren je Platz?</summary>
-          <p>Ja. Unter „Faktor oder FP je Platz“ bekommt jeder Platz auf Wunsch einen eigenen Arche-Faktor oder einen festen FP-Betrag, etwa wenn ein Förderer mit anderer Arche einzahlt oder einen Platz schon genommen hat. Schneller geht es im Förderplan selbst: Ein Tipp auf die Zahl unter „Einzahlen“ öffnet sie direkt in der Zeile. Ist ein Platz schon vergeben, schaltest du sein Häkchen per Tipp auf den Strich: Er bleibt in der Rechnung, fällt aber aus der Chat-Zeile.</p>
+          <p>Ja. Unter „Faktor oder FP je Platz“ bekommt jeder Platz auf Wunsch einen eigenen Arche-Faktor oder einen festen FP-Betrag, etwa wenn ein Förderer mit anderer Arche einzahlt oder einen Platz schon genommen hat. Schneller geht es im Förderplan selbst: Ein Tipp auf die Zahl unter „Kosten“ öffnet sie direkt in der Zeile. Ist ein Platz schon vergeben, schaltest du sein Häkchen per Tipp auf den Strich: Er bleibt in der Rechnung, fällt aber aus der Chat-Zeile.</p>
         </details>
         <details>
           <summary>Welche Legendären Bauwerke kennt cipher?</summary>

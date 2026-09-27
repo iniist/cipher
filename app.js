@@ -1701,7 +1701,7 @@
    * Die fuenf Tabellenzeilen einmalig aufbauen.
    *
    * Frueher wurde die Tabelle bei jedem Zeichnen neu geschrieben. Seit die
-   * Zahl unter "Einzahlen" sich direkt in der Zeile bearbeiten laesst, geht
+   * Zahl unter "Kosten" sich direkt in der Zeile bearbeiten laesst, geht
    * das nicht mehr: ein neues innerHTML naehme dem Feld bei jedem
    * Tastendruck den Cursor — dieselbe Lage wie bei buildSlotRows. Gebaut
    * wird also einmal, danach werden nur Werte nachgezogen. Nebenbei bleibt
@@ -1949,7 +1949,8 @@
    */
   function secureText(row, running) {
     if (row.taken) return '<span class="given">vergeben</span>';
-    if (!row.offered) return row.tooTight ? "passt nicht" : "–";
+    // Leise, damit das Gruen der Spalte nur an Betraegen steht, die du zahlst.
+    if (!row.offered) return '<span class="none">' + (row.tooTight ? "passt nicht" : "–") + "</span>";
     if (row.secure === 0) return '<span class="safe">Sicher</span>';
     return state.secureMode === "total"
       ? formatNumber(running)
@@ -1964,10 +1965,10 @@
    */
   function renderSecureHead() {
     var total = state.secureMode === "total";
-    $("secureModeLabel").textContent = total ? "Summe" : "Sichern";
+    $("secureModeLabel").textContent = total ? "Eigen" : "Sichern";
     $("secureMode").setAttribute("aria-label", total
-      ? "Summe — umschalten auf das, was dieser Platz kostet"
-      : "Sichern — umschalten auf die laufende Summe");
+      ? "Eigen — umschalten auf das, was dieser Platz zum Sichern kostet"
+      : "Sichern — umschalten auf deine laufenden Eigen-FP");
   }
 
   function renderBar(plan) {
@@ -2015,7 +2016,7 @@
 
   /**
    * Der Satz ueber die Absicherung vergebener Plaetze. Der Kasten nennt nur,
-   * was noch aussteht; die Spalte "Summe" zaehlt das schon Eingezahlte mit.
+   * was noch aussteht; die Spalte "Eigen" zaehlt das schon Eingezahlte mit.
    * Ohne diesen Satz passen beide Zahlen scheinbar nicht zusammen.
    */
   function alreadyIn(plan) {
@@ -2649,7 +2650,7 @@
     $("rows").addEventListener("click", function (event) {
       if (event.target.closest("td.pre")) { toggleSecureMode(); return; }
 
-      // Die Zahl unter "Einzahlen" oeffnet sich in der Zeile selbst. Der
+      // Die Zahl unter "Kosten" oeffnet sich in der Zeile selbst. Der
       // Block oben kann dasselbe, liegt aber eine Bildschirmhoehe entfernt —
       // hier sieht man beim Tippen, was es mit Summe und "Sicher" macht.
       var open = event.target.closest("[data-pay-open]");

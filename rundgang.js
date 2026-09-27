@@ -110,7 +110,7 @@
   }
 
   /**
-   * Foerderplan: zwischen „Sichern“ und „Summe“ wechseln. Von selbst im
+   * Foerderplan: zwischen „Sichern“ und „Eigen“ wechseln. Von selbst im
    * Takt, solange der Plan zu sehen ist; ein Klick uebernimmt die Wahl
    * und haelt den Takt an.
    */
