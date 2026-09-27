@@ -149,7 +149,7 @@ async function main() {
       await page.locator("#building").selectOption(id, { force: true });
       await page.fill("#level", String(level));
       await page.locator("#level").blur();
-      await page.click('button[data-copy="chatPlain"]');
+      await page.click("#chatCopy");
       await page.waitForTimeout(80);
     }
     // Neu laden: die Knoepfe sagen sonst noch „Kopiert“.
