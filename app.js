@@ -299,16 +299,21 @@
    * Welt legt ihren Teil unter "cipher:w:<welt>:" ab.
    *
    * Ohne Eintrag ist noch keine Welt gewaehlt; dann laeuft alles wie immer.
+   * Wer eine Welt wieder abwaehlt, landet mit `active: null` genau dort:
+   * die alten Schluessel ohne Namen. Die erste Welt bleibt dabei vermerkt,
+   * damit die anderen Welten ihren Stand behalten und die erste ihn bei der
+   * naechsten Wahl zurueckbekommt — Abwaehlen loescht nie etwas.
    */
   function normaliseWorld(value) {
     if (!value || !worldById[value.home]) return null;
+    if (value.active === null) return { home: value.home, active: null };
     return { home: value.home, active: worldById[value.active] ? value.active : value.home };
   }
 
   var world = normaliseWorld(read(WORLD_KEY, null));
 
   /** Liegt die offene Welt unter eigenen Schluesseln? */
-  var awayFromHome = Boolean(world && world.active !== world.home);
+  var awayFromHome = Boolean(world && world.active && world.active !== world.home);
 
   function worldPrefix(id) { return "cipher:w:" + id + ":"; }
 
@@ -2784,7 +2789,7 @@
   // --------------------------------------------------------- Weltenauswahl
 
   function renderWorldPick() {
-    $("worldName").textContent = world ? worldById[world.active].name : "Server";
+    $("worldName").textContent = world && world.active ? worldById[world.active].name : "Server";
   }
 
   /**
@@ -2797,15 +2802,18 @@
   var renamingWorld = false;
 
   function renderWorlds() {
-    var active = world && worldById[world.active];
+    var active = world && world.active && worldById[world.active];
     $("worldsTitle").textContent = renamingWorld ? "Welt umbenennen" : "Welt wählen";
     $("worldsNote").textContent = renamingWorld
       ? "Zu welcher Welt gehört der Stand von " + active.name + " wirklich? Welten, die schon etwas gespeichert haben, stehen nicht zur Wahl."
-      : world
+      : active
         ? "Jede Welt hat eigene Bauwerke, Faktoren, Favoriten und eine eigene Sammlung. Name, Darstellung und Kürzel gelten überall."
-        : "Was du bisher eingestellt und gemerkt hast, gehört dann zu der Welt, die du jetzt wählst.";
-    $("worldRename").hidden = !world;
-    if (world) {
+        : world
+          ? "Keine Welt gewählt. Du siehst den Stand ohne Welt — den von " + worldById[world.home].name + ". Jede Welt behält, was sie gespeichert hat."
+          : "Was du bisher eingestellt und gemerkt hast, gehört dann zu der Welt, die du jetzt wählst.";
+    $("worldRename").hidden = !active;
+    $("worldLeave").hidden = !active || renamingWorld;
+    if (active) {
       $("worldRename").textContent = renamingWorld ? "Doch nicht umbenennen" : "Falsche Welt? " + active.name + " umbenennen";
     }
     $("worldList").innerHTML = WORLDS.map(function (entry) {
@@ -2863,9 +2871,35 @@
       return;
     }
     if (id === world.active) { dialog.close(); return; }
+    if (!world.active && id === world.home) {
+      // Ohne Welt liegen schon die Schluessel der ersten Welt offen.
+      world = { home: id, active: id };
+      write(WORLD_KEY, world);
+      renderWorldPick();
+      dialog.close();
+      toast("Der Stand gehört wieder zu " + worldById[id].name + ".");
+      return;
+    }
     persistState();
     write(WORLD_KEY, { home: world.home, active: id });
     window.location.reload();
+  }
+
+  /**
+   * Die Welt abwaehlen: nur die Zuordnung faellt weg, kein Stand. Wer von
+   * der ersten Welt kommt, sieht dieselben Daten wie eben, nur ohne Namen;
+   * von jeder anderen geht es wie bei einem Wechsel ueber einen Neustart.
+   */
+  function leaveWorld() {
+    if (!world || !world.active) return;
+    var from = worldById[world.active].name;
+    persistState();
+    write(WORLD_KEY, { home: world.home, active: null });
+    if (awayFromHome) { window.location.reload(); return; }
+    world = { home: world.home, active: null };
+    renderWorldPick();
+    $("worlds").close();
+    toast(from + " ist abgewählt. Gespeichert bleibt alles.");
   }
 
   /**
@@ -2877,7 +2911,7 @@
    * ist in keinem Moment ein Stand nur noch halb da.
    */
   function renameWorld(id) {
-    if (!world || !worldById[id] || id === world.active || worldInUse(id)) return;
+    if (!world || !world.active || !worldById[id] || id === world.active || worldInUse(id)) return;
     var from = worldById[world.active].name;
     persistState();
 
@@ -2924,6 +2958,7 @@
       if (renamingWorld) renameWorld(button.dataset.world);
       else chooseWorld(button.dataset.world);
     });
+    $("worldLeave").addEventListener("click", leaveWorld);
     $("worldRename").addEventListener("click", function () {
       renamingWorld = !renamingWorld;
       renderWorlds();

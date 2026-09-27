@@ -198,3 +198,69 @@ test.describe("Umbenennen", () => {
     await expect(page.locator(".world-opt:disabled")).toHaveCount(0);
   });
 });
+
+test.describe("Abwaehlen", () => {
+  test("ohne gewaehlte Welt gibt es nichts abzuwaehlen", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.click("#worldPick");
+    await expect(page.locator("#worldLeave")).toBeHidden();
+  });
+
+  test("die erste Welt verliert nur ihren Namen und bekommt ihn zurueck", async ({ page }) => {
+    await altbestandLaden(page);
+    await weltWaehlen(page, "Brisgard");
+
+    await page.click("#worldPick");
+    await page.click("#worldLeave");
+    await expect(page.locator("#worlds")).toBeHidden();
+    await expect(page.locator("#worldName")).toHaveText("Server");
+    expect(JSON.parse(await speicher(page, "cipher:world"))).toEqual({ home: "de2", active: null });
+    // Nichts geloescht, nichts verschoben.
+    for (const key of Object.keys(ALTBESTAND)) {
+      expect(await speicher(page, key)).toBe(ALTBESTAND[key]);
+    }
+    await expect(page.locator("#building")).toHaveValue("Notre_Dame");
+
+    // Auch nach einem Neustart bleibt es beim Stand ohne Welt.
+    await page.reload();
+    await expect(page.locator("#worldName")).toHaveText("Server");
+    await page.click("#worldPick");
+    await expect(page.locator(".world-opt[aria-current]")).toHaveCount(0);
+    await expect(page.locator("#worldRename")).toBeHidden();
+    await expect(page.locator(".world-opt", { hasText: "Brisgard" })).toContainText("genutzt");
+    await page.click("#worldsClose");
+
+    await weltWaehlen(page, "Brisgard");
+    expect(JSON.parse(await speicher(page, "cipher:world"))).toEqual({ home: "de2", active: "de2" });
+    await expect(page.locator("#favList li")).toHaveCount(1);
+  });
+
+  test("eine weitere Welt behaelt ihren Stand, auch wenn sie abgewaehlt wird", async ({ page }) => {
+    await altbestandLaden(page);
+    await weltWaehlen(page, "Brisgard");
+    await weltWaehlen(page, "Korch");
+    await page.fill("#level", "66");
+    await page.locator("#level").blur();
+    await page.click("#favSave");
+
+    await page.click("#worldPick");
+    await page.click("#worldLeave");
+    await expect(page.locator("#worldName")).toHaveText("Server");
+    // Ohne Welt liegt der Stand ohne Namen offen — der der ersten Welt.
+    await expect(page.locator("#building")).toHaveValue("Notre_Dame");
+    expect(await speicher(page, "cipher:w:de10:favorites")).not.toBeNull();
+
+    await weltWaehlen(page, "Korch");
+    await expect(page.locator("#level")).toHaveValue("66");
+    await expect(page.locator("#favList li")).toHaveCount(1);
+  });
+
+  test("beim Umbenennen steht Abwaehlen nicht zur Wahl", async ({ page }) => {
+    await altbestandLaden(page);
+    await weltWaehlen(page, "Brisgard");
+    await page.click("#worldPick");
+    await expect(page.locator("#worldLeave")).toBeVisible();
+    await page.click("#worldRename");
+    await expect(page.locator("#worldLeave")).toBeHidden();
+  });
+});
