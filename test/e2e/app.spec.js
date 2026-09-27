@@ -336,14 +336,14 @@ test("der Kopierknopf quittiert den Kopiervorgang", async ({ page, context, brow
   await nameEintragen(page, "Dani");
   const expected = await page.locator("#chatPlain").textContent();
 
-  const button = page.locator('button[data-copy="chatPlain"]');
+  const button = page.locator("#chatCopy");
   await button.click();
   await expect(button).toHaveText("Kopiert");
 
   const clipboard = await page.evaluate(() => navigator.clipboard.readText());
   expect(clipboard).toBe(expected);
 
-  await expect(button).toHaveText("Nur Plätze kopieren", { timeout: 3000 });
+  await expect(button).toHaveText("Zeile kopieren", { timeout: 3000 });
 });
 
 test.describe("Datum der Datenquelle", () => {

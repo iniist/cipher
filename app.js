@@ -283,12 +283,13 @@
   var WORLD_KEY = "cipher:world";
 
   /**
-   * Die Felder von `cipher:state`, die zur Welt gehoeren. Alles andere —
+   * Die Felder von `cipher:state`, die zur Welt gehoeren — auch, ob die
+   * Chat-Zeile mit FP kopiert wird: das haelt jede Gilde anders. Alles andere —
    * Theme, Spielername, Kuerzel-Schalter, die Lesarten von Stufe, Sichern
    * und Plaetzen — gilt ueberall gleich.
    */
   var WORLD_FIELDS = ["building", "level", "factor", "enabled", "taken",
-    "slotFactors", "slotPays", "ownPaid", "ownPaidFor"];
+    "slotFactors", "slotPays", "ownPaid", "ownPaidFor", "chatMode"];
 
   /**
    * Die Welt, die zuerst gewaehlt wurde ("home"), behaelt die Schluessel, die
@@ -393,7 +394,10 @@
     ownPaidFor: typeof stored.ownPaidFor === "string" ? stored.ownPaidFor : "",
     // Ob Bauwerke mit ihrem Kuerzel aus abbr.js genannt werden ("AO") oder
     // mit vollem Namen ("Arktische Orangerie"). Aus ist die Vorgabe.
-    useAbbr: stored.useAbbr === true
+    useAbbr: stored.useAbbr === true,
+    // Welche Fassung der Chat-Zeile kopiert wird: nur die Plaetze oder
+    // mit den FP je Platz. "plain" ist die Vorgabe.
+    chatMode: stored.chatMode === "points" ? "points" : "plain"
   };
 
   // Ein Platz traegt entweder einen Faktor oder einen Betrag, nie beides —
@@ -1543,7 +1547,7 @@
       chip.classList.toggle("on", Number(chip.dataset.factor) === state.factor);
     });
     if (document.activeElement !== $("playerName")) $("playerName").value = state.name;
-    $("nameHint").hidden = Boolean(state.name.trim());
+    $("nameNeedTop").hidden = Boolean(state.name.trim());
     renderShortField(building);
     $("useAbbr").checked = state.useAbbr;
     $("useAbbrChat").checked = state.useAbbr;
@@ -1854,15 +1858,37 @@
     setChatLine("chatPoints", Calc.chatLine(plan, heading, true));
   }
 
-  /**
-   * Eine Chat-Zeile setzen und den zugehoerigen Knopf mitschalten. Ein
-   * aktiver Knopf ueber einem leeren Kasten sieht bedienbar aus, tut aber
-   * nichts — das ist keine gute Rueckmeldung.
-   */
   function setChatLine(id, text) {
     $(id).textContent = text;
-    var button = document.querySelector('[data-copy="' + id + '"]');
-    if (button) button.disabled = !text;
+    renderChatCopy();
+  }
+
+  /** Die Zeile, die der Schalter gerade meint. */
+  function chatSource() {
+    return $(state.chatMode === "points" ? "chatPoints" : "chatPlain");
+  }
+
+  /**
+   * Schalter, sichtbare Fassung und Knopf auf den Stand bringen. Kopiert
+   * wird erst mit Namen: ohne ihn weiss die Gilde nicht, von wem die
+   * Foerderung ist. Bis dahin fuehrt der Knopf ins Namensfeld. Und ein
+   * aktiver Kopierknopf ueber einem leeren Kasten sieht bedienbar aus, tut
+   * aber nichts — der bleibt aus.
+   */
+  function renderChatCopy() {
+    var points = state.chatMode === "points";
+    $("chatPlain").hidden = points;
+    $("chatPoints").hidden = !points;
+    document.querySelectorAll("[data-chat-mode]").forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.dataset.chatMode === state.chatMode));
+    });
+    var button = $("chatCopy");
+    var named = Boolean(state.name.trim());
+    button.classList.toggle("needs-name", !named);
+    if (!button.classList.contains("done")) {
+      button.textContent = named ? "Zeile kopieren" : "Erst Namen eintragen";
+    }
+    button.disabled = named && !chatSource().textContent;
   }
 
   // ---------------------------------------------------------------- Sammlung
@@ -1876,9 +1902,9 @@
    *
    * Gesammelt wird beim Kopieren und nicht ueber einen eigenen Knopf. Der
    * Grund ist die Wahl zwischen "Nur Plaetze" und "Mit FP": ein Knopf
-   * "Sammeln" muesste sie ein zweites Mal stellen. Der Kopierknopf hat sie
-   * schon beantwortet, also nimmt die Sammlung genau die Zeile, die auch
-   * in der Zwischenablage landet.
+   * "Sammeln" muesste sie ein zweites Mal stellen. Der Schalter ueber der
+   * Zeile hat sie schon beantwortet, also nimmt die Sammlung genau die
+   * Zeile, die auch in der Zwischenablage landet.
    */
 
   /**
@@ -2520,13 +2546,23 @@
       }
     });
 
-    document.querySelectorAll("[data-copy]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        var source = $(button.dataset.copy);
-        var text = source.textContent;
-        copyToClipboard(button, text, source);
-        collect(state.building, text);
-      });
+    $("chatCopy").addEventListener("click", function () {
+      if (!state.name.trim()) {
+        openSettings($("playerName"), $("chatCopy"));
+        return;
+      }
+      var source = chatSource();
+      var text = source.textContent;
+      if (!text) return;
+      copyToClipboard($("chatCopy"), text, source);
+      collect(state.building, text);
+    });
+
+    $("chatMode").addEventListener("click", function (event) {
+      var button = event.target.closest("[data-chat-mode]");
+      if (!button) return;
+      state.chatMode = button.dataset.chatMode;
+      render();
     });
 
     $("collCopy").addEventListener("click", function () {
@@ -2911,8 +2947,8 @@
     var dialog = $("settings");
     var opener = $("settingsPick");
     opener.addEventListener("click", function () { openSettings(); });
-    $("nameHintGo").addEventListener("click", function () {
-      openSettings($("playerName"), $("nameHintGo"));
+    document.querySelectorAll(".name-go").forEach(function (button) {
+      button.addEventListener("click", function () { openSettings($("playerName"), button); });
     });
     $("settingsClose").addEventListener("click", function () { dialog.close(); });
     dialog.addEventListener("close", function () {
@@ -2929,9 +2965,14 @@
       if (event.target === dialog && downOnBackdrop) dialog.close();
       downOnBackdrop = false;
     });
-    // Enter im Namensfeld heisst "fertig".
+    // Enter im Namensfeld heisst "fertig". Ohne preventDefault landete
+    // derselbe Tastendruck auf dem Knopf, der den Fokus zurueckbekommt —
+    // der Menueknopf oeffnete das Menue gleich wieder, der Kopierknopf
+    // kopierte.
     $("playerName").addEventListener("keydown", function (event) {
-      if (event.key === "Enter") dialog.close();
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      dialog.close();
     });
   }
 

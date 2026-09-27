@@ -63,7 +63,7 @@ test.describe("Ein Kuerzel vergeben", () => {
   test("wirkt es auf dem Eintrag in der Sammlung", async ({ page }) => {
     await orangerie(page);
     await feld(page).fill("AO");
-    await page.click('[data-copy="chatPlain"]');
+    await page.click("#chatCopy");
 
     await expect(page.locator(".coll-del").first())
       .toHaveAttribute("aria-label", "AO aus der Sammlung entfernen");

@@ -116,9 +116,9 @@ test.describe("Ein eigenes Kuerzel", () => {
 test.describe("Die Sammlung zieht mit", () => {
   test("tauscht den Namen in gesammelten Zeilen beim Umschalten", async ({ page }) => {
     await orangerie(page);
-    await page.click('[data-copy="chatPlain"]');
+    await page.click("#chatCopy");
     await page.locator("#building").selectOption("Terracotta_Army", { force: true });
-    await page.click('[data-copy="chatPlain"]');
+    await page.click("#chatCopy");
 
     const zeilen = page.locator("#collList .coll-t");
     await expect(zeilen.nth(0)).toContainText("Dani Arktische Orangerie P");
@@ -139,9 +139,13 @@ test.describe("Die Sammlung zieht mit", () => {
   });
 
   test("gilt auch ohne Spielernamen", async ({ page }) => {
+    // Ohne Namen wird heute nicht mehr kopiert; Zeilen von damals, in denen
+    // das Bauwerk vorn steht, muessen trotzdem mitziehen.
     await page.goto("/index.html");
-    await page.locator("#building").selectOption("Arctic_Orangery", { force: true });
-    await page.click('[data-copy="chatPlain"]');
+    await page.evaluate(() => localStorage.setItem("cipher:collection", JSON.stringify([
+      { id: "Arctic_Orangery", text: "Arktische Orangerie P5 P4", label: "Arktische Orangerie", at: 0 }
+    ])));
+    await page.reload();
     await umschalten(page, true);
     await expect(page.locator("#collList .coll-t").first()).toHaveText(/^AO P/);
   });

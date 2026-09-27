@@ -30,25 +30,19 @@ test("oben stehen nur Welt und Menue, die Einstellungen liegen im Menue", async 
   await expect(page.locator("#settingsPick")).toBeFocused();
 });
 
-test("ohne Namen weist der Foerderchat den Weg ins Menue", async ({ page }) => {
-  await expect(page.locator("#nameHint")).toBeVisible();
-  await page.click("#nameHintGo");
-  await expect(page.locator("#settings")).toBeVisible();
-  await expect(page.locator("#playerName")).toBeFocused();
-
-  await page.keyboard.type("Dani");
-  await page.keyboard.press("Enter");
+test("Enter im Namensfeld schliesst das Menue", async ({ page }) => {
+  await page.click("#settingsPick");
+  await page.fill("#playerName", "Dani");
+  await page.press("#playerName", "Enter");
   await expect(page.locator("#settings")).toBeHidden();
-  await expect(page.locator("#nameHint")).toBeHidden();
   await expect(page.locator("#chatPlain")).toContainText("Dani ");
-  // Der Hinweis ist weg, also kehrt der Fokus zum Menueknopf zurueck.
   await expect(page.locator("#settingsPick")).toBeFocused();
 });
 
 test("mit Namen bleibt der Hinweis weg, auch nach dem Neuladen", async ({ page }) => {
   await nameEintragen(page, "Dani");
   await page.reload();
-  await expect(page.locator("#nameHint")).toBeHidden();
+  await expect(page.locator("#nameNeedTop")).toBeHidden();
 });
 
 test("das Theme laesst sich im Menue waehlen und bleibt", async ({ page }) => {

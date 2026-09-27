@@ -435,7 +435,7 @@ bisher über eine Notiz außerhalb: kopieren, wegschreiben, nächstes Bauwerk,
 wieder kopieren.
 
 Die Sammlung ist diese Notiz, nur an der Stelle, an der die Zeilen ohnehin
-entstehen. Unter den beiden Kopierkästen sammelt sie jede Zeile, die du
+entstehen. Unter dem Kopierkasten sammelt sie jede Zeile, die du
 kopierst; „Alle kopieren“ gibt sie am Ende untereinander zurück. Jede Zeile
 lässt sich einzeln wieder herausnehmen, „Sammlung leeren“ räumt alles weg.
 Sie liegt im `localStorage` und überdauert damit das Schließen des Browsers.
@@ -443,7 +443,7 @@ Solange nichts gesammelt ist, fällt der Kasten ganz weg.
 
 Gesammelt wird **beim Kopieren** und nicht über einen eigenen Knopf. Der Grund
 ist die Wahl zwischen „Nur Plätze“ und „Mit FP“: ein Knopf „Sammeln“ müsste sie
-ein zweites Mal stellen. Der Kopierknopf hat sie schon beantwortet, also nimmt
+ein zweites Mal stellen. Der Schalter über der Zeile hat sie schon beantwortet, also nimmt
 die Sammlung genau die Zeile, die auch in der Zwischenablage landet.
 
 Je Bauwerk steht **eine** Zeile in der Sammlung. Wer nach einer Korrektur
@@ -461,11 +461,20 @@ Bauwerk-Kasten — Platz, der beim Fördern fehlte. Die Welt bleibt dagegen als
 eigener Knopf oben links sichtbar: wer nicht sieht, in welcher Welt er ist,
 fördert irgendwann mit dem Stand der falschen.
 
-Solange kein Name eingetragen ist, steht über den Chat-Zeilen ein Hinweis mit
-einem Knopf, der das Menü gleich im Namensfeld öffnet — wer cipher zum ersten
-Mal benutzt, sucht den Namen sonst nicht im Menü. Impressum und
+**Kopiert wird erst mit Namen** — ohne ihn weiß die Gilde nicht, von wem die
+Förderung ist. Bis einer eingetragen ist, steht oben im Bauwerk-Kasten ein
+knapper Hinweis, und der Kopierknopf heißt „Erst Namen eintragen“: beide
+öffnen das Menü gleich im Namensfeld, Enter schließt es wieder. Wer cipher zum
+ersten Mal benutzt, sucht den Namen sonst nicht im Menü. Impressum und
 Datenschutzerklärung behalten ihre Theme-Leiste im Kopf; dort gibt es nichts
 anderes einzustellen.
+
+### Eine Chat-Zeile
+
+Früher standen „Nur Plätze“ und „Mit FP“ als zwei Kästen mit je einem großen
+Knopf untereinander. Jetzt gibt es eine Zeile und einen Knopf „Zeile kopieren“;
+welche Fassung es ist, stellt der Schalter **Nur Plätze | Mit FP** darüber ein.
+Er merkt sich die Wahl je Welt, denn jede Gilde hält es anders.
 
 ### Welten
 

@@ -4,7 +4,7 @@
  * Favoritenliste, der Leerzustand ohne Daten.
  */
 const { test, expect } = require("@playwright/test");
-const { themaWaehlen } = require("./menue");
+const { nameEintragen, themaWaehlen } = require("./menue");
 const { mitTestdaten, OHNE_DATEN } = require("./testdaten");
 
 /** Zwoelf Favoriten, also die volle Liste. */
@@ -84,9 +84,9 @@ test.describe("Leerzustand", () => {
     await expect(page.locator("#legend")).toBeHidden();
   });
 
-  test("die Kopierknöpfe sind ausgeschaltet, solange nichts dasteht", async ({ page }) => {
-    await expect(page.locator('[data-copy="chatPlain"]')).toBeDisabled();
-    await expect(page.locator('[data-copy="chatPoints"]')).toBeDisabled();
+  test("der Kopierknopf ist ausgeschaltet, solange nichts dasteht", async ({ page }) => {
+    await nameEintragen(page, "Dani");
+    await expect(page.locator("#chatCopy")).toBeDisabled();
   });
 
   test("sie schalten sich wieder ein, sobald ein Plan da ist", async ({ page }) => {
@@ -95,8 +95,8 @@ test.describe("Leerzustand", () => {
     await page.click("#applyInput");
 
     await expect(page.locator("#legend")).toBeVisible();
-    await expect(page.locator('[data-copy="chatPlain"]')).toBeEnabled();
-    await expect(page.locator('[data-copy="chatPoints"]')).toBeEnabled();
+    await nameEintragen(page, "Dani");
+    await expect(page.locator("#chatCopy")).toBeEnabled();
   });
 });
 

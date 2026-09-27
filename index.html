@@ -207,6 +207,13 @@
   <section class="panel">
     <h2>Bauwerk</h2>
 
+    <!-- Solange kein Spielername eingetragen ist: hier oben, wo man anfängt.
+         Wer cipher zum ersten Mal öffnet, sucht den Namen nicht im Menü. -->
+    <div class="name-need" id="nameNeedTop" hidden>
+      <p><b>Wie heißt du im Spiel?</b> Ohne Namen kein Kopieren.</p>
+      <button type="button" class="name-go">Namen eintragen</button>
+    </div>
+
     <!-- Gemerktes zuerst: wer wiederkommt, will meistens genau dorthin
          zurück. Solange nichts gemerkt ist, fällt der Streifen ganz weg —
          ein leerer Platzhalter an der prominentesten Stelle wäre schlechter
@@ -262,7 +269,7 @@
              Platzhalter zeigt den Namen aus dem Datensatz, leer lassen
              heißt also „den nehmen“. Der Spielername stand früher darüber;
              er gilt für alles und steht darum im Menü. -->
-        <label class="l lbl-short" for="buildingShort">Eigenes Kürzel<span class="sr-only"> für das gewählte Bauwerk</span></label>
+        <label class="l" for="buildingShort">Eigenes Kürzel<span class="sr-only"> für das gewählte Bauwerk</span></label>
         <input id="buildingShort" autocomplete="off" maxlength="24" spellcheck="false">
       </div>
     </div>
@@ -357,12 +364,21 @@
       <h2>Förderchat</h2>
       <label class="abbr-toggle" title="Im Chat „AO“ statt „Arktische Orangerie“ schreiben"><input type="checkbox" id="useAbbrChat"> Kürzel<span class="sr-only"> statt Namen verwenden</span></label>
     </div>
-    <!-- Ohne Namen fängt die Zeile beim Bauwerk an. Das Feld steht im Menü,
-         wo es niemand sucht, der cipher zum ersten Mal öffnet — darum hier
-         ein Hinweis mit dem Weg dorthin, bis ein Name drinsteht. -->
-    <p class="name-hint" id="nameHint" hidden>Dein Spielername fehlt noch vorn in der Zeile. <button type="button" class="link" id="nameHintGo">Im Menü eintragen</button></p>
-    <div class="copy"><div class="t" id="chatPlain"></div><button type="button" data-copy="chatPlain">Nur Plätze kopieren</button></div>
-    <div class="copy"><div class="t" id="chatPoints"></div><button type="button" data-copy="chatPoints">Mit FP kopieren</button></div>
+    <!-- Eine Zeile, eine Wahl: ob die Beträge mitgehen, stellt der Schalter
+         ein, und er merkt es sich je Welt — jede Gilde hält es anders. Früher
+         standen beide Fassungen mit je einem großen Knopf untereinander. -->
+    <div class="seg chat-mode" id="chatMode" role="group" aria-label="Was die Zeile enthält">
+      <button type="button" data-chat-mode="plain" aria-pressed="true">Nur Plätze</button>
+      <button type="button" data-chat-mode="points" aria-pressed="false">Mit FP</button>
+    </div>
+    <div class="copy">
+      <div class="t" id="chatPlain"></div>
+      <div class="t" id="chatPoints" hidden></div>
+      <!-- Ohne Namen weiß die Gilde nicht, von wem die Förderung ist. Bis
+           einer eingetragen ist, kopiert der Knopf nicht, sondern führt
+           ins Namensfeld im Menü — ein eigener Hinweis kostete eine Zeile. -->
+      <button type="button" id="chatCopy">Zeile kopieren</button>
+    </div>
 
     <!-- Wer mehrere Bauwerke gleichzeitig in die Fördergruppe stellt, hat
          bisher jede kopierte Zeile in einer Notiz zwischengeparkt. Der
