@@ -2,7 +2,7 @@
  * Misst, ab welcher Spreizung der Arche-Faktoren ein tieferer Maezen-Platz
  * teurer werden kann als ein hoeherer.
  *
- *   node tools/order-scan.js                     (die Bereiche aus der README)
+ *   node tools/order-scan.js                     (Standardbereiche)
  *   node tools/order-scan.js 170-200 120-200     (eigene Bereiche)
  *
  * Hintergrund: Die Belohnungen werden auf 5 gerundet, halbieren sich von
@@ -15,10 +15,9 @@
  * ueber ihm. Zwei Plaetze mit derselben Belohnung — P1 und P2 fallen bei
  * 5 FP beide auf 5 — bleiben aussen vor: dort dreht schon jeder Unterschied
  * im Faktor die Reihenfolge, und eine kleinere Belohnung ueberholt nichts.
- * Dieser Fall steht als Fussnote in der README.
  *
- * Die Zahlen in der README stammen aus diesem Lauf. Nach einem Datenimport
- * also erneut laufen lassen und die Tabelle dort nachziehen.
+ * Die Aussage selbst (1,80–2,00: kein Fall) haelt ein Einheitentest fest;
+ * dieses Skript ist zum Nachmessen anderer Bereiche da.
  */
 "use strict";
 

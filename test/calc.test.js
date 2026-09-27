@@ -773,9 +773,8 @@ test("Betraege unter oder gleich null zaehlen als nicht gesetzt", () => {
 //
 // Die Anzeige verlaesst sich darauf: in der Summen-Lesart steht bei P2
 // normalerweise das Wort "Sicher" statt einer Zahl, weil nach P1 nichts
-// nachzulegen ist. Der README-Abschnitt "Schritt oder Summe" nennt dazu eine
-// gemessene Zahl — und die soll nicht still altern, wenn der Datensatz sich
-// aendert.
+// nachzulegen ist. Dieser Test haelt fest, dass das ueber den ganzen
+// Datensatz so bleibt, auch wenn er sich aendert.
 
 test("nach einem angebotenen P1 braucht P2 hoechstens 1 FP", () => {
   const allOn = [true, true, true, true, true];
@@ -799,7 +798,7 @@ test("nach einem angebotenen P1 braucht P2 hoechstens 1 FP", () => {
 
   // Gezaehlt werden nur Plaene, in denen beide Plaetze auch angeboten werden.
   assert.ok(geprueft > 50000, `der Durchlauf deckt nur ${geprueft} Plaene ab`);
-  // Es kommt vor, aber in der Minderheit — das ist die Aussage im README.
+  // Es kommt vor, aber in der Minderheit.
   assert.ok(faelle / geprueft < 0.2, `P2 brauchte in ${faelle} von ${geprueft} Faellen etwas`);
 });
 

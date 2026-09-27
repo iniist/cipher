@@ -1,555 +1,41 @@
 # cipher
 
-**Das Förder-Dashboard für Mäzen-Plätze & FP-Einsatz.**
+**Förderrechner für Legendäre Bauwerke in *Forge of Empires*** —
+live unter <https://foe-foerderrechner.com/>.
 
-Quelltext: https://github.com/iniist/cipher
-
-cipher rechnet aus, wie du ein Legendäres Bauwerk in *Forge of Empires* so
-förderst, dass dir niemand die Mäzen-Plätze wegschnappt — und schreibt den Text
-für den Förderchat gleich mit. Eine statische Seite, komplett im Browser, ohne
-Konto, ohne Server, ohne Tracking.
+cipher rechnet aus, wie viele FP du vorab einzahlen musst, damit dir niemand
+die Mäzen-Plätze wegschnappt, und schreibt die Zeile für den Förderchat gleich
+mit. Eine statische Seite, komplett im Browser: kein Konto, kein Server, kein
+Tracking.
 
 > **Kein offizielles Angebot.** cipher ist ein inoffizielles Fan-Projekt und
 > steht in keiner Verbindung zur InnoGames GmbH. „Forge of Empires“ sowie alle
 > zugehörigen Bezeichnungen und Logos sind Marken der InnoGames GmbH.
 > Alle Angaben ohne Gewähr — im Zweifel gilt das Spiel.
 
----
-
-## Was es macht
-
-Du wählst ein Bauwerk, eine Stufe und deinen Arche-Faktor. cipher zeigt
-dir dann für jeden der fünf Mäzen-Plätze:
-
-| Spalte | Bedeutung |
-| --- | --- |
-| **Belohnung** | Was der Platz auszahlt (P1 aus dem Datensatz, P2–P5 daraus abgeleitet) |
-| **Kosten** | Was ein Förderer für diesen Platz zahlen muss, inklusive Arche-Bonus |
-| **Sichern** | Was *du* vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann — auf Tipp als „Eigen“, dein laufender Stand |
-
-Dazu die Aufteilung in Eigen und Förderer, den Betrag, den du zum Sichern
-einzahlst, und zwei fertige Zeilen zum Kopieren in den Förderchat —
-samt einer Sammlung, die mehrere davon aufhebt.
-
-Das Häkchen je Platz kennt drei Zustände, ein Tipp schaltet weiter:
-
-| Häkchen | Zustand | Rechnung | Chat |
-| --- | --- | --- | --- |
-| ✓ | angeboten | Fremdkapital, mit „Sichern“ | steht drin |
-| – | vergeben | Fremdkapital, schon abgesichert | fällt heraus |
-| leer | nicht angeboten | Eigenanteil | fällt heraus |
-
-### Wörter und Farben
-
-Die Begriffe folgen dem, was die Förderszene aus den bekannten Rechnern
-kennt: **Kosten** zahlt der Förderer, **Sichern** ist dein Schritt je Platz,
-**Eigen** dein Stand. Früher hieß die Förderer-Spalte „Einzahlen“ — und der
-Kasten darunter sagte „vorab einzahlen“ zu dem, was *du* zahlst. Dasselbe
-Verb für zwei Leute, direkt untereinander. Nur „Belohnung“ bleibt, weil das
-Spiel es so nennt. Unten steht „Förderer“ statt „Fremd“: Spielsprache statt
-Buchhaltung. Und weil „Eigen“ jetzt deine FP meint, heißt ein Platz
-mit eigenem Faktor oder Betrag „angepasst“ statt „eigen“.
-
-Grün heißt überall „deine FP“: die Eigen-Spalte, die Zahl im Kasten, der
-Eigen-Teil im Balken und „Eigen“ unten. Früher war die Zahl im Kasten grün,
-der Eigenanteil darunter rot und die Förderer-Summe wieder grün — zwei fast
-gleiche eigene Beträge in entgegengesetzten Farben. Die Förderer-Summe ist
-jetzt neutral; die Förderer haben ihre Platzfarben im Balken. „Sicher“ ist
-ein Status, kein Betrag, und steht als Fläche in einem helleren Grün
-(`--safe`). Das frühere Rot heißt jetzt `--danger` und bleibt für Warnungen
-und Löschen.
-
-### Vergeben
-
-Wer in Runden fördert, schreibt erst P1 und P2 aus und, wenn die belegt
-sind, P3 bis P5. Dafür nahm man früher die Häkchen bei P1 und P2 heraus —
-und cipher rechnete dann, als zahltest du die beiden selbst: der Eigenanteil
-sprang hoch, und vor P3 stand eine Absicherung ab null, obwohl P1 und P2
-längst eingezahlt sind. Das kam als Rückmeldung, und sie hatte recht.
-
-Darum „vergeben“: der Platz bleibt mit seiner Einzahlung in der Rechnung,
-Eigenanteil und Fremdkapital ändern sich nicht, die Spalte zeigt „vergeben“
-statt einer Zahl, und nur die Chatzeile lässt ihn weg. Der Kasten „zum
-Sichern“ nennt nur noch, was für die offenen Plätze aussteht, und sagt
-dazu, wie viel für die vergebenen schon drin ist.
-
-Die Spalte „Eigen“ zählt die Absicherung vergebener Plätze dagegen mit —
-auch das kam als Rückmeldung. Sie soll der Stand deiner eigenen FP im
-Bauwerk sein, wie ihn das Spiel zeigt: Waren P1 und P2 mit 51.474 FP
-abgesichert, steht bei P3 52.704 und nicht die Differenz von 1.230. Die
-steht in der Lesart „Sichern“.
-
-Der Zustand kommt direkt nach „angeboten“, weil das der häufige Weg ist:
-ein Tipp auf P1 heißt meist „ist weg“, nicht „zahl ich selbst“. Hat der
-Förderer eines vergebenen Platzes mit anderem Faktor gezahlt, trägst du
-seinen Betrag wie gewohnt im Block je Platz ein.
-
-„Nicht angeboten“ bleibt trotzdem nötig — nur eben unten. P5 und oft P4
-bringen wenig und kosten eine weitere Runde Ausschreiben; sie lässt man weg
-und levelt selbst. Oben ergibt es keinen Sinn: P1 oder P2 selbst zu zahlen,
-während P3 angeboten wird, macht niemand mit Absicht. Steht ein Platz auf
-„aus“, während ein kleinerer darunter noch im Spiel ist, sagt cipher das
-und zeigt den Weg zu „vergeben“.
-
-### Deine FP schon im Bauwerk
-
-„Vergeben“ nimmt an, dass du vor jedem Platz der Reihe nach gesichert hast.
-Manchmal zahlen P1 und P2 aber, bevor du überhaupt etwas eingezahlt hast —
-etwa P1 10.000 und P2 9.999 auf einer Arche 181 (66.154 FP). Dann rechnet
-cipher, als wären schon 46.154 FP von dir drin, und für P3 bis P5 bleibt
-nur 1 FP: „passt nicht“.
-
-Sobald ein Platz vergeben ist, erscheint unter der Tabelle das Feld „Deine
-FP schon im Bauwerk“. Trägst du dort ein, was du wirklich drin hast (auch
-0), rechnet cipher vom jetzigen Stand aus: Die vergebenen Plätze sind mit
-ihrer Einzahlung drin, und der erste offene Platz sichert sie gleich mit
-ab. Im Beispiel mit Faktor 2,0 heißt das: +43.715 vor P3, +600 vor P4, +190
-vor P5, danach 60 FP zum Leveln — 44.565 FP Eigenanteil. Leer heißt wieder
-„der Reihe nach gesichert“. Der Stand gilt nur für das Bauwerk und die
-Stufe, auf der du ihn eingetragen hast.
-
-### Schritt oder Stand
-
-Dieselbe Spalte, zwei verbreitete Lesarten. Manche wollen wissen, was
-*dieser* Platz sie noch kostet (`+1.060`), andere, wo sie stehen, wenn er
-sicher ist (`74.393`). Ein Tipp auf den Spaltenkopf — oder auf eine der
-Zahlen — schaltet um, und die Überschrift nennt die aktive Lesart:
-„Sichern“ gegen „Eigen“.
-
-Zwei kurze Worte, nicht „Vorher sichern“ gegen „Vorher zusammen“: als Paar lesen
-sie sich schneller, und die Spalte ist bei 320 Pixeln 68 Pixel breit — dort
-zählt jedes Wort, das wegfällt. Dass das „vorher“ gemeint ist, steht im
-Fußtext und im Kasten über der Tabelle.
-
-Es ist dieselbe Lage wie bei der Stufenzahl, und darum dieselbe Antwort:
-umschalten statt entscheiden, und die Beschriftung sagt, was dasteht. Eine
-fünfte Spalte wäre der naheliegende Weg gewesen — bei 320 Pixeln ist die
-vorhandene aber 68 Pixel breit, eine weitere passt schlicht nicht.
-
-Die Eigen-Spalte endet beim Betrag aus dem Kasten darunter, nicht beim Eigenanteil
-(sind Plätze vergeben, bei dem Betrag plus dem, was davor schon drin ist):
-die letzten FP zahlst du ein, wenn alle Plätze vergeben sind.
-
-Der Hinweis dazu im Fußtext hat den Satz über den Zeitpunkt verdrängt
-(„bevor der Platz vergeben wird“). Das war gemessen nötig: quer auf einem
-iPhone SE kostet dort jede Zeile ein Zwanzigstel Bildschirm, und der Test
-daneben hält die Seite unter 4,5 davon — mit beidem waren es 4,52. Verloren
-ist nichts, der Kasten über der Tabelle erklärt den Zeitpunkt genauer.
-
-**„Sicher“ gilt in beiden.** Wo nichts nachzulegen ist, bewegt sich auch der
-Stand nicht, und das Wort sagt das deutlicher als eine wiederholte Zahl. Eine
-Sonderregel für P2 braucht es dafür nicht: nach P1 ist P2 fast immer von
-selbst sicher, und wo ein eigener Faktor oder Betrag doch etwas nötig macht,
-erscheint die Zahl von allein.
-
-„Fast immer“ ist gemessen. Über alle 1256 P1-Werte des Datensatzes, alle
-Faktoren von 1,80 bis 2,00 und fünf Größenordnungen von Gesamtkosten —
-71.097 Pläne, in denen beide Plätze angeboten werden — braucht P2 nach P1 in
-9,1 % der Fälle doch etwas, und dann **immer genau 1 FP**, nie mehr. Bei 1,80,
-1,90 und 2,00 tritt der Fall überhaupt nicht auf; er entsteht nur bei krummen
-Faktoren, wo die Abrundung der Einzahlung um einen Punkt danebenfällt.
-
-Zwei Einheitentests halten beides fest — die Obergrenze von 1 FP und die
-Sicherheit bei den drei Werten der Schnellwahl —, damit die Aussage nicht
-still altert, wenn der Datensatz sich ändert.
-
-### Aktuelle oder nächste Stufe
-
-Dieselbe Zahl heißt für die einen „das Bauwerk steht auf 80“, für die anderen
-„es wird gerade auf 81 gezogen“. Beides ist verbreitet, und wer die falsche
-Lesart annimmt, rechnet eine Stufe daneben.
-
-Der Umschalter unter dem Feld stellt ein, welche gemeint ist; die Zeile
-daneben nennt jeweils die andere Zahl — steht „80“ als aktuelle Stufe da,
-liest man darunter „Gefördert wird Stufe 81“. Die Antwort steht also da,
-egal wie herum jemand denkt.
-
-Gerechnet wird intern immer mit der Stufe, die gefördert wird. Umschalten
-ändert nur die Anzeige, nie den Plan — auch die gemerkten Favoriten wandern
-mit und zeigen dieselbe Lesart. Im aktuellen Modus ist zusätzlich Stufe 0
-erlaubt: ein Bauwerk, das noch gar nicht steht.
-
-### Arche-Faktor
-
-Der obere Faktor läuft über einen Stepper mit eintippbarem Feld: `−`, Wert,
-`+`, darunter die Schnellwahl für die gängigen Werte. Zulässig ist 1,80 bis 2,00.
-Das Feld nimmt an, was man tatsächlich tippt — `1,93`, `1.93`, `1,9`, `193`
-und `193 %` führen alle zum selben Ergebnis. Pfeiltasten ändern den Wert um
-eine Stufe.
-
-Vorher war es ein Schieberegler. Auf dem Telefon sprang dessen Wert schon beim
-**Aufsetzen** des Fingers dorthin, wo man ihn hinsetzte — beim Scrollen also
-ständig unbemerkt. Keine `touch-action`-Einstellung hilft dagegen: der Wert
-wird gesetzt, bevor der Browser die Geste überhaupt einordnet. Gemessen:
-`pan-y` ändert nichts, `none` beseitigt nur das Scrollen.
-
-Ein Stepper hat keine Schiene, die man versehentlich trifft. Knöpfe lösen erst
-beim Loslassen aus, und eine Wischgeste bricht den Klick ab. Der schmale
-Balken unter dem Feld zeigt weiterhin die Lage im Bereich — als reine Anzeige,
-ohne Angriffsfläche.
-
-Die `−`- und `+`-Knöpfe sind Zeichen im Feld, keine Fächen. Zuerst waren es
-volle Flächen in `--btn`; auf einem Bildschirm mit Stufe, Faktor und fünf
-Plätzen sind das vierzehn helle Blöcke, die lauter sind als die Zahlen, um
-die es geht. Die Fläche zum Tippen ist dieselbe geblieben — leiser heißt
-nicht kleiner.
-
-An der Bereichsgrenze verblasst das Zeichen, nicht der Knopf: `opacity` hätte
-auch seine Trennlinie mitgenommen. Im Kontrastmodus verschwindet das Zeichen
-stattdessen ganz, denn ein blasses Grau wäre dort genau das Falsche.
-
-### Faktor oder FP je Platz
-
-Der Arche-Bonus gehört dem Förderer, nicht dem Bauwerk: wer P3 übernimmt,
-kann eine andere Arche haben als wer P1 nimmt. Hinter dem Aufklapper
-„Faktor oder FP je Platz“ steht darum für jeden der fünf Plätze ein
-eigener Wert.
-
-Das Modell in zwei Sätzen:
-
-- Ein Platz **folgt** dem Wert oben, bis du ihn anfasst. Danach ist er
-  **angepasst**, trägt das Wort daneben und bleibt stehen, wenn der obere
-  Wert sich bewegt. Früher hieß das „eigen“ — seit „Eigen“ im Förderplan
-  deine FP meint, wäre das doppelt belegt.
-- **„Alle wieder angleichen“** nimmt alle fünf zurück aufs Folgen, ein
-  einzelnes × nur einen.
-
-Dadurch muss der obere Wähler nie ausgegraut werden — er ist weiterhin die
-Vorgabe für jeden Platz ohne eigenen Wert und zeigt damit immer etwas
-Wahres. Ausgegraut würde er weiter „1,90“ anzeigen, während die Plätze
-längst etwas anderes sagen. Gibt es Unterschiede, nennt der Kopf des Blocks
-die Spanne (`1,85–1,95`), auch zugeklappt.
-
-#### Direkt in der Tabelle
-
-Der Block steht oben bei Stufe und Faktor, die Zahlen, um die es geht,
-stehen eine Bildschirmhöhe tiefer im Förderplan. Darum lässt sich die Zahl
-unter „Kosten“ antippen: Sie wird in der Zeile selbst zum Feld, in FP,
-darunter eine schmale Zeile mit der anderen Einheit, dem Umschalter
-Faktor/FP, „Zurücksetzen“ und „Fertig“. Summe, Balken und „Sicher“ rechnen
-beim Tippen mit, man sieht die Wirkung also direkt daneben.
-
-- Es ist derselbe Wert wie im Block oben, nur an einer zweiten Stelle.
-- Ein Platz mit eigenem Wert trägt in der Tabelle eine durchgezogene
-  goldene Linie statt der gestrichelten; so sieht man auch im Plan, welcher
-  Platz nicht mehr dem Faktor oben folgt.
-- Geschlossen wird mit Enter, Escape, „Fertig“ oder einem Tipp daneben —
-  auf `click`, nicht schon beim Drücken: sonst rückt beim Schließen alles
-  darunter hoch, und der Finger trifft beim Loslassen etwas anderes.
-- Die Tabelle wird dafür nicht mehr bei jedem Zeichnen neu geschrieben,
-  sondern einmal aufgebaut und dann nachgezogen, wie die Platzzeilen im
-  Block — sonst verlöre das Feld bei jedem Tastendruck den Cursor.
-
-#### Faktor oder Betrag
-
-Wer einen Platz wegschnappt, zahlt eine Summe, die zu keinem Faktor im
-zulässigen Bereich passt — und trotzdem verschiebt sie alles darunter. Darum
-nimmt jede Platz-Zeile ihren Wert wahlweise als Faktor oder als Betrag in FP
-entgegen; der Umschalter im Block wählt, was eine folgende Zeile anzeigt.
-
-Es ist **ein** Feld, nicht zwei nebeneinander, weil es eine Zahl ist: die
-Einzahlung dieses Platzes. Zwei Bedienelemente für dieselbe Zahl können sich
-widersprechen — dann zeigt die Tabelle den einen Wert an, während der Plan mit
-dem anderen rechnet. Unter dem Feld steht darum immer die jeweils andere
-Lesart (`≙ 6.400 FP`, `≙ Faktor 2,00`), dieselbe Idee wie bei der Stufenzahl.
-
-Getippt wird in der Einheit, die im Feld **steht**, nicht in der des
-Umschalters. Andersherum würde ein Klick in ein Feld mit `10.000` diesen
-Betrag als Faktor lesen und auf 2,00 stutzen. Weicht eine Zeile vom Umschalter
-ab, nennt ihr Nachsatz darum beide Einheiten — `10.000 FP ≙ Faktor 3,13` statt
-nur `≙ Faktor 3,13`. Neben dem Feld wäre dafür kein Platz: bei 320 Pixeln
-drängt schon ein längeres Wort das × aus der Zeile. Die Einheit wechselt ein
-Platz nur über das ×, das ihn ohnehin freigibt.
-
-Das Abzeichen am zugeklappten Block nennt die Faktorspanne nur, solange alle
-eigenen Werte Faktoren sind. Eine Betragsspanne wäre nichtssagend — 50 bis
-10.000 ist zwischen P5 und P1 der Normalfall. Dann steht dort, wie viele
-Plätze eigene Werte tragen.
-
-**Was es nicht gibt: „hat schon eingezahlt“.** Naheliegend wäre ein dritter
-Zustand für einen Platz, dessen FP bereits im Topf liegen. Er ändert am Geld
-aber nichts: die Kette schiebt sich zusammen, weil nach einem gesicherten
-Platz immer genau dessen Einzahlung offensteht. Ob sie vorab eingeht oder an
-ihrer Stelle in der Reihe, ändert weder den Eigenanteil noch die Summe des
-Vorgestreckten — nur, welche Zeile wie viel davon trägt. Ein Einheitentest
-hält das fest.
-
-**Die Absicherung trägt das ohne neue Regel.** `buildPlan` rechnet
-`needed = remaining − 2 × Einzahlung` — mit der Einzahlung *dieses* Platzes.
-Ein schwächerer Faktor bedeutet also automatisch mehr vorher sichern, und
-das stimmt auch inhaltlich: ein kleinerer Beitrag ist leichter zu
-überbieten. Umgekehrt wirkt jeder Platz auf die Plätze unter ihm, weil sie
-nacheinander vergeben werden.
-
-**Warum der Bereich bei 1,80 endet.** Die Belohnungen werden auf 5 gerundet,
-halbieren sich von Platz zu Platz also nicht exakt. Spreizt man die Faktoren
-weit genug, kann ein tieferer Platz dadurch mehr kosten als ein höherer.
-Gemessen wird der schlechteste Fall — der bessere Platz zahlt mit dem
-schwächsten Faktor des Bereichs, der schlechtere mit dem stärksten — über
-alle 1256 verschiedenen P1-Werte des Datensatzes:
-
-| Bereich | Fälle mit vertauschter Reihenfolge |
-| --- | --- |
-| 1,80 – 2,00 | 0 |
-| 1,50 – 2,00 | 0 |
-| 1,00 – 2,00 | 628 |
-
-Solange der Bereich bei 1,80 bleibt, kann der Fall nicht eintreten und
-braucht keine Warnung.
-
-Für **getippte Beträge** gilt die Schranke nicht: wer P4 auf 2.000 setzt,
-während P3 bei 1.070 steht, hat eine Reihenfolge gebaut, die das Spiel so
-nicht vergibt. Verboten wird das nicht — du trägst ein, was im Förderfenster
-steht —, aber der Plan sagt es. Der Einheitentest oben prüft deshalb
-ausdrücklich nur Einzahlungen, die aus einem Faktor stammen.
-
-Die Tabelle stammt aus [`tools/order-scan.js`](./tools/order-scan.js); das
-Skript nimmt auch eigene Bereiche (`node tools/order-scan.js 170-200`). Weil
-sie mit dem Datensatz altert, hält ein Einheitentest die Aussage selbst fest:
-Über den gesamten Datensatz darf im Bereich 1,80–2,00 kein Platz mit
-kleinerer Belohnung den über ihm überholen. Nach einem Import ist die Tabelle
-darum nachzuziehen, aber ein stiller Fehler kann sie nicht mehr werden.
-
-Eine Ausnahme der Ehrlichkeit halber: Gezählt werden nur Plätze mit **echt
-kleinerer** Belohnung. Bei P1 = 5 fällt auch P2 auf 5, weil auf Vielfache von
-5 gerundet wird — zwei gleich hohe Belohnungen trennt dann nur noch der
-Faktor, und P2 mit 2,00 kostet 10 FP gegen P1 mit 1,80 und 9 FP. Das betrifft
-Stufe 1 eines Bauwerks und geht um 1 FP; eine Warnung wäre dafür lauter als
-die Sache.
-
-### Bauwerk finden
-
-Ein Tipp auf das Bauwerk öffnet die **Auswahl**. Sie ersetzt die native Liste
-des Browsers, die auf dem Telefon bei 49 Einträgen mühsam war: auf Android
-ein langes Blatt ohne Suche, auf dem iPhone ein Drehrad. Am Telefon kommt die
-Auswahl als Blatt von unten, auf breiten Bildschirmen als Fenster in der
-Mitte. Oben steht ein Suchfeld, darunter die Bauwerke nach Zeitalter
-gruppiert. Die Überschriften laufen beim Scrollen mit, und das gewählte
-Bauwerk ist markiert und steht beim Öffnen in der Mitte.
-
-Geschlossen wird die Auswahl, wie man es von System-Blättern kennt: mit der
-Zurück-Geste, per Esc, mit dem Kreuz, durch Tippen daneben oder indem man den
-Kopf nach unten zieht. Mit dem Finger geöffnet, bleibt die Tastatur zu, bis
-man ins Suchfeld tippt. Mit Maus oder Tastatur geöffnet, steht der Cursor
-gleich im Suchfeld. Pfeiltasten, Bild auf/ab, Pos1/Ende und Enter bedienen
-die Liste, und wer in der Liste lostippt, sucht.
-
-49 Bauwerke in 24 Zeitaltern sind viel zum Scrollen. Das Suchfeld unter der
-Auswahl findet sie nach Name, Kürzel und Zeitalter — Groß- und
-Kleinschreibung sowie Umlaute spielen keine Rolle. Die Treffer erscheinen als
-eigene Liste darunter, ein Tipp darauf wählt das Bauwerk aus, Enter nimmt den
-ersten.
-
-Die Suche **schränkt das Auswahlfeld nicht ein**. Es enthält immer alle
-Bauwerke und zeigt immer das wirklich gewählte; nichts wechselt die Auswahl
-ohne einen Klick. Am Telefon erspart das den Weg durch die native Liste mit
-49 Einträgen.
-
-Weil die Suche auch das Zeitalter durchsucht, kann ein Treffer auf den ersten
-Blick unerklärlich wirken: „ho" findet den **Markusdom**, obwohl in dessen
-Namen kein „ho" steht — er liegt im Hochmittelalter. Zwei Dinge machen das
-lesbar: Namenstreffer stehen vor Zeitalter-Treffern, und in jedem Eintrag
-wird genau die Stelle hervorgehoben, die getroffen hat.
-
-### Kürzel statt Namen
-
-Im Förderchat schreibt kaum jemand „Arktische Orangerie“ aus — die einen
-schreiben „Orangerie“, die anderen „AO“. Der Schalter **Bauwerke mit Kürzel
-nennen** im Menü wechselt zwischen vollem Namen und Kürzel: aus, heißt ein
-Bauwerk wie im Spiel („Arktische Orangerie“); an, mit seinem Kürzel aus
-[`abbr.js`](./abbr.js) — `Obsi`, `AO`, `TA`, `Inno`. Die Wahl wird gemerkt.
-
-Denselben Schalter gibt es ein zweites Mal als **Kürzel** rechts neben
-„Förderchat“ — dort, wo man sieht, was er bewirkt, und gleich kopiert: wer
-erst beim Kopieren merkt, dass er lieber „AO“ hätte, muss nicht erst ins Menü.
-Beide zeigen immer denselben Stand.
-
-Der Schalter wirkt überall, wo cipher ein Bauwerk kurz nennt: in beiden
-Chat-Zeilen, in der Sammlung, am Merken-Knopf, auf den Favoriten-Chips und
-als Platzhalter im Feld „Eigenes Kürzel“. Das Auswahlfeld bleibt beim vollen Namen,
-dort wird gesucht und nicht getippt. Die Suche kennt die Kürzel in beiden
-Stellungen: „obsi“ findet das Observatorium.
-
-**Die Kürzel pflegen.** `abbr.js` ist von Hand gepflegt und wird von keinem
-Import angefasst — eine Zeile je Bauwerk, links der Schlüssel aus `data.js`,
-rechts das Kürzel. Ein Kürzel ändern heißt, den Text rechts zu ändern.
-`test/abbr.test.js` prüft, dass jedes Bauwerk eines hat, keines doppelt
-vorkommt und keines länger als zwölf Zeichen ist.
-
-**Die Sammlung zieht mit.** Sie speichert zu jeder Zeile, an welcher Stelle
-der Name des Bauwerks steht. Wird danach umgeschaltet oder ein eigenes Kürzel
-vergeben, tauscht sie ihn dort aus — sonst stünde in einer Nachricht „AO“
-neben „Terrakotta-Armee“, je nachdem, wann kopiert wurde. Zeilen, die vor dem
-Schalter gesammelt wurden, tragen diese Stelle nicht und bleiben, wie sie
-sind.
-
-**Die Chips springen nicht.** Mit Kürzeln schrumpft ein Favorit auf „KI 12“,
-und beim Umschalten würden alle Reihen neu umbrechen. Der Name behält darum
-auf dem Chip mindestens fünf Zeichen Platz. Nach oben ist er auf 17 Zeichen
-begrenzt, „Saturn VI Tor CENTAURUS“ endet dort mit „…“. Das gilt nur für den
-Chip, in der Chat-Zeile steht der Name ganz.
-
-**Warum es keinen Kurznamen mehr gibt.** Früher kannte der Datensatz eine
-dritte Form: „Orangerie“, „Kriegsschiff“, „PEGASUS“. Aus war dann weder der
-volle Name noch das Kürzel, und den vollen Namen bekam nur, wer ihn als
-eigenes Kürzel eintippte. Ein technischer Grund stand nie dahinter. Wer
-„Orangerie“ schreiben will, trägt das als eigenes Kürzel ein. Zeilen in der
-Sammlung, die noch den alten Kurznamen tragen, bekommen beim nächsten Laden
-den vollen Namen.
-
-### Eigenes Kürzel
-
-Voller Name und Kürzel aus `abbr.js` treffen nicht jede Runde: „AO“ für die
-Arktische Orangerie versteht die eine sofort und die nächste gar nicht, die
-dritte schreibt „Orangerie“.
-
-Das Feld **Eigenes Kürzel** neben der Stufe setzt darum je Bauwerk einen eigenen
-Namen für die Zeile `[Dein Name] [Bauwerk] P5 P4 P3`. Der Platzhalter zeigt immer, was ohne
-eigenes gilt, leer lassen heißt also „das nehmen“ — es braucht kein
-Zurücksetzen, und es wird auch nichts gespeichert, solange niemand etwas
-vergeben hat.
-
-Das Kürzel gilt überall, wo cipher ein Bauwerk kurz nennt: in der Chat-Zeile,
-in der Sammlung, am Merken-Knopf und auf den Favoriten-Chips — und zwar in
-beiden Stellungen des Schalters „Kürzel“, denn wer es vergibt, meint es
-ausdrücklich. Der Platzhalter zeigt, was ohne eigenes gälte. Im Quelltext
-ist das eine Funktion, `shortName(building)`, und sechs Aufrufstellen.
-
-Gespeichert wird unter `cipher:shorts`, nach dem Schlüssel des Bauwerks. Weil
-der stabil ist, überlebt ein Kürzel jede Erneuerung des Datensatzes — im
-Unterschied zu einer Änderung in `abbr.js`, die für alle gilt und einen
-Deploy braucht.
-
-**Die Suche kennt es.** Wer sein Bauwerk „AO“ nennt, findet es auch so. Damit
-entsteht allerdings ein Treffer der Sorte, gegen die der Abschnitt oben
-argumentiert: „AO“ steht in „Arktische Orangerie“ nirgends, es gäbe also
-nichts hervorzuheben. Darum nennt so ein Treffer sein Kürzel
-ausdrücklich — `Arktische Zukunft · AO` — und die Hervorhebung sitzt dort.
-
-**Was es kostet.** Ein zweites Feld in der Spalte: 25 Pixel Höhe, sobald
-Stufe und Name nebeneinander stehen (ab 390 Pixel Breite), und 78 Pixel
-darunter, wo sie untereinander stehen. Dafür sind die beiden Spalten ab 390
-Pixel erstmals gleich hoch — vorher endete die rechte auf halber Strecke.
-
-### Favoriten
-
-Ein Favorit ist ein Bauwerk (bis zu zwölf), und seine Stufe ist die, auf der
-es zuletzt stand. Ziehst du ein gemerktes Bauwerk eine Stufe weiter, wandert
-der Eintrag mit — neu merken musst du nichts, und doppelt steht ein Bauwerk
-nie in der Liste. Vorher war jede Stufe ein eigener Eintrag; wer sein Bauwerk
-levelte, hatte es danach zweimal da.
-
-Ein Tipp auf einen Favoriten springt zurück — praktisch, wenn du mehrere
-Bauwerke parallel hochziehst. Auch der Wechsel per Auswahlfeld oder Suche auf
-ein gemerktes Bauwerk lädt dessen Stufe; ohne das würde die mitgebrachte
-Stufe des vorigen Bauwerks den Eintrag überschreiben. Die Liste zeigt drei
-Reihen und scrollt darüber hinaus, damit sie den Förderplan nicht aus dem
-Bild schiebt. Sie liegt im Browser, nicht auf einem Server.
-
-Die Liste ist **„zuletzt benutzt zuerst“**: Merken und Antippen stellen einen
-Eintrag nach vorn. Der erste Chip ist damit das, womit du zuletzt gearbeitet
-hast — im Normalfall also das Aktive. Vorher galt „zuletzt gemerkt zuerst“,
-und das lehrte das Auge eine Regel, die nur meistens stimmte: direkt nach dem
-Merken stand der neue Eintrag vorn und war aktiv, beim ersten Antippen eines
-älteren Eintrags nicht mehr. Wer per Stufen-Stepper zufällig in eine gemerkte
-Stufe läuft, hat die Liste nicht angefasst — dann bewegt sie sich auch nicht,
-nur der Marker wandert.
-
-Das Gemerkte steht **vor** allem anderen im Bauwerk-Panel. Vorher stand es
-ganz unten dahinter, hinter Suche, Stufe, Name und Faktor — auf dem Telefon
-also außerhalb des ersten Bildschirms, obwohl es genau das ist, wozu die
-meisten beim Wiederkommen wollen. Solange nichts gemerkt ist, fällt der
-Streifen ganz weg; ein leerer Platzhalter an der prominentesten Stelle wäre
-schlechter als gar keiner.
-
-Der Stern steht dafür unten bei dem, was er merkt, und sagt es auch:
-„Die Arche · Stufe 81 merken“. Damit erklärt der Knopf die Funktion selbst,
-und die Einträge im Streifen sind gefüllt statt umrandet — die Faktor-Chips
-daneben sind Einstellungen, diese hier Sprungmarken, und gleiche Optik hieße
-gleiche Bedeutung.
-
-### Sammlung
-
-Manche stellen mehrere Bauwerke **gleichzeitig** in die Fördergruppe. Am Ende
-soll dann eine Nachricht alle Zeilen enthalten — und genau dafür lief der Weg
-bisher über eine Notiz außerhalb: kopieren, wegschreiben, nächstes Bauwerk,
-wieder kopieren.
-
-Die Sammlung ist diese Notiz, nur an der Stelle, an der die Zeilen ohnehin
-entstehen. Unter dem Kopierkasten sammelt sie jede Zeile, die du
-kopierst; „Alle kopieren“ gibt sie am Ende untereinander zurück. Jede Zeile
-lässt sich einzeln wieder herausnehmen, „Sammlung leeren“ räumt alles weg.
-Sie liegt im `localStorage` und überdauert damit das Schließen des Browsers.
-Solange nichts gesammelt ist, fällt der Kasten ganz weg.
-
-Gesammelt wird **beim Kopieren** und nicht über einen eigenen Knopf. Der Grund
-ist die Wahl zwischen „Nur Plätze“ und „Mit FP“: ein Knopf „Sammeln“ müsste sie
-ein zweites Mal stellen. Der Schalter über der Zeile hat sie schon beantwortet, also nimmt
-die Sammlung genau die Zeile, die auch in der Zwischenablage landet.
-
-Je Bauwerk steht **eine** Zeile in der Sammlung. Wer nach einer Korrektur
-erneut kopiert, meint dieselbe Förderung noch einmal und nicht eine zweite —
-die neue Zeile ersetzt darum die alte an deren Platz, und die Reihenfolge der
-Sammlung bleibt die Reihenfolge des Sammelns. Mehr als 15 Zeilen hält sie
-nicht; läuft sie über, fällt die älteste heraus.
-
-### Menü
-
-Was man einmal einstellt und dann in Ruhe lässt, steht im **Menü** oben rechts:
-der Spielername, die Darstellung (sechs Themes) und der Schalter für Kürzel.
-Früher belegten die Themes die Kopfzeile und der Name ein eigenes Feld im
-Bauwerk-Kasten — Platz, der beim Fördern fehlte. Die Welt bleibt dagegen als
-eigener Knopf oben links sichtbar: wer nicht sieht, in welcher Welt er ist,
-fördert irgendwann mit dem Stand der falschen.
-
-**Kopiert wird erst mit Namen** — ohne ihn weiß die Gilde nicht, von wem die
-Förderung ist. Bis einer eingetragen ist, steht oben im Bauwerk-Kasten ein
-knapper Hinweis, und der Kopierknopf heißt „Erst Namen eintragen“: beide
-öffnen das Menü gleich im Namensfeld, Enter schließt es wieder. Wer cipher zum
-ersten Mal benutzt, sucht den Namen sonst nicht im Menü. Impressum und
-Datenschutzerklärung behalten ihre Theme-Leiste im Kopf; dort gibt es nichts
-anderes einzustellen.
-
-### Eine Chat-Zeile
-
-Früher standen „Nur Plätze“ und „Mit FP“ als zwei Kästen mit je einem großen
-Knopf untereinander. Jetzt gibt es eine Zeile und einen Knopf „Zeile kopieren“;
-welche Fassung es ist, stellt der Schalter **Nur Plätze | Mit FP** darüber ein.
-Vorgabe ist „Mit FP“, die meisten Gilden wollen die Beträge sehen. Er merkt
-sich die Wahl je Welt, denn jede Gilde hält es anders.
-
-### Welten
-
-Wer auf mehreren Welten spielt, fördert dort andere Bauwerke mit einem anderen
-Faktor. Der Knopf oben links öffnet die Liste der 24 deutschen Welten,
-von Arvahall (de1) bis Yorkton (de24). Jede Welt hat ihren **eigenen Stand**:
-Bauwerk, Stufe, Faktoren, Plätze, Favoriten und Sammlung. **Überall gleich**
-bleiben Spielername, Darstellung, der Kürzel-Schalter, eigene Kürzel,
-selbst eingetragene Kosten und P1 sowie die Lesarten von Stufe, Sichern und
-Plätzen.
-
-Die Welt, die zuerst gewählt wird, übernimmt, was schon da ist, und behält
-dafür die Schlüssel von vorher. Nichts wird umkopiert: Wer nie eine zweite
-Welt öffnet, hat genau denselben Speicher wie vorher, und fiele der Umschalter
-wieder weg, läge alles noch an seinem Platz. Jede weitere Welt legt ihren Teil
-unter `cipher:w:<welt>:` ab, die Wahl selbst steht in `cipher:world`. Ein
-Wechsel lädt die Seite neu; der Start liest dann aus den Schlüsseln der neuen
-Welt und prüft alles wie immer. Solange keine Welt gewählt ist, speichert
-cipher dazu nichts.
-
-Wer bei der ersten Wahl danebengetippt hat, findet unter der Liste
-„Falsche Welt? … umbenennen“. Der Stand der offenen Welt geht dann an eine
-andere — aber nur an eine, die noch nichts gespeichert hat, denn zwei Stände
-zu verschmelzen hieße einen davon wegzuwerfen. Bei der ersten Welt ändert sich
-dafür nur der Name in `cipher:world`; jede weitere zieht mit ihren Schlüsseln
-um: erst kopieren, dann die Wahl umstellen, dann das Alte löschen.
-
-### Wenn Daten fehlen
-
-Für sehr hohe Stufen und für neue Bauwerke kennt der Datensatz nicht immer
-Gesamtkosten oder P1. cipher sagt das dann offen und bittet dich, die Zahlen aus
-dem Förderfenster einzutragen. Ab Stufe 11 rechnet es daraus die übrigen Stufen
-hoch, weil die Kostenkurve rein exponentiell ist (× 1,025 je Stufe).
+Eine bebilderte Vorstellung aller Funktionen steht unter
+[`/rundgang`](https://foe-foerderrechner.com/rundgang).
+
+## Funktionen
+
+- **Förderplan** für P1–P5: Belohnung, Kosten für den Förderer und was du
+  vorher sichern musst — wahlweise als Schritt je Platz oder als laufender
+  Stand deiner FP im Bauwerk.
+- **Plätze angeboten, vergeben oder selbst gezahlt** — ein Tipp aufs Häkchen
+  schaltet weiter; für Förderung in Runden lässt sich eintragen, wie viele FP
+  schon von dir im Bauwerk liegen.
+- **Arche-Faktor 1,80–2,00**, auf Wunsch je Platz eigens als Faktor oder als
+  tatsächlich gezahlter Betrag, auch direkt in der Tabelle.
+- **Chat-Zeile** mit oder ohne FP-Beträge, Bauwerk als vollem Namen, Kürzel
+  oder eigenem Kürzel; eine **Sammlung** fasst Zeilen mehrerer Bauwerke zu
+  einer Nachricht zusammen.
+- **Favoriten**, die beim Leveln mitwandern, und eigener Stand für jede der
+  **24 deutschen Welten**.
+- Stufe wahlweise als aktuelle oder als geförderte Stufe lesbar.
+- Sechs Darstellungen inklusive Kontrastmodus, vollständig per Tastatur und
+  Screenreader bedienbar, eigenes Layout für Telefone im Querformat.
+- Als App installierbar (Web-App-Manifest; bewusst ohne Service Worker, damit
+  niemand auf einem alten Datensatz hängen bleibt).
 
 ## Wie es rechnet
 
@@ -559,200 +45,28 @@ die Plätze von P1 abwärts durch, bestimmt für jeden diesen Schwellwert und
 summiert, was du dafür vorstrecken musst. Was am Ende übrig bleibt, zahlst du
 selbst ein und levelst damit.
 
-Die Belohnungen der hinteren Plätze folgen aus P1: P2 = P1/2, P3 = P2/3,
-P4 = P3/4, P5 = P4/5 — jeweils kaufmännisch auf ein Vielfaches von 5 gerundet.
-Die Einzahlung ist `floor((Belohnung × Faktor + 50) / 100)`.
+- Belohnungen: P2 = P1/2, P3 = P2/3, P4 = P3/4, P5 = P4/5, jeweils
+  kaufmännisch auf ein Vielfaches von 5 gerundet.
+- Einzahlung: `floor((Belohnung × Faktor + 50) / 100)`.
+- Fehlen im Datensatz Gesamtkosten oder P1 (sehr hohe Stufen, neue Bauwerke),
+  fragt cipher danach und rechnet ab Stufe 11 mit × 1,025 je Stufe hoch.
 
-Der ganze Rechenkern steckt in [`calc.js`](./calc.js) und besteht nur aus reinen
-Funktionen — ohne DOM, ohne Speicherzugriff, vollständig getestet.
+Der Rechenkern steckt in [`calc.js`](./calc.js): reine Funktionen, ohne DOM
+und Speicherzugriff, vollständig getestet.
 
-## Als App installieren
+## Datenschutz
 
-cipher lässt sich auf dem Telefon als App installieren — in Chrome auf
-Android über das Menü „App installieren“ (bzw. „Zum Startbildschirm
-hinzufügen“), auf dem iPhone in Safari über „Teilen → Zum Home-Bildschirm“.
-Danach startet es mit eigenem Icon und ohne Adressleiste.
-
-Dafür sorgt `manifest.webmanifest` mit Name, Start-URL, `standalone` und
-Icons in 192 und 512 Pixeln, dazu einer „maskable“-Variante mit etwas mehr
-Rand, die Android rund oder eckig zuschneiden kann. Die Icons in `icons/`
-zeichnet `node tools/icons.js` aus demselben Pfad wie das Favicon.
-
-Einen Service Worker gibt es bewusst noch nicht: installierbar ist die
-Seite ohne ihn, und ein Cache im Browser bräuchte eine saubere
-Aktualisierung — sonst hängt jemand auf einer alten Version mit altem
-Datensatz fest. Offline braucht cipher deshalb vorerst Netz zum Start.
-
-## Keine externen Anfragen
-
-cipher lädt **nichts** von Drittanbietern:
-
-- Die Schrift (Barlow Semi Condensed, SIL OFL 1.1) liegt als `woff2` im
-  Verzeichnis `fonts/`.
-- Es gibt keine eingebundenen Analyse-, Statistik- oder Werbedienste, keine
-  CDNs, keine eingebetteten Inhalte, keine Cookies.
-- Das Favicon steckt als Daten-URI direkt im HTML.
-
-Ein Browsertest prüft das bei jedem Lauf nach: Jede Anfrage, die nicht an den
-eigenen Host geht, lässt die Suite rot werden.
-
-### Reichweitenmessung
-
-Beim Hoster ist **Netlify Web Analytics** eingeschaltet. Das ist der Grund,
-warum oben „eingebundene“ Dienste steht: Web Analytics wertet die
-CDN-Logfiles serverseitig aus und fasst die Seite selbst nicht an — kein
-Cookie, kein Skript, nichts, was auf dem Gerät gespeichert oder von dort
-gelesen wird. Deshalb greift § 25 TDDDG nicht, und es braucht kein
-Einwilligungsbanner. Es entstehen auch keine neuen Daten: die IP-Adresse
-steht ohnehin im Logfile, sie bekommt nur einen zweiten Zweck.
-
-Bewusst **nicht** eingeschaltet ist Netlifys *Real User Metrics*. Das spritzt
-ein Skript in die Auslieferung und meldet Web-Vitals-Werte aus dem Browser
-— also genau die Art Anfrage, die dieses Projekt nicht stellt. Es würde
-ohnehin nicht funktionieren: `connect-src 'none'` verbietet jede Verbindung,
-auch zur eigenen Domain. Ein Test in `headers.spec.js` hält diese Direktive
-fest, damit sie niemand nebenbei aufweicht.
-
-Eine Einschränkung ehrlichkeitshalber: Die Zusicherung „keine externen
-Anfragen“ prüft die Suite gegen den lokalen Server. Würde an der Edge ein
-Skript eingespritzt, bliebe der Test grün. Die CSP-Zusicherung oben ist
-darum die belastbarere von beiden.
-
-Gespeichert wird ausschließlich im `localStorage`, unter Schlüsseln mit dem
-Präfix `cipher:` — und nur das, was die Anwendung zum Weiterarbeiten braucht.
-Auf der Datenschutzseite gibt es einen Knopf, der alles davon löscht.
-
-## Dateien
-
-```
-index.html        Die Anwendung
-impressum.html    Impressum
-datenschutz.html  Datenschutzerklärung
-404.html          Fehlerseite
-rundgang.html     Vorstellungsseite zum Teilen (aus der App nur im Footer verlinkt)
-rundgang.css      Darstellung des Rundgangs, fest im Schmiede-Look
-rundgang.js       Bewegung des Rundgangs: Einblenden, Funken, Wechsel
-bilder/           Bildschirmfotos für den Rundgang (WebP, generiert)
-styles.css        Darstellung, sechs Themes über data-theme
-fonts.css         @font-face für die lokal ausgelieferte Schrift
-data.js           Datensatz der Legendären Bauwerke (generiert)
-abbr.js           Kürzel je Bauwerk für den Förderchat (von Hand gepflegt)
-calc.js           Rechenkern, reine Funktionen
-app.js            Oberfläche: DOM, Ereignisse, Easter Eggs
-legal.js          Kleines Skript für die beiden Rechtsseiten
-netlify.toml      Auslieferung: Header, Caching, 404
-robots.txt        Hält /tools/ und /test/ aus dem Suchindex
-tools/serve.js    Statischer Server für Entwicklung und Tests
-tools/import.html Holt die Daten aus dem Wiki (läuft nur lokal)
-tools/build-data.js  Macht aus dem Import wieder data.js
-tools/screenshots.js Fotografiert cipher für bilder/ neu
-tools/order-scan.js  Misst die Faktor-Spreizung für die Tabelle oben
-test/             Einheitentests (node:test) und Browsertests (Playwright)
-```
-
-## Rundgang
-
-`rundgang.html` (live unter `/rundgang`) stellt cipher vor: alle
-Einstellungen mit Bildschirmfotos, im Schmiede-Look und leicht animiert —
-das Video im Kopf, aufsteigende Glut, Einblenden beim Scrollen, der
-Förderplan wechselt von selbst zwischen „Sichern“ und „Eigen“. Die Seite ist
-zum Teilen gedacht; der Rechner verlinkt sie nur einmal, ganz unten im
-Footer — ein Browsertest hält das fest.
-
-Sie hält dieselben Regeln ein wie der Rest: keine fremden Anfragen, kein
-Inline-Stil, kein Speicher. Ohne JavaScript und bei
-`prefers-reduced-motion` steht alles sofort und ohne Bewegung da.
-
-Die Bilder in `bilder/` entstehen aus der echten Oberfläche:
-
-```sh
-node tools/screenshots.js
-```
-
-Das startet den Testserver, stellt einen Beispielzustand ein und legt alle
-Fotos als WebP neu ab. Nach sichtbaren Änderungen an der App einfach erneut
-laufen lassen.
-
-## Ausliefern
-
-Es gibt keinen Build-Schritt. Das Repo-Wurzelverzeichnis ist das, was
-ausgeliefert wird; `test/` und `tools/` braucht die Seite im Betrieb nicht.
-
-Weil sie trotzdem im Deploy liegen, beantwortet `netlify.toml` beide Pfade mit
-404 — und zwar mit `force = true`. Das ist kein Detail: Netlify wendet eine
-Weiterleitung auf einen Pfad, unter dem eine Datei liegt, sonst gar nicht an.
-Ohne `force` waren der Importer und alle Tests live abrufbar, obwohl die
-Regel dastand. `tools/serve.js` bildet dieselbe Regel nach, und ein
-Browsertest prüft die Wirkung: `/tools/import.html` muss mit 404 antworten,
-nicht nur eine Regel im Text stehen haben.
-
-Auf Netlify genügt es, das Repository zu verbinden — `netlify.toml` setzt
-Publish-Verzeichnis, Header und Weiterleitungen selbst. Auf jedem anderen
-Webspace reicht Hochladen; die Header aus `netlify.toml` sollten dann in der
-Server-Konfiguration nachgebildet werden.
-
-### Vorschau beim Teilen
-
-Die Startseite bringt Open-Graph- und Twitter-Card-Angaben mit, damit der Link
-in Chats und Foren als Karte mit Titel und Beschreibung erscheint statt als
-nackte URL.
-
-Bewusst **ohne Bild**: ein `og:image`, das auf eine fehlende Datei zeigt,
-erzeugt eine kaputte Karte — eine reine Textkarte ist dagegen vollständig.
-
-### Umzug von cipher-calc.netlify.app
-
-cipher lief zuerst unter `cipher-calc.netlify.app`. Die alte Adresse bleibt
-erreichbar, leitet aber auf `foe-foerderrechner.com` weiter — und nimmt dabei
-mit, was der Browser dort gespeichert hat. Browser trennen den localStorage
-je Adresse; ohne das begänne jeder auf der neuen Adresse leer, ohne
-Favoriten, eigene Werte und Sammlung.
-
-Eine 301 auf dem Server kann das nicht, sie greift, bevor ein Skript läuft.
-Darum beantwortet `netlify.toml` jeden Pfad der alten Adresse mit
-`umzug.html` (Status 200). Deren Skript `umzug.js` liest die Einträge mit
-`cipher:` (und `lgr-` vom Vorgänger) und springt mit
-`location.replace` zur neuen Domain, Pfad inklusive. Für die Startseite hängt
-es die Einträge hinter `#umzug=` an — der Teil hinter dem `#` geht nie an
-einen Server. `app.js` übernimmt sie dort, bevor es irgendetwas liest:
-
-- nur bekannte Schlüssel, nur mit lesbarem JSON, danach dieselben Prüfungen
-  wie für alles aus dem Speicher;
-- nichts wird überschrieben — wer die neue Adresse schon benutzt, behält
-  seinen Stand, bekommt aber, was dort noch fehlt;
-- der Anhang verschwindet sofort per `history.replaceState` aus der Adresse,
-  damit er weder in Lesezeichen noch beim Teilen landet;
-- ein kurzer Hinweis bestätigt die Übernahme.
-
-Für Suchmaschinen steht der Umzug in `noindex` und `canonical` von
-`umzug.html` und im `canonical` der Seiten selbst; die 301 fehlt dafür.
-`test/e2e/umzug.spec.js` prüft beide Seiten des Umzugs.
-
-`canonical` und `og:url` zeigen auf <https://foe-foerderrechner.com/>. Die
-Rechtsseiten bekommen bewusst kein `canonical`: sie stehen auf `noindex`, und
-beides nebeneinander wäre ein widersprüchliches Signal. Bei einem Umzug auf
-eine eigene Domain sind beide Angaben in `index.html` anzupassen — ein Test
-hält den Wert fest, die Suite schlägt also an.
-
-### Header
-
-`netlify.toml` setzt unter anderem einen Content-Security-Policy, der das
-Versprechen „lädt nichts von Dritten“ vom Browser durchsetzen lässt:
-`connect-src 'none'` verbietet jede fetch-, XHR- und Beacon-Anfrage,
-`default-src 'self'` lässt nur Dateien von dieser Domain zu. Das eine
-Inline-Skript, das vor dem ersten Frame das Theme setzt, ist über seinen
-SHA-256-Hash erlaubt — nicht über `'unsafe-inline'`. Auch `style-src` kommt
-ohne `'unsafe-inline'` aus: Platzfarben laufen über Klassen (`.slot-1` bis
-`.slot-5`), Balkenbreiten setzt JavaScript über `element.style` — das zählt
-für den CSP nicht als Inline-Stil. Dazu `Strict-Transport-Security`, damit
-der Browser gar nicht erst über `http` anfragt.
-
-Damit ein falscher Hash nicht erst nach dem Deploy auffällt, liest
-`tools/serve.js` dieselben Header aus `netlify.toml` und liefert sie aus. Die
-Browsertests laufen also gegen die Produktionsvorgaben und schlagen an, sobald
-der CSP die Seite bricht.
+- Keine Anfragen an Dritte: Schrift, Icons und Skripte liegen im Repo.
+  `connect-src 'none'` in der CSP verbietet jede fetch-/XHR-/Beacon-Anfrage,
+  ein Browsertest schlägt bei jeder fremden Anfrage an.
+- Gespeichert wird nur im `localStorage` unter `cipher:…`; die
+  Datenschutzseite hat einen Knopf, der alles löscht.
+- Beim Hoster läuft Netlify Web Analytics (serverseitig aus den Logfiles, kein
+  Skript, kein Cookie). Real User Metrics ist bewusst aus.
 
 ## Entwicklung
+
+Kein Build-Schritt — das Wurzelverzeichnis ist die Website.
 
 ```bash
 npm install                        # nur für die Tests nötig
@@ -763,144 +77,51 @@ npm run test:e2e                   # Browsertests (Playwright, Desktop + Mobil)
 npm test                           # beides
 ```
 
-### Automatisch
+`tools/serve.js` liefert dieselben Header und Weiterleitungen aus wie
+`netlify.toml`, die Browsertests laufen also gegen die Produktions-CSP.
+In CI (`.github/workflows/tests.yml`) laufen die Einheitentests bei jedem Push,
+die Browsertests bei Pull Requests und auf `main`.
 
-`.github/workflows/tests.yml` lässt die **Einheitentests bei jedem Push**
-laufen — sie brauchen keinen Browser und sind in Sekunden durch. Die
-**Browsertests** kosten einen Chromium-Download und laufen darum nur bei Pull
-Requests und auf `main`. Ein neuer Push auf denselben Zweig bricht den
-laufenden Durchgang ab, damit auf einem privaten Repo keine Minuten
-verpuffen. Schlägt ein Browsertest fehl, hängt der Playwright-Bericht sieben
-Tage als Artefakt am Lauf.
-
-Die Browsertests decken Berechnung, den Wert je Platz in beiden Einheiten,
-die Lesart der Absicherungsspalte, eigene Kürzel, die Lesart der
-Stufenzahl, Favoriten, Speicherung, Migration aus dem Vorgänger, die
-Rechtstexte, Barrierefreiheit, die Easter Eggs, die Sicherheits-Header samt
-CSP und die Zusicherung „keine externen Anfragen“ ab.
-
-## Barrierefreiheit
-
-- Sechs Darstellungen: Blaupause (dunkel), Weißpause (hell), ein
-  Kontrastmodus in Schwarz auf Weiß, Papier (warmes, liniertes Schreibpapier),
-  Weltall (Neon auf Sternenhimmel) und Schmiede (Holz und Messing in den
-  Farben des Spiels).
-- Alle Bedienelemente sind beschriftet und per Tastatur erreichbar, mit
-  deutlich sichtbarem Fokusring.
-- Die Bauwerksauswahl ist ein echtes `<dialog>` nach dem ARIA-Muster
-  „Combobox mit Listbox“: Screenreader hören Zeitalter als Gruppen, das
-  gewählte Bauwerk als ausgewählt und die Trefferzahl der Suche. Der Fokus
-  bleibt im Fenster und kehrt danach auf den Knopf zurück.
-- `prefers-reduced-motion` schaltet sämtliche Animationen ab — auch die
-  Easter Eggs, die dann nur noch einen kurzen Texthinweis zeigen.
-- Ab etwa 390 Pixel Breite stehen Stufe und Name nebeneinander, darunter
-  untereinander — auf schmalen Telefonen bliebe die Stufenzahl sonst
-  abgeschnitten. Browsertests messen das bei 320, 360 und 390 Pixeln nach.
-
-## Telefon im Querformat
-
-Quer ist Höhe das knappe Gut und Breite im Überfluss da. Dort stehen die
-Einstellungen links und der Förderplan rechts — einstellen und ablesen ohne
-Scrollen. Das kürzt die Seite auf einem iPhone 14 quer von **1856 auf 1202
-Pixel**, also von knapp fünf auf gut drei Bildschirme.
-
-Die zweite Zahl ist nachgemessen: hier stand lange 1141, und dazwischen ist
-die Seite gewachsen. Eine dokumentierte Messung altert mit dem, was über ihr
-liegt — anders als bei der Faktor-Spreizung hält hier kein Test sie fest, sie
-ist also nach Änderungen an den Panels nachzuziehen.
-
-Aus demselben Grund zeigt der Streifen mit dem Gemerkten quer zwei Reihen
-statt drei — das gibt rund 36 Pixel an den Rest zurück, ohne dass ein
-Eintrag verloren geht.
-
-Die Umschaltung hängt an drei Bedingungen zusammen:
-
-```css
-@media (orientation: landscape) and (max-height: 520px) and (min-width: 540px)
+```
+index.html          Die Anwendung
+app.js              Oberfläche: DOM, Ereignisse, Easter Eggs
+calc.js             Rechenkern, reine Funktionen
+data.js             Datensatz der Legendären Bauwerke (generiert)
+abbr.js             Kürzel je Bauwerk (von Hand gepflegt)
+styles.css          Darstellung, sechs Themes über data-theme
+rundgang.*          Vorstellungsseite; Bilder in bilder/ via tools/screenshots.js
+umzug.*             Übernimmt den Speicher von der alten Adresse cipher-calc.netlify.app
+impressum.html, datenschutz.html, legal.js, 404.html
+netlify.toml        Header (CSP, HSTS), Caching, Weiterleitungen
+tools/              Server, Import, Bild- und Messskripte (nicht ausgeliefert)
+test/               Einheitentests und Browsertests (nicht ausgeliefert)
 ```
 
-`orientation` allein genügt nicht — ein Desktop-Fenster ist auch „landscape".
-Die Höhe unterscheidet: Telefone quer sind 330–430 Pixel hoch, Tablets und
-Desktops deutlich mehr. Die Mindestbreite fängt ein hochkant gehaltenes
-Telefon ab, dessen Ansicht durch eine eingeblendete Tastatur flacher als breit
-werden könnte.
+`tools/` und `test/` liegen zwar im Deploy, `netlify.toml` beantwortet sie aber
+mit 404. Die Regeln brauchen `force = true`, sonst greift Netlify bei
+existierenden Dateien nicht ein.
 
-**Das Hochformat bleibt davon unberührt** — nicht aus Sorgfalt, sondern weil
-Regeln innerhalb einer Abfrage nicht greifen können, wenn sie nicht zutrifft.
-`test/e2e/landscape.spec.js` hält es trotzdem fest: bei vier Hochformat-Größen,
-auf dem Desktop und auf dem Tablet wird geprüft, dass Aufbau, Breite und
-Polster unverändert sind.
+## Datensatz erneuern
 
-## Easter Eggs
+`data.js` wird aus dem [Forge of Empires Wiki](https://forgeofempires.fandom.com/de/wiki/)
+erzeugt, nicht von Hand gepflegt.
 
-Sechs Stück, alle harmlos und alle stumm bei `prefers-reduced-motion`. Sie zu
-finden ist der Punkt, deshalb hier nur so viel: einer belohnt einen wirklich gut
-zugeschnittenen Förderplan (in rund einem von tausend Fällen), einer hört auf
-eine sehr alte Tastenfolge, und einer sitzt im Namen selbst. Die übrigen drei
-sind leichter: einer wartet dort, wo es nicht mehr weitergeht, einer in der
-Suche, und einer grüßt alle, die einen Blick unter die Haube werfen.
+- **Per GitHub Actions:** Workflow „Datensatz importieren“ von Hand starten —
+  er importiert, baut `data.js`, lässt die Tests laufen und öffnet einen Pull
+  Request.
+- **Lokal:** `npm run import`, danach `npm run test:unit`.
 
-## Daten
-
-Kosten- und Belohnungswerte stammen aus dem von Spielerinnen und Spielern
-gepflegten [Forge of Empires Wiki](https://forgeofempires.fandom.com/de/wiki/)
-(Fandom) und stehen dort unter
-[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.de). Der
-daraus abgeleitete Datensatz in `data.js` wird unter derselben Lizenz
-weitergegeben. Stand siehe `generated` in der Datei.
-
-Wo das Wiki sich widerspricht, ist die Stufe im Datensatz als solche markiert
-(`source: "x"`) und die Anwendung weist beim Aufruf darauf hin. Dasselbe
-Zeichen bekommen Wiki-Werte, die weiter als eine Rundungsstufe (5 FP) neben der
-Kurve ihres Zeitalters liegen: verrutschte Zeilen und doppelt abgetippte Zahlen
-steigen zwar brav an, sind aber keine Wahrheit — dort gilt der Kurvenwert.
-
-### Datensatz erneuern
-
-`data.js` wird erzeugt, nicht von Hand gepflegt. Der Weg dorthin geht über zwei
-Schritte:
-
-```bash
-# tools/import.html direkt im Browser öffnen (Datei, kein Server nötig),
-# „Alle LGs importieren", dann „Datendatei herunterladen"
-node tools/build-data.js ~/Downloads/lg-daten.json
-npm run test:unit
-node tools/order-scan.js   # Tabelle unter „Warum der Bereich bei 1,80 endet" nachziehen
-```
-
-Der Importer läuft absichtlich nicht über `npm run serve`: der Testserver
-bildet die 404-Regel für `/tools/` nach, genau wie Netlify. Als Datei geöffnet
-funktioniert er trotzdem, weil das Wiki seine API mit CORS für jede Herkunft
-beantwortet.
-
-`tools/import.html` liest die Wiki-Seiten aller Bauwerke, gleicht Kosten und
-Belohnungen gegen die Formeln ab und markiert jede Stufe danach, wie sicher ihr
-Wert ist. `tools/build-data.js` überführt das Ergebnis in `data.js`.
-
-**Der Importer gehört nicht zur Website.** `netlify.toml` beantwortet
-`/tools/*` mit 404, lokal ist er über `npm run serve` erreichbar. Im
-Unterschied zur Anwendung fragt er das Wiki ab — aber erst auf Knopfdruck, beim
-Laden der Seite geht keine Anfrage hinaus.
-
-Zwei Dinge stehen nicht zwingend im Wiki und übernimmt der Konverter deshalb
-aus der bestehenden `data.js`:
-
-- **Bauwerke, die der Import nicht liefert**; sie bleiben mit ihren bisherigen
-  Werten stehen, statt stillschweigend zu verschwinden
-- **Kostenformel und P1-Kurve eines Bauwerks, das der Import leer liefert** —
-  etwa der Horizontriss-Siphon, den das Wiki nicht kennt und dessen Werte aus
-  im Spiel abgelesenen Stufen stammen
-
-Beides meldet der Konverter im Lauf. Ein neues Bauwerk meldet er ebenfalls,
-denn es braucht ein Kürzel in `abbr.js`. `test/build-data.test.js` prüft es, indem
-es aus `data.js` ein Import-JSON baut, durch den Konverter schickt und das
-Ergebnis mit dem Original vergleicht.
+Bauwerke oder Formeln, die der Import nicht liefert, übernimmt
+`tools/build-data.js` aus der bestehenden `data.js` und meldet sie. Ein neues
+Bauwerk braucht einen Eintrag in `abbr.js` — `test/abbr.test.js` schlägt sonst
+an. Widersprüchliche oder aus der Kurve fallende Wiki-Werte werden als
+`source: "x"` markiert; die Anwendung weist darauf hin.
 
 ## Lizenz
 
-Quellcode: [MIT](./LICENSE). Die Datei enthält nur den MIT-Text, damit
-GitHub die Lizenz erkennt; was anders lizenziert ist, steht in
-[NOTICE.md](./NOTICE.md):
+Quellcode: [MIT](./LICENSE). Abweichend lizenziert (Details in
+[NOTICE.md](./NOTICE.md)):
 
-- Datensatz (`data.js`): CC BY-SA 3.0, abgeleitet aus dem Forge of Empires Wiki.
+- Datensatz (`data.js`): [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.de),
+  abgeleitet aus dem Forge of Empires Wiki.
 - Schrift (`fonts/`): SIL Open Font License 1.1, siehe `fonts/LICENSE-Barlow.txt`.
