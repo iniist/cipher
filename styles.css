@@ -285,6 +285,20 @@ h1 {
 
 .sub { color: var(--dim); margin: 0; max-width: 42ch; font-size: .98rem }
 
+/* Die Welt steht neben der Wortmarke: rechts davon ist in jeder Ansicht
+   Platz, und die Zeile ist ohnehin so hoch wie der Knopf. */
+.title-row { display: flex; align-items: center; gap: 12px; min-width: 0; margin: 0 0 4px }
+.title-row h1 { margin: 0 }
+.world-pick {
+  display: flex; align-items: center; gap: 6px;
+  min-width: 0; height: 34px; padding: 0 10px;
+  font: inherit; font-size: .9rem; font-weight: 600;
+  background: transparent; color: var(--ink);
+  border: 1.5px solid var(--frame); cursor: pointer;
+}
+.world-pick svg { flex: 0 0 auto; width: 18px; height: 18px }
+.world-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+
 .modes { display: flex; border: 1.5px solid var(--frame); align-self: flex-end }
 .modes button {
   width: 36px; height: 34px;
@@ -797,6 +811,26 @@ html.picker-open { overflow: hidden; scrollbar-gutter: stable }
   .picker[open]::backdrop, .picker.closing::backdrop { animation: none; transition: none }
 }
 
+/* Die Weltenauswahl leiht sich das Blatt der Bauwerksauswahl. Ohne
+   Suchfeld reicht ein kuerzeres. */
+.worlds { height: auto; max-height: calc(var(--vvh, 100dvh) * .88) }
+.worlds-note { margin: 0 16px 4px; font-size: .88rem; color: var(--dim) }
+.worlds .picker-list li { list-style: none }
+.world-opt {
+  width: 100%; text-align: left;
+  font: inherit; color: inherit; background: transparent;
+}
+.world-opt[aria-current="true"] b { color: var(--gold) }
+.world-opt[aria-current="true"]::before {
+  content: "✓";
+  content: "✓" / "";
+  position: absolute; left: 12px;
+  color: var(--gold); font-weight: 700;
+}
+@media (min-width: 641px) {
+  .worlds { height: fit-content; max-height: min(640px, calc(var(--vvh, 100dvh) - 32px)) }
+}
+
 /* ------------------------------------------------------------ Favoriten */
 
 /* Der Streifen stand frueher ganz unten im Panel, hinter Suche, Stufe, Name
@@ -1304,6 +1338,8 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
     margin: 0 0 12px;
   }
   h1 { font-size: 1.9rem }
+  /* Nicht hoeher als die kleinere Wortmarke, sonst waechst der Kopf. */
+  .world-pick { height: 30px }
   /* Die Zeilenbreite von 42 Zeichen ist fuer schmale Geraete gedacht; quer
      steht daneben ohnehin nur der Themenwechsler. */
   .sub { font-size: .9rem; max-width: none }
@@ -1334,7 +1370,7 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
    und --shadow-sm; hier steht nur, wer sie bekommt. */
 .panel, .card { border-radius: var(--r); box-shadow: var(--shadow) }
 
-select, input, .pick, .seg, .step, .modes,
+select, input, .pick, .seg, .step, .modes, .world-pick,
 .chips button, .fav-save, .fav-list li, .filter-hit, .slot-reset,
 .copy .t, .copy button, .coll-copy, .coll-list li,
 .lump, .note, .note .go, .highlight, .bar, .fac-gauge,
@@ -1350,18 +1386,18 @@ select, input, .pick, .seg, .step, .modes,
 .filter button { border-radius: 0 var(--r-sm) var(--r-sm) 0 }
 
 /* Gefuellte Flaechen heben sich ein wenig ab. */
-.modes, .chips button.on, .copy button, .coll-copy, .note .go,
+.modes, .world-pick, .chips button.on, .copy button, .coll-copy, .note .go,
 .fav-list li[aria-current="true"] { box-shadow: var(--shadow-sm) }
 
 /* Weiche Uebergaenge und ein kleines Nachgeben beim Druecken. Die Stepper-
    Knoepfe bleiben aussen vor: an der Grenze soll ihr Zeichen sofort
    verblassen, nicht erst nach einer Blende. */
 .modes button, .seg button, .chips button, .fav-save, .fav-go, .filter-hit,
-.copy button, .coll-copy, .note .go, .slot-reset, select, input, .pick {
+.copy button, .coll-copy, .note .go, .slot-reset, select, input, .pick, .world-pick {
   transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s, transform .1s;
 }
 .chips button:active, .fav-save:active, .copy button:active:not(:disabled),
-.coll-copy:active, .note .go:active, .modes button:active { transform: translateY(1px) }
+.coll-copy:active, .note .go:active, .modes button:active, .world-pick:active { transform: translateY(1px) }
 .chips button:hover:not(.on), .fav-save:hover { border-color: var(--frame) }
 .copy button:hover:not(:disabled), .coll-copy:hover, .note .go:hover { filter: brightness(1.07) }
 select:hover, input:hover:not(:focus), .pick:hover { border-color: var(--frame) }
@@ -1414,9 +1450,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .safe, td.chg, .stamp, .scan, .wordmark.plotting > span, .toast { animation: none }
   .coll-list li.fresh { animation: none }
   .modes button, .seg button, .chips button, .fav-save, .fav-go, .filter-hit,
-  .copy button, .coll-copy, .note .go, .slot-reset, select, input, .pick { transition: none }
+  .copy button, .coll-copy, .note .go, .slot-reset, select, input, .pick, .world-pick { transition: none }
   .chips button:active, .fav-save:active, .copy button:active,
-  .coll-copy:active, .note .go:active, .modes button:active { transform: none }
+  .coll-copy:active, .note .go:active, .modes button:active, .world-pick:active { transform: none }
   /* Der Stempel wuerde sonst dauerhaft stehen bleiben — er wird in diesem
      Modus gar nicht erst eingeblendet (siehe app.js). */
 }
