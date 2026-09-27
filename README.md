@@ -199,6 +199,26 @@ Wahres. Ausgegraut würde er weiter „1,90“ anzeigen, während die Plätze
 längst etwas anderes sagen. Gibt es Unterschiede, nennt der Kopf des Blocks
 die Spanne (`1,85–1,95`), auch zugeklappt.
 
+#### Direkt in der Tabelle
+
+Der Block steht oben bei Stufe und Faktor, die Zahlen, um die es geht,
+stehen eine Bildschirmhöhe tiefer im Förderplan. Darum lässt sich die Zahl
+unter „Einzahlen“ antippen: Sie wird in der Zeile selbst zum Feld, in FP,
+darunter eine schmale Zeile mit der anderen Einheit, dem Umschalter
+Faktor/FP, „Zurücksetzen“ und „Fertig“. Summe, Balken und „Sicher“ rechnen
+beim Tippen mit, man sieht die Wirkung also direkt daneben.
+
+- Es ist derselbe Wert wie im Block oben, nur an einer zweiten Stelle.
+- Ein Platz mit eigenem Wert trägt in der Tabelle eine durchgezogene
+  goldene Linie statt der gestrichelten; so sieht man auch im Plan, welcher
+  Platz nicht mehr dem Faktor oben folgt.
+- Geschlossen wird mit Enter, Escape, „Fertig“ oder einem Tipp daneben —
+  auf `click`, nicht schon beim Drücken: sonst rückt beim Schließen alles
+  darunter hoch, und der Finger trifft beim Loslassen etwas anderes.
+- Die Tabelle wird dafür nicht mehr bei jedem Zeichnen neu geschrieben,
+  sondern einmal aufgebaut und dann nachgezogen, wie die Platzzeilen im
+  Block — sonst verlöre das Feld bei jedem Tastendruck den Cursor.
+
 #### Faktor oder Betrag
 
 Wer einen Platz wegschnappt, zahlt eine Summe, die zu keinem Faktor im

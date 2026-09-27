@@ -1694,16 +1694,46 @@
     setChatLine("chatPlain", "");
     setChatLine("chatPoints", "");
     previousContributions = [];
+    payEdit = null;
+  }
+
+  /**
+   * Die fuenf Tabellenzeilen einmalig aufbauen.
+   *
+   * Frueher wurde die Tabelle bei jedem Zeichnen neu geschrieben. Seit die
+   * Zahl unter "Einzahlen" sich direkt in der Zeile bearbeiten laesst, geht
+   * das nicht mehr: ein neues innerHTML naehme dem Feld bei jedem
+   * Tastendruck den Cursor — dieselbe Lage wie bei buildSlotRows. Gebaut
+   * wird also einmal, danach werden nur Werte nachgezogen. Nebenbei bleibt
+   * so auch der Fokus auf einer Checkbox stehen, ohne dass ihn jemand
+   * zurueckgeben muss.
+   */
+  function buildRows() {
+    var rows = [];
+    for (var index = 0; index < Calc.SLOTS; index++) {
+      var slot = index + 1;
+      rows.push(
+        '<tr data-row="' + index + '">' +
+          '<td><label class="pl">' +
+            '<input type="checkbox" data-slot="' + index + '">' +
+            '<span class="tag slot-' + slot + '">P' + slot + "</span>" +
+          "</label></td>" +
+          '<td class="rew"></td>' +
+          '<td class="pay"><button type="button" class="pay-btn" data-pay-open="' + index + '"></button></td>' +
+          '<td class="pre"></td>' +
+        "</tr>"
+      );
+    }
+    $("rows").innerHTML = rows.join("");
   }
 
   function renderRows(plan) {
     $("rows").closest("table").classList.remove("none");
+    // Nach dem Leerzustand steht statt der Zeilen ein Hinweis in der Tabelle.
+    if (!$("rows").querySelector("tr[data-row]")) buildRows();
 
-    // Die Tabelle wird komplett neu geschrieben. Stand der Fokus auf einer
-    // der Checkboxen, landet er dabei sonst auf <body> — wer zwei Plaetze
-    // mit der Tastatur abwaehlen will, muesste sich nach jedem Haekchen neu
-    // durch die Seite tabben. Also merken und danach zurueckgeben.
-    var focusedSlot = focusedSlotInRows();
+    // Ein abgewaehlter Platz hat nichts mehr zu bearbeiten.
+    if (payEdit && !payEditable(plan.rows[payEdit.index], payEdit.index)) payEdit = null;
 
     var previous = previousContributions;
     previousContributions = plan.rows.map(function (row) { return row.contribution; });
@@ -1712,34 +1742,185 @@
     // Mit eingetragenem Stand beginnt die Summe bei dem, was schon drin ist.
     var running = plan.ownPaid || 0;
 
-    $("rows").innerHTML = plan.rows.map(function (row, index) {
-      var changed = previous.length && previous[index] !== row.contribution;
+    plan.rows.forEach(function (row, index) {
+      var tr = $("rows").querySelector('tr[data-row="' + index + '"]');
+      var editing = payEdit != null && payEdit.index === index;
+      var own = slotIsOwn(index);
       // Vergebene Plaetze zaehlen mit: ihre Absicherung ist eingezahlt, und
       // die Summe soll der Stand sein, den das Spiel als eigene FP zeigt.
       if (row.offered || row.taken) running += row.secure;
+
+      tr.className = [row.offered ? "" : row.taken ? "taken" : "off",
+        own ? "own" : "", editing ? "editing" : ""].join(" ").trim();
+
+      var checkbox = tr.querySelector('input[type="checkbox"]');
+      checkbox.checked = state.enabled[index];
+      checkbox.disabled = !(row.reward > 0);
+      // "Vergeben" zeigt die Checkbox als Strich. Das geht nur ueber die
+      // Eigenschaft, ein Attribut dafuer gibt es nicht.
+      checkbox.indeterminate = Boolean(row.taken);
+      checkbox.setAttribute("aria-label", slotLabel(row));
+
+      tr.querySelector("td.rew").textContent = formatNumber(row.reward);
+
+      var pay = tr.querySelector("td.pay");
+      var button = pay.querySelector(".pay-btn");
+      button.textContent = formatNumber(row.contribution);
+      button.disabled = !payEditable(row, index);
+      button.setAttribute("aria-label", "P" + row.slot + " zahlt " + formatNumber(row.contribution) +
+        " FP" + (own ? ", eigener Wert" : "") + " — ändern");
+      button.hidden = editing;
+      renderPayInput(pay, index, row, editing);
+      if (previous.length && previous[index] !== row.contribution) flashCell(pay);
+
+      // Nur schreiben, was sich geaendert hat: sonst springt "Sicher" bei
+      // jedem Tastendruck im Feld von vorn auf.
       var secureCell = secureText(row, running);
-
-      return '<tr class="' + (row.offered ? "" : row.taken ? "taken" : "off") + '">' +
-        '<td><label class="pl">' +
-          '<input type="checkbox" data-slot="' + index + '"' +
-            (state.enabled[index] ? " checked" : "") +
-            (row.reward > 0 ? "" : " disabled") +
-            ' aria-label="' + slotLabel(row) + '">' +
-          '<span class="tag slot-' + row.slot + '">P' + row.slot + "</span>" +
-        "</label></td>" +
-        "<td>" + formatNumber(row.reward) + "</td>" +
-        '<td class="pay' + (changed ? " chg" : "") + '">' + formatNumber(row.contribution) + "</td>" +
-        '<td class="pre">' + secureCell + "</td>" +
-      "</tr>";
-    }).join("");
-
-    // "Vergeben" zeigt die Checkbox als Strich. Das geht nur ueber die
-    // Eigenschaft, ein Attribut dafuer gibt es nicht.
-    plan.rows.forEach(function (row, index) {
-      if (row.taken) $("rows").querySelector('input[data-slot="' + index + '"]').indeterminate = true;
+      var pre = tr.querySelector("td.pre");
+      if (pre.innerHTML !== secureCell) pre.innerHTML = secureCell;
     });
 
-    restoreFocusToSlot(focusedSlot);
+    renderPayEditBar(plan);
+  }
+
+  /**
+   * Ob sich die Einzahlung eines Platzes in der Tabelle oeffnen laesst.
+   *
+   * Am Haekchen, nicht daran, ob der Plan den Platz gerade anbietet: ein
+   * getippter Betrag, der nicht mehr passt, macht ihn "passt nicht" — und
+   * genau dann muss er sich noch korrigieren lassen, auch mitten im Tippen.
+   */
+  function payEditable(row, index) {
+    return row.reward > 0 && (state.enabled[index] || row.taken);
+  }
+
+  /** Die Zelle kurz aufleuchten lassen; die Animation muss dafuer neu starten. */
+  function flashCell(cell) {
+    cell.classList.remove("chg");
+    void cell.offsetWidth;
+    cell.classList.add("chg");
+  }
+
+  /**
+   * Der Platz, dessen Einzahlung gerade in der Tabelle bearbeitet wird —
+   * und in welcher Einheit dort getippt wird. null, wenn keiner offen ist.
+   *
+   * Die Einheit gehoert nur zu diesem Feld. Wer auf eine FP-Zahl tippt, will
+   * meist einen Betrag eintragen, darum steht sie auf FP; nur ein Platz mit
+   * eigenem Faktor oeffnet in Faktor. Der Umschalter im Block oben bleibt
+   * davon unberuehrt.
+   * @type {{index: number, unit: "factor"|"fp"}|null}
+   */
+  var payEdit = null;
+
+  /** Das Feld in der Zelle anlegen, nachfuehren oder wieder entfernen. */
+  function renderPayInput(cell, index, row, editing) {
+    var input = cell.querySelector(".pay-in");
+    if (!editing) {
+      if (input) input.remove();
+      return;
+    }
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "text";
+      input.className = "pay-in";
+      input.autocomplete = "off";
+      input.dataset.payEdit = String(index);
+      cell.appendChild(input);
+    }
+    var unit = payEdit.unit;
+    input.setAttribute("inputmode", unit === "fp" ? "numeric" : "decimal");
+    input.setAttribute("enterkeyhint", "done");
+    input.setAttribute("aria-label", (unit === "fp" ? "Einzahlung für P" : "Faktor für P") + row.slot);
+    input.classList.toggle("factor", unit === "factor");
+    // Waehrend des Tippens nicht dazwischenfunken.
+    if (document.activeElement !== input) input.value = payEditValue(index, row);
+  }
+
+  /** Was im Feld der Tabelle steht — in der Einheit, die dort gewaehlt ist. */
+  function payEditValue(index, row) {
+    if (payEdit.unit === "fp") return formatNumber(row.contribution);
+    // Ein getippter Betrag hat keinen eigenen Faktor; gezeigt wird der, den
+    // er auf diese Belohnung bedeutet.
+    if (state.slotPays[index] != null && row.reward > 0) return formatFactor(impliedFactor(row));
+    return formatFactor(effectiveFactors()[index]);
+  }
+
+  /**
+   * Die schmale Zeile unter dem bearbeiteten Platz: die andere Einheit,
+   * der Umschalter, das Zuruecknehmen und "Fertig".
+   *
+   * Sie steht nur im DOM, solange ein Platz offen ist — die Tabelle hat
+   * sonst genau fuenf Zeilen, und so soll es fuer alles bleiben, das sie
+   * zaehlt.
+   */
+  function renderPayEditBar(plan) {
+    var bar = $("rows").querySelector("tr.pay-edit");
+    if (!payEdit) {
+      if (bar) bar.remove();
+      return;
+    }
+    var index = payEdit.index;
+    var row = plan.rows[index];
+    var anchor = $("rows").querySelector('tr[data-row="' + index + '"]');
+
+    if (!bar || Number(bar.dataset.for) !== index) {
+      if (bar) bar.remove();
+      bar = document.createElement("tr");
+      bar.className = "pay-edit";
+      bar.dataset.for = String(index);
+      bar.innerHTML =
+        '<td colspan="4"><div class="pay-edit-bar">' +
+          '<span class="pay-edit-hint"></span>' +
+          '<div class="seg" role="group" aria-label="Einheit für P' + row.slot + '">' +
+            '<button type="button" data-pay-unit="factor">Faktor</button>' +
+            '<button type="button" data-pay-unit="fp">FP</button>' +
+          "</div>" +
+          '<button type="button" class="link pay-edit-reset"' +
+            ' aria-label="P' + row.slot + ' wieder dem Faktor oben folgen lassen">Zurücksetzen</button>' +
+          '<button type="button" class="pay-edit-done">Fertig</button>' +
+        "</div></td>";
+    }
+    anchor.after(bar);
+    bar.classList.toggle("own", slotIsOwn(index));
+
+    bar.querySelector(".pay-edit-hint").textContent = payEdit.unit === "fp"
+      ? (row.reward > 0 ? "≙ Faktor " + formatFactor(impliedFactor(row)) : "")
+      : "≙ " + formatNumber(row.contribution) + " FP";
+    bar.querySelectorAll("[data-pay-unit]").forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.dataset.payUnit === payEdit.unit));
+    });
+    bar.querySelector(".pay-edit-reset").hidden = !slotIsOwn(index);
+  }
+
+  /** Die Einzahlung eines Platzes in der Tabelle zum Bearbeiten oeffnen. */
+  function openPayEdit(index) {
+    payEdit = { index: index, unit: state.slotFactors[index] != null ? "factor" : "fp" };
+    render();
+    focusPayInput();
+  }
+
+  /**
+   * Das Feld wieder schliessen. `refocus`, wenn es ueber die Tastatur oder
+   * "Fertig" zuging: dann landet der Fokus auf der Zahl, statt auf <body>
+   * zu fallen. Bei einem Tipp daneben hat der Fokus schon ein neues Ziel.
+   */
+  function closePayEdit(refocus) {
+    if (!payEdit) return;
+    var index = payEdit.index;
+    payEdit = null;
+    render();
+    if (refocus) {
+      var button = $("rows").querySelector('[data-pay-open="' + index + '"]');
+      if (button && !button.disabled) button.focus({ preventScroll: true });
+    }
+  }
+
+  function focusPayInput() {
+    var input = $("rows").querySelector(".pay-in");
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    input.select();
   }
 
   /** Was ein Screenreader an der Checkbox eines Platzes vorliest. */
@@ -1787,20 +1968,6 @@
     $("secureMode").setAttribute("aria-label", total
       ? "Summe — umschalten auf das, was dieser Platz kostet"
       : "Sichern — umschalten auf die laufende Summe");
-  }
-
-  /** Den Platz nennen, dessen Checkbox gerade den Fokus hat — sonst null. */
-  function focusedSlotInRows() {
-    var active = document.activeElement;
-    if (!active || !active.dataset || active.dataset.slot == null) return null;
-    return $("rows").contains(active) ? active.dataset.slot : null;
-  }
-
-  function restoreFocusToSlot(slot) {
-    if (slot == null) return;
-    var checkbox = $("rows").querySelector('input[data-slot="' + slot + '"]');
-    // Die Zeile steht an derselben Stelle, darum kein Springen der Ansicht.
-    if (checkbox && !checkbox.disabled) checkbox.focus({ preventScroll: true });
   }
 
   function renderBar(plan) {
@@ -2480,7 +2647,90 @@
     $("secureMode").addEventListener("click", toggleSecureMode);
 
     $("rows").addEventListener("click", function (event) {
-      if (event.target.closest("td.pre")) toggleSecureMode();
+      if (event.target.closest("td.pre")) { toggleSecureMode(); return; }
+
+      // Die Zahl unter "Einzahlen" oeffnet sich in der Zeile selbst. Der
+      // Block oben kann dasselbe, liegt aber eine Bildschirmhoehe entfernt —
+      // hier sieht man beim Tippen, was es mit Summe und "Sicher" macht.
+      var open = event.target.closest("[data-pay-open]");
+      if (open) { openPayEdit(Number(open.dataset.payOpen)); return; }
+
+      var unit = event.target.closest("[data-pay-unit]");
+      if (unit && payEdit) {
+        payEdit.unit = unit.dataset.payUnit === "factor" ? "factor" : "fp";
+        render();
+        // Neu hinschreiben: das Feld hat den Fokus, render laesst es darum aus.
+        var input = $("rows").querySelector(".pay-in");
+        if (input) input.value = payEditValue(payEdit.index, lastPlan.rows[payEdit.index]);
+        focusPayInput();
+        return;
+      }
+
+      if (event.target.closest(".pay-edit-reset") && payEdit) {
+        clearSlot(payEdit.index);
+        closePayEdit(true);
+        return;
+      }
+
+      if (event.target.closest(".pay-edit-done")) closePayEdit(true);
+    });
+
+    // Beim Tippen mitrechnen, genau wie im Block oben — und genau dadurch
+    // wird der Platz eigen.
+    $("rows").addEventListener("input", function (event) {
+      if (!event.target.classList.contains("pay-in") || !payEdit) return;
+      var index = payEdit.index;
+      if (payEdit.unit === "fp") {
+        var amount = parseAmount(event.target.value);
+        if (amount) { setSlotPay(index, amount); render(); }
+        return;
+      }
+      var parsed = parseFactor(event.target.value);
+      if (parsed) { setSlotFactor(index, parsed); render(); }
+    });
+
+    $("rows").addEventListener("keydown", function (event) {
+      if (!event.target.classList.contains("pay-in") || !payEdit) return;
+      if (event.key === "Enter" || event.key === "Escape") {
+        event.preventDefault();
+        closePayEdit(true);
+      } else if (payEdit.unit === "factor" && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+        event.preventDefault();
+        var index = payEdit.index;
+        stepSlotFactor(index, event.key === "ArrowUp" ? 1 : -1);
+        event.target.value = formatFactor(effectiveFactors()[index]);
+      }
+    });
+
+    // Beim Verlassen sauber hinschreiben, was gilt — etwa "3.670" statt "3670".
+    $("rows").addEventListener("blur", function (event) {
+      if (!event.target.classList.contains("pay-in") || !payEdit || !lastPlan) return;
+      event.target.value = payEditValue(payEdit.index, lastPlan.rows[payEdit.index]);
+    }, true);
+
+    // Wer mit Tab aus Feld und Zusatzzeile herausgeht, ist fertig. Nur mit
+    // der Tastatur: ein Tipp verschiebt den Fokus schon beim Druecken, und
+    // dann gilt, was unten zum click steht. Ohne neues Ziel (ein Tipp auf
+    // etwas, das keinen Fokus nimmt) entscheidet ohnehin der click.
+    var pointerDown = false;
+    document.addEventListener("pointerdown", function () { pointerDown = true; }, true);
+    ["pointerup", "pointercancel"].forEach(function (type) {
+      document.addEventListener(type, function () { pointerDown = false; }, true);
+    });
+    $("rows").addEventListener("focusout", function (event) {
+      if (!payEdit || !event.relatedTarget || pointerDown) return;
+      if (!event.relatedTarget.closest("tr.editing, tr.pay-edit")) closePayEdit(false);
+    });
+
+    // Ein Tipp irgendwo daneben schliesst das Feld. Auf click, nicht schon
+    // auf pointerdown: das Schliessen nimmt die Zusatzzeile weg und alles
+    // darunter rueckt hoch — beim Druecken waere dann der Finger beim
+    // Loslassen ueber etwas anderem. So wirkt der Tipp erst, dann rueckt es.
+    // Wischen zum Scrollen loest kein click aus und laesst das Feld offen.
+    document.addEventListener("click", function (event) {
+      if (!payEdit) return;
+      if (event.target.closest && event.target.closest("tr.editing, tr.pay-edit")) return;
+      closePayEdit(false);
     });
 
     $("rows").addEventListener("change", function (event) {

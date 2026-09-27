@@ -1030,6 +1030,48 @@ td:first-child { text-align: left; white-space: nowrap }
 td.pay { font-weight: 700; font-size: 1.15rem }
 /* Die Zahl schaltet die Lesart mit um — wer sie antippt, meint sie. */
 td.pre { font-weight: 600; color: var(--warn); cursor: pointer }
+/* Die Zahl unter "Einzahlen" laesst sich antippen und oeffnet sich in der
+   Zeile. Sie sieht aus wie die Zahl, die sie ist; nur die gestrichelte
+   Linie verraet, dass sie mehr kann. Traegt der Platz einen eigenen Wert,
+   wird die Linie durchgezogen und gold — so sieht man auch im Plan, welcher
+   Platz nicht mehr dem Faktor oben folgt, und das ohne Farbe allein. */
+.pay-btn {
+  font: inherit; color: inherit; background: none; cursor: pointer;
+  border: 0; border-bottom: 1.5px dashed var(--dim);
+  padding: 0 0 1px; margin: 0; line-height: 1.2;
+}
+.pay-btn:disabled { cursor: default; border-bottom-color: transparent }
+tr.own .pay-btn { border-bottom: 2px solid var(--gold) }
+:root[data-theme="contrast"] .pay-btn { border-bottom-color: #000 }
+:root[data-theme="contrast"] tr.own .pay-btn { border-bottom-width: 3px }
+.pay-btn[hidden] { display: none }
+
+/* Schmal genug, dass die Tabelle auch bei 320 Pixeln nicht breiter wird:
+   dort hat die Spalte gut 25 Pixel Luft, und "10.000" passt trotzdem. */
+td.pay { white-space: nowrap }
+.pay-in {
+  box-sizing: border-box; width: 4.2em; min-width: 0; text-align: right;
+  font: inherit; font-weight: 700; padding: 2px 4px; margin: -3px 0;
+  background: var(--field); color: var(--ink);
+  border: 1.5px solid var(--gold);
+}
+tr.editing td { border-bottom: 0 }
+
+/* Die Zusatzzeile unter dem offenen Platz. */
+tr.pay-edit td { border-top: 0; padding: 0 4px 10px; text-align: left }
+.pay-edit-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+  gap: 8px 12px; font-size: .85rem;
+}
+.pay-edit-hint { color: var(--dim); font-variant-numeric: tabular-nums; margin-right: auto }
+.pay-edit-bar .seg button { padding: 3px 10px }
+.pay-edit-reset { color: var(--dim); font-size: .82rem; font-weight: 500 }
+.pay-edit-reset[hidden] { display: none }
+.pay-edit-done {
+  font: inherit; font-weight: 700; cursor: pointer;
+  background: var(--btn); color: var(--btn-ink);
+  border: 0; padding: 4px 12px;
+}
 td.empty { padding: 14px 0; color: var(--dim); white-space: normal; text-align: left; border-top: 0 }
 table.none thead { display: none }
 
