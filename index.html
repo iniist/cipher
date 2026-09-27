@@ -176,26 +176,26 @@
       <!-- Die Wortmarke bleibt ein Knopf (Easter Egg). Der Zusatz sagt
            Screenreadern und Suchmaschinen, was die Seite ist; zu sehen ist
            er im Untertitel darunter und im Abschnitt unten. -->
-      <div class="title-row">
-        <h1><button type="button" class="wordmark" id="wordmark">cipher</button><span class="sr-only"> — Förderrechner für Legendäre Bauwerke in Forge of Empires</span></h1>
-        <!-- Welche Spielwelt gerade offen ist. Jede Welt hat ihre eigenen
-             Bauwerke, Faktoren, Favoriten und ihre eigene Sammlung; die Liste
-             öffnet sich als Blatt wie die Bauwerksauswahl. Der Knopf steht
-             neben der Wortmarke, weil dort in jeder Ansicht Platz frei ist. -->
-        <button type="button" class="world-pick" id="worldPick" aria-haspopup="dialog" aria-expanded="false" aria-controls="worlds">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
-          <span class="sr-only">Spielwelt: </span><span class="world-name" id="worldName">Welt</span>
-        </button>
-      </div>
+      <h1><button type="button" class="wordmark" id="wordmark">cipher</button><span class="sr-only"> — Förderrechner für Legendäre Bauwerke in Forge of Empires</span></h1>
       <p class="sub">Das Förder-Dashboard für Mäzen-Plätze &amp; FP-Einsatz.</p>
     </div>
-    <div class="modes" role="group" aria-label="Darstellung">
-      <button type="button" data-mode="light" aria-label="Hell" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
-      <button type="button" data-mode="dark" aria-label="Dunkel" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
-      <button type="button" data-mode="contrast" aria-label="Kontrast" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button>
-      <button type="button" data-mode="writer" aria-label="Papier" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4C11 4 6 10 6 18M6 18l-3 3M6 18c6 0 11-4 12-9M9.5 13H15"/></svg></button>
-      <button type="button" data-mode="space" aria-label="Weltall" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3l1.8 5.7L17.5 10.5l-5.7 1.8L10 18l-1.8-5.7L2.5 10.5l5.7-1.8z"/><path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></button>
-      <button type="button" data-mode="forge" aria-label="Schmiede" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 2.8l7.6 7.6-2.8 2.8-7.6-7.6z"/><path d="M11.4 8.1l4.5 4.5-9.2 9.2a1.6 1.6 0 0 1-2.3 0l-2.2-2.2a1.6 1.6 0 0 1 0-2.3z"/></svg></button>
+    <div class="head-bar">
+      <!-- Welche Spielwelt gerade offen ist. Jede Welt hat ihre eigenen
+           Bauwerke, Faktoren, Favoriten und ihre eigene Sammlung; die Liste
+           öffnet sich als Blatt wie die Bauwerksauswahl. Oben links, in
+           derselben Zeile wie die Themes: dort war ohnehin Platz frei. -->
+      <button type="button" class="world-pick" id="worldPick" aria-haspopup="dialog" aria-expanded="false" aria-controls="worlds">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+        <span class="sr-only">Spielwelt: </span><span class="world-name" id="worldName">Welt</span>
+      </button>
+      <div class="modes" role="group" aria-label="Darstellung">
+        <button type="button" data-mode="light" aria-label="Hell" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
+        <button type="button" data-mode="dark" aria-label="Dunkel" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+        <button type="button" data-mode="contrast" aria-label="Kontrast" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button>
+        <button type="button" data-mode="writer" aria-label="Papier" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4C11 4 6 10 6 18M6 18l-3 3M6 18c6 0 11-4 12-9M9.5 13H15"/></svg></button>
+        <button type="button" data-mode="space" aria-label="Weltall" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3l1.8 5.7L17.5 10.5l-5.7 1.8L10 18l-1.8-5.7L2.5 10.5l5.7-1.8z"/><path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></button>
+        <button type="button" data-mode="forge" aria-label="Schmiede" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 2.8l7.6 7.6-2.8 2.8-7.6-7.6z"/><path d="M11.4 8.1l4.5 4.5-9.2 9.2a1.6 1.6 0 0 1-2.3 0l-2.2-2.2a1.6 1.6 0 0 1 0-2.3z"/></svg></button>
+      </div>
     </div>
   </header>
 

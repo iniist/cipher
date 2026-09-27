@@ -285,13 +285,26 @@ h1 {
 
 .sub { color: var(--dim); margin: 0; max-width: 42ch; font-size: .98rem }
 
-/* Die Welt steht neben der Wortmarke: rechts davon ist in jeder Ansicht
-   Platz, und die Zeile ist ohnehin so hoch wie der Knopf. */
-.title-row { display: flex; align-items: center; gap: 12px; min-width: 0; margin: 0 0 4px }
-.title-row h1 { margin: 0 }
+/* Die Kopfleiste: links die Welt, rechts die Themes. Im Hochformat stand
+   links neben den Themes ohnehin nichts. Der Weltname darf schrumpfen, die
+   Theme-Knoepfe nicht. */
+.head-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 10px }
+.head-bar .modes { flex: 0 0 auto; margin-left: auto }
+/* Schmale Telefone: die Themes ruecken zusammen, damit der Weltname
+   daneben passt. Passt er trotzdem nicht, bricht die Leiste um — lieber
+   eine Zeile mehr als ein abgeschnittener Name. */
+@media (max-width: 400px) {
+  .modes button { width: 32px }
+  .head-bar .world-pick { padding: 0 8px; gap: 5px }
+}
+/* Unter 380px reicht es selbst dann nicht fuer "Mount Killmore"; der
+   Globus geht, der Rahmen sagt weiter, dass es ein Knopf ist. */
+@media (max-width: 380px) {
+  .head-bar .world-pick svg { display: none }
+}
 .world-pick {
-  display: flex; align-items: center; gap: 6px;
-  min-width: 0; height: 34px; padding: 0 10px;
+  display: flex; flex: 0 0 auto; align-items: center; gap: 6px;
+  height: 34px; padding: 0 10px;
   font: inherit; font-size: .9rem; font-weight: 600;
   background: transparent; color: var(--ink);
   border: 1.5px solid var(--frame); cursor: pointer;
@@ -299,7 +312,7 @@ h1 {
 .world-pick svg { flex: 0 0 auto; width: 18px; height: 18px }
 .world-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 
-.modes { display: flex; border: 1.5px solid var(--frame); align-self: flex-end }
+.modes { display: flex; border: 1.5px solid var(--frame) }
 .modes button {
   width: 36px; height: 34px;
   display: grid; place-items: center;
@@ -1333,16 +1346,24 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
   main > .panel:nth-of-type(2) { grid-column: 2; grid-row: 2 / span 2 } /* Foerderplan */
   main > .panel:nth-of-type(3) { grid-column: 1; grid-row: 3 }   /* Foerderchat */
 
-  /* Der Kopf stand hochkant untereinander; quer passt er in eine Zeile. */
+  /* Quer ist Hoehe knapp: eine eigene Zeile fuer die Welt kostete das
+     iPhone SE einen Zehntel-Bildschirm. Darum eine Zeile fuer alles — Welt
+     oben links vor der Wortmarke, Themes rechts, der Untertitel darunter.
+     Die beiden Huellen treten dafuer zurueck, ihre Kinder ordnet das Raster. */
   header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    grid-template-areas: "world title . modes" "sub sub sub modes";
+    align-items: center;
+    gap: 2px 10px;
     margin: 0 0 12px;
   }
+  header > div, .head-bar { display: contents }
+  .world-pick { grid-area: world; height: 30px }
+  h1 { grid-area: title; margin: 0 }
+  .sub { grid-area: sub }
+  .head-bar .modes { grid-area: modes; align-self: start }
   h1 { font-size: 1.9rem }
-  /* Nicht hoeher als die kleinere Wortmarke, sonst waechst der Kopf. */
-  .world-pick { height: 30px }
   /* Die Zeilenbreite von 42 Zeichen ist fuer schmale Geraete gedacht; quer
      steht daneben ohnehin nur der Themenwechsler. */
   .sub { font-size: .9rem; max-width: none }

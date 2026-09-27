@@ -342,7 +342,7 @@ test.describe("Barrierefreiheit", () => {
     await page.locator("#wordmark").focus();
     await expect(page.locator("#wordmark")).toBeFocused();
 
-    // Neben der Wortmarke steht die Weltenwahl, danach kommen die Themes.
+    // Nach der Wortmarke kommt die Weltenwahl, danach kommen die Themes.
     await page.keyboard.press("Tab");
     await expect(page.locator("#worldPick")).toBeFocused();
     await page.keyboard.press("Tab");

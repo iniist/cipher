@@ -457,7 +457,7 @@ nicht; läuft sie über, fällt die älteste heraus.
 ### Welten
 
 Wer auf mehreren Welten spielt, fördert dort andere Bauwerke mit einem anderen
-Faktor. Der Knopf neben der Wortmarke öffnet die Liste der 24 deutschen Welten,
+Faktor. Der Knopf oben links öffnet die Liste der 24 deutschen Welten,
 von Arvahall (de1) bis Yorkton (de24). Jede Welt hat ihren **eigenen Stand**:
 Bauwerk, Stufe, Faktoren, Plätze, Favoriten und Sammlung. **Überall gleich**
 bleiben Spielername, Darstellung, der Kürzel-Schalter, eigene Kürzel,
