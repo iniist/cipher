@@ -27,7 +27,7 @@ test("rechnet beim Laden einen vollstaendigen Plan", async ({ page }) => {
   await expect(page.locator("#bar i")).toHaveCount(6);
 });
 
-test("Gesamt entspricht Fremd plus Eigenanteil", async ({ page }) => {
+test("Gesamt entspricht Förderer plus Eigen", async ({ page }) => {
   const read = async (id) => Number((await page.locator(`#${id}`).textContent()).replace(/\./g, ""));
   // Die Zahlen zaehlen animiert hoch — auf den Endwert warten.
   await expect.poll(async () => {

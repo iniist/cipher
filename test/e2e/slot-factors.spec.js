@@ -2,12 +2,12 @@
  * Browsertests fuer den Block "Faktor oder FP je Platz".
  *
  * Das Modell dahinter in zwei Saetzen: ein Platz *folgt* dem Wert oben, bis
- * jemand ihn anfasst — danach ist er *eigen* und bleibt stehen, wenn der
+ * jemand ihn anfasst — danach ist er *angepasst* und bleibt stehen, wenn der
  * Wert oben sich bewegt. "Alle wieder angleichen" nimmt alle fuenf zurueck.
  * Der obere Wert zeigt dadurch immer etwas Wahres und wird nie ausgegraut.
  */
 const { test, expect } = require("@playwright/test");
-const { nameEintragen } = require("./menue");
+const { nameEintragen, themaWaehlen } = require("./menue");
 const { haekchen, abwaehlen } = require("./plaetze");
 
 const row = (page, slot) => page.locator(`.slot-list li[data-slot="${slot}"]`);
@@ -79,7 +79,7 @@ test.describe("Folgen und eigen werden", () => {
     await step(page, 2, -1).click();
 
     await expect(value(page, 2)).toHaveValue("1,89");
-    await expect(state(page, 2)).toHaveText("eigen");
+    await expect(state(page, 2)).toHaveText("angepasst");
     await expect(row(page, 2).locator(".slot-reset")).toBeVisible();
     await expect(row(page, 2)).toHaveClass(/own/);
 
@@ -119,7 +119,7 @@ test.describe("Der Wert oben bewegt nur die Folger", () => {
     await page.locator('#factorChips button[data-factor="200"]').click();
 
     expect(await shown(page)).toEqual(["2,00", "2,00", "1,85", "2,00", "2,00"]);
-    await expect(state(page, 2)).toHaveText("eigen");
+    await expect(state(page, 2)).toHaveText("angepasst");
   });
 
   test("auch der Stepper oben laesst den eigenen Wert in Ruhe", async ({ page }) => {
@@ -151,7 +151,7 @@ test.describe("Zuruecknehmen", () => {
     await open(page);
     await value(page, 3).fill("1,82");
     await value(page, 3).blur();
-    await expect(state(page, 3)).toHaveText("eigen");
+    await expect(state(page, 3)).toHaveText("angepasst");
 
     await row(page, 3).locator(".slot-reset").click();
 
@@ -220,7 +220,7 @@ test.describe("Eingabe", () => {
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("ArrowDown");
     await expect(value(page, 4)).toHaveValue("1,88");
-    await expect(state(page, 4)).toHaveText("eigen");
+    await expect(state(page, 4)).toHaveText("angepasst");
 
     await page.keyboard.press("ArrowUp");
     await expect(value(page, 4)).toHaveValue("1,89");
@@ -306,7 +306,7 @@ test.describe("Speichern", () => {
     await page.reload();
 
     expect(await shown(page)).toEqual(["1,90", "1,84", "1,90", "1,97", "1,90"]);
-    await expect(state(page, 1)).toHaveText("eigen");
+    await expect(state(page, 1)).toHaveText("angepasst");
     await expect(state(page, 2)).toHaveText("folgt");
   });
 
@@ -319,7 +319,7 @@ test.describe("Speichern", () => {
 
     await abwaehlen(page, 3);
     await expect(value(page, 3)).toHaveValue("1,83");
-    await expect(state(page, 3)).toHaveText("eigen");
+    await expect(state(page, 3)).toHaveText("angepasst");
 
     await haekchen(page, 3).click();
     await expect(value(page, 3)).toHaveValue("1,83");
@@ -428,7 +428,7 @@ test.describe("Einen Betrag eintragen", () => {
     await unit(page, "fp").click();
     await value(page, 0).fill("10000");
 
-    await expect(state(page, 0)).toHaveText("eigen");
+    await expect(state(page, 0)).toHaveText("angepasst");
     await expect(state(page, 1)).toHaveText("folgt");
     await expect(row(page, 0).locator(".slot-reset")).toBeVisible();
 
@@ -451,13 +451,13 @@ test.describe("Einen Betrag eintragen", () => {
     // Der Nachsatz nennt jetzt beide Einheiten, denn im Feld steht eine
     // andere als im Umschalter — sonst laese man die 10.000 als Faktor.
     await expect(hint(page, 0)).toHaveText("10.000 FP ≙ Faktor 3,13");
-    await expect(state(page, 0)).toHaveText("eigen");
+    await expect(state(page, 0)).toHaveText("angepasst");
   });
 
   test("Faktor und Betrag verdraengen einander, ein Platz traegt eine Zahl", async ({ page }) => {
     await frontenac(page);
     await value(page, 2).fill("1,85");
-    await expect(state(page, 2)).toHaveText("eigen");
+    await expect(state(page, 2)).toHaveText("angepasst");
 
     // In FP-Einheit zeigt der Platz weiter seinen Faktor und nimmt auch
     // weiter einen an: getippt wird in der Einheit, die im Feld steht.
@@ -507,7 +507,7 @@ test.describe("Einen Betrag eintragen", () => {
     await unit(page, "fp").click();
     await value(page, 0).fill("10000");
     await value(page, 3).fill("400");
-    await expect(page.locator("#slotsBadge")).toHaveText("2 eigene");
+    await expect(page.locator("#slotsBadge")).toHaveText("2 angepasst");
 
     await page.click("#slotsReset");
     for (let slot = 0; slot < 5; slot++) await expect(state(page, slot)).toHaveText("folgt");
@@ -525,7 +525,7 @@ test.describe("Einen Betrag eintragen", () => {
 
     await unit(page, "fp").click();
     await value(page, 3).fill("400");
-    await expect(page.locator("#slotsBadge")).toHaveText("2 eigene");
+    await expect(page.locator("#slotsBadge")).toHaveText("2 angepasst");
   });
 });
 
@@ -593,6 +593,27 @@ test.describe("Der Block passt auch auf schmale Telefone", () => {
       const zeile = await page.locator("#slotList .slot-row").first().boundingBox();
       const nachsatz = await hint(page, 0).boundingBox();
       expect(nachsatz.y - zeile.y).toBeGreaterThan(zeile.height / 2);
+    });
+  }
+});
+
+test.describe("bei 320 Pixeln", () => {
+  // "angepasst" ist fast doppelt so breit wie frueher "eigen" und ging
+  // zuerst ganz vom Feld ab: von "1,85" blieb "1" stehen.
+  for (const theme of ["forge", "contrast"]) {
+    test(`bleibt ein angepasster Faktor ganz lesbar (${theme})`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 800 });
+      await open(page);
+      await themaWaehlen(page, theme);
+      await value(page, 2).fill("1,85");
+      await value(page, 2).blur();
+      await expect(state(page, 2)).toHaveText("angepasst");
+      await expect(value(page, 2)).toHaveValue("1,85");
+      // Das Kreuz bleibt ganz im Bild, die Zeile wird nicht breiter.
+      const kreuz = await row(page, 2).locator(".slot-reset").boundingBox();
+      expect(kreuz.x + kreuz.width).toBeLessThanOrEqual(320);
+      const [client, scroll] = await value(page, 2).evaluate((input) => [input.clientWidth, input.scrollWidth]);
+      expect(scroll).toBeLessThanOrEqual(client);
     });
   }
 });

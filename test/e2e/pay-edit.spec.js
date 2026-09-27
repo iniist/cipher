@@ -1,7 +1,7 @@
 /**
  * Browsertests fuer das Bearbeiten direkt in der Tabelle.
  *
- * Die Zahl unter "Einzahlen" oeffnet sich per Tipp in der Zeile: ein Feld,
+ * Die Zahl unter "Kosten" oeffnet sich per Tipp in der Zeile: ein Feld,
  * darunter eine schmale Zeile mit der anderen Einheit, dem Umschalter und
  * "Fertig". Es ist derselbe Wert wie im Block "Faktor oder FP je Platz" —
  * nur dort, wo man ihn sieht.

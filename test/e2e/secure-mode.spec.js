@@ -34,14 +34,14 @@ test.describe("Umschalten", () => {
     await frontenac(page);
     await page.click("#secureMode");
 
-    await expect(kopf(page)).toHaveText("Summe");
+    await expect(kopf(page)).toHaveText("Eigen");
     expect(await werte(page)).toEqual(["73.333", "Sicher", "74.393", "74.923", "75.093"]);
   });
 
   test("schaltet auch ein Klick auf die Zahl", async ({ page }) => {
     await frontenac(page);
     await spalte(page).nth(2).click();
-    await expect(kopf(page)).toHaveText("Summe");
+    await expect(kopf(page)).toHaveText("Eigen");
 
     await spalte(page).nth(2).click();
     await expect(kopf(page)).toHaveText("Sichern");
@@ -61,7 +61,7 @@ test.describe("Umschalten", () => {
     await page.click("#secureMode");
     await page.reload();
 
-    await expect(kopf(page)).toHaveText("Summe");
+    await expect(kopf(page)).toHaveText("Eigen");
   });
 
   test("bleibt der Plan darunter unveraendert", async ({ page }) => {
@@ -162,17 +162,17 @@ test.describe("Bedienbarkeit", () => {
   test("traegt der Kopf eine Beschriftung, die die Lesart nennt", async ({ page }) => {
     await frontenac(page);
     await expect(page.locator("#secureMode"))
-      .toHaveAttribute("aria-label", /^Sichern — umschalten auf die laufende Summe$/);
+      .toHaveAttribute("aria-label", /^Sichern — umschalten auf deine laufenden Eigen-FP$/);
 
     await page.click("#secureMode");
     await expect(page.locator("#secureMode"))
-      .toHaveAttribute("aria-label", /^Summe — umschalten auf das, was dieser Platz kostet$/);
+      .toHaveAttribute("aria-label", /^Eigen — umschalten auf das, was dieser Platz zum Sichern kostet$/);
   });
 
   test("steht der Kopf auf derselben Hoehe wie die uebrigen", async ({ page }) => {
     // Er ist ein Knopf, die anderen sind blosser Text. Zuerst trug der Knopf
     // das Polster und die Zelle keins — dadurch sass die Beschriftung drei
-    // Pixel tiefer als "Platz", "Belohnung" und "Einzahlen" daneben.
+    // Pixel tiefer als "Platz", "Belohnung" und "Kosten" daneben.
     await frontenac(page);
     const oben = await page.locator("thead th").evaluateAll((zellen) =>
       zellen.map((th) => Math.round(
@@ -186,6 +186,6 @@ test.describe("Bedienbarkeit", () => {
     await page.locator("#secureMode").focus();
     await page.keyboard.press("Enter");
 
-    await expect(kopf(page)).toHaveText("Summe");
+    await expect(kopf(page)).toHaveText("Eigen");
   });
 });

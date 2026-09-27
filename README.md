@@ -24,11 +24,11 @@ dir dann für jeden der fünf Mäzen-Plätze:
 | Spalte | Bedeutung |
 | --- | --- |
 | **Belohnung** | Was der Platz auszahlt (P1 aus dem Datensatz, P2–P5 daraus abgeleitet) |
-| **Einzahlen** | Was ein Förderer für diesen Platz zahlen muss, inklusive Arche-Bonus |
-| **Sichern** | Was *du* vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann — auf Tipp auch als laufende Summe |
+| **Kosten** | Was ein Förderer für diesen Platz zahlen muss, inklusive Arche-Bonus |
+| **Sichern** | Was *du* vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann — auf Tipp als „Eigen“, dein laufender Stand |
 
-Dazu die Aufteilung in Eigenanteil und Fremdkapital, den Betrag, den du vorab
-einzahlen solltest, und zwei fertige Zeilen zum Kopieren in den Förderchat —
+Dazu die Aufteilung in Eigen und Förderer, den Betrag, den du zum Sichern
+einzahlst, und zwei fertige Zeilen zum Kopieren in den Förderchat —
 samt einer Sammlung, die mehrere davon aufhebt.
 
 Das Häkchen je Platz kennt drei Zustände, ein Tipp schaltet weiter:
@@ -38,6 +38,26 @@ Das Häkchen je Platz kennt drei Zustände, ein Tipp schaltet weiter:
 | ✓ | angeboten | Fremdkapital, mit „Sichern“ | steht drin |
 | – | vergeben | Fremdkapital, schon abgesichert | fällt heraus |
 | leer | nicht angeboten | Eigenanteil | fällt heraus |
+
+### Wörter und Farben
+
+Die Begriffe folgen dem, was die Förderszene aus den bekannten Rechnern
+kennt: **Kosten** zahlt der Förderer, **Sichern** ist dein Schritt je Platz,
+**Eigen** dein Stand. Früher hieß die Förderer-Spalte „Einzahlen“ — und der
+Kasten darunter sagte „vorab einzahlen“ zu dem, was *du* zahlst. Dasselbe
+Verb für zwei Leute, direkt untereinander. Nur „Belohnung“ bleibt, weil das
+Spiel es so nennt. Unten steht „Förderer“ statt „Fremd“: Spielsprache statt
+Buchhaltung. Und weil „Eigen“ jetzt deine FP meint, heißt ein Platz
+mit eigenem Faktor oder Betrag „angepasst“ statt „eigen“.
+
+Grün heißt überall „deine FP“: die Eigen-Spalte, die Zahl im Kasten, der
+Eigen-Teil im Balken und „Eigen“ unten. Früher war die Zahl im Kasten grün,
+der Eigenanteil darunter rot und die Förderer-Summe wieder grün — zwei fast
+gleiche eigene Beträge in entgegengesetzten Farben. Die Förderer-Summe ist
+jetzt neutral; die Förderer haben ihre Platzfarben im Balken. „Sicher“ ist
+ein Status, kein Betrag, und steht als Fläche in einem helleren Grün
+(`--safe`). Das frühere Rot heißt jetzt `--danger` und bleibt für Warnungen
+und Löschen.
 
 ### Vergeben
 
@@ -49,11 +69,11 @@ längst eingezahlt sind. Das kam als Rückmeldung, und sie hatte recht.
 
 Darum „vergeben“: der Platz bleibt mit seiner Einzahlung in der Rechnung,
 Eigenanteil und Fremdkapital ändern sich nicht, die Spalte zeigt „vergeben“
-statt einer Zahl, und nur die Chatzeile lässt ihn weg. Der Kasten „vorab
-einzahlen“ nennt nur noch, was für die offenen Plätze aussteht, und sagt
+statt einer Zahl, und nur die Chatzeile lässt ihn weg. Der Kasten „zum
+Sichern“ nennt nur noch, was für die offenen Plätze aussteht, und sagt
 dazu, wie viel für die vergebenen schon drin ist.
 
-Die Spalte „Summe“ zählt die Absicherung vergebener Plätze dagegen mit —
+Die Spalte „Eigen“ zählt die Absicherung vergebener Plätze dagegen mit —
 auch das kam als Rückmeldung. Sie soll der Stand deiner eigenen FP im
 Bauwerk sein, wie ihn das Spiel zeigt: Waren P1 und P2 mit 51.474 FP
 abgesichert, steht bei P3 52.704 und nicht die Differenz von 1.230. Die
@@ -88,15 +108,15 @@ vor P5, danach 60 FP zum Leveln — 44.565 FP Eigenanteil. Leer heißt wieder
 „der Reihe nach gesichert“. Der Stand gilt nur für das Bauwerk und die
 Stufe, auf der du ihn eingetragen hast.
 
-### Schritt oder Summe
+### Schritt oder Stand
 
 Dieselbe Spalte, zwei verbreitete Lesarten. Manche wollen wissen, was
 *dieser* Platz sie noch kostet (`+1.060`), andere, wo sie stehen, wenn er
 sicher ist (`74.393`). Ein Tipp auf den Spaltenkopf — oder auf eine der
 Zahlen — schaltet um, und die Überschrift nennt die aktive Lesart:
-„Sichern“ gegen „Summe“.
+„Sichern“ gegen „Eigen“.
 
-Zwei Worte, nicht „Vorher sichern“ gegen „Vorher zusammen“: als Paar lesen
+Zwei kurze Worte, nicht „Vorher sichern“ gegen „Vorher zusammen“: als Paar lesen
 sie sich schneller, und die Spalte ist bei 320 Pixeln 68 Pixel breit — dort
 zählt jedes Wort, das wegfällt. Dass das „vorher“ gemeint ist, steht im
 Fußtext und im Kasten über der Tabelle.
@@ -106,7 +126,7 @@ umschalten statt entscheiden, und die Beschriftung sagt, was dasteht. Eine
 fünfte Spalte wäre der naheliegende Weg gewesen — bei 320 Pixeln ist die
 vorhandene aber 68 Pixel breit, eine weitere passt schlicht nicht.
 
-Die Summe endet beim Betrag aus dem Kasten darunter, nicht beim Eigenanteil
+Die Eigen-Spalte endet beim Betrag aus dem Kasten darunter, nicht beim Eigenanteil
 (sind Plätze vergeben, bei dem Betrag plus dem, was davor schon drin ist):
 die letzten FP zahlst du ein, wenn alle Plätze vergeben sind.
 
@@ -116,8 +136,8 @@ iPhone SE kostet dort jede Zeile ein Zwanzigstel Bildschirm, und der Test
 daneben hält die Seite unter 4,5 davon — mit beidem waren es 4,52. Verloren
 ist nichts, der Kasten über der Tabelle erklärt den Zeitpunkt genauer.
 
-**„Sicher“ gilt in beiden.** Wo nichts nachzulegen ist, bewegt sich auch die
-Summe nicht, und das Wort sagt das deutlicher als eine wiederholte Zahl. Eine
+**„Sicher“ gilt in beiden.** Wo nichts nachzulegen ist, bewegt sich auch der
+Stand nicht, und das Wort sagt das deutlicher als eine wiederholte Zahl. Eine
 Sonderregel für P2 braucht es dafür nicht: nach P1 ist P2 fast immer von
 selbst sicher, und wo ein eigener Faktor oder Betrag doch etwas nötig macht,
 erscheint die Zahl von allein.
@@ -188,8 +208,9 @@ eigener Wert.
 Das Modell in zwei Sätzen:
 
 - Ein Platz **folgt** dem Wert oben, bis du ihn anfasst. Danach ist er
-  **eigen**, trägt das Wort daneben und bleibt stehen, wenn der obere Wert
-  sich bewegt.
+  **angepasst**, trägt das Wort daneben und bleibt stehen, wenn der obere
+  Wert sich bewegt. Früher hieß das „eigen“ — seit „Eigen“ im Förderplan
+  deine FP meint, wäre das doppelt belegt.
 - **„Alle wieder angleichen“** nimmt alle fünf zurück aufs Folgen, ein
   einzelnes × nur einen.
 
@@ -203,7 +224,7 @@ die Spanne (`1,85–1,95`), auch zugeklappt.
 
 Der Block steht oben bei Stufe und Faktor, die Zahlen, um die es geht,
 stehen eine Bildschirmhöhe tiefer im Förderplan. Darum lässt sich die Zahl
-unter „Einzahlen“ antippen: Sie wird in der Zeile selbst zum Feld, in FP,
+unter „Kosten“ antippen: Sie wird in der Zeile selbst zum Feld, in FP,
 darunter eine schmale Zeile mit der anderen Einheit, dem Umschalter
 Faktor/FP, „Zurücksetzen“ und „Fertig“. Summe, Balken und „Sicher“ rechnen
 beim Tippen mit, man sieht die Wirkung also direkt daneben.
@@ -634,7 +655,7 @@ test/             Einheitentests (node:test) und Browsertests (Playwright)
 `rundgang.html` (live unter `/rundgang`) stellt cipher vor: alle
 Einstellungen mit Bildschirmfotos, im Schmiede-Look und leicht animiert —
 das Video im Kopf, aufsteigende Glut, Einblenden beim Scrollen, der
-Förderplan wechselt von selbst zwischen „Sichern“ und „Summe“. Die Seite ist
+Förderplan wechselt von selbst zwischen „Sichern“ und „Eigen“. Die Seite ist
 zum Teilen gedacht; der Rechner verlinkt sie nur einmal, ganz unten im
 Footer — ein Browsertest hält das fest.
 
