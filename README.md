@@ -5,8 +5,8 @@ live unter <https://foe-foerderrechner.com/>.
 
 cipher rechnet aus, wie viele FP du vorab einzahlen musst, damit dir niemand
 die Mäzen-Plätze wegschnappt, und schreibt die Zeile für den Förderchat gleich
-mit. Eine statische Seite, komplett im Browser: kein Konto, kein Server, kein
-Tracking.
+mit. Eine statische Seite, komplett im Browser: kein Konto, keine Cookies,
+keine Tracker.
 
 > **Kein offizielles Angebot.** cipher ist ein inoffizielles Fan-Projekt und
 > steht in keiner Verbindung zur InnoGames GmbH. „Forge of Empires“ sowie alle
