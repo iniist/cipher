@@ -255,13 +255,29 @@ a { color: inherit }
 
 /* ---------------------------------------------------------------- Header */
 
-/* Eine Zeile fuer Welt, Wortmarke und Menue, der Untertitel zentriert
-   darunter. Die Wortmarke steht in der Mitte des Bildschirms, solange beide
-   Knoepfe daneben passen; ein langer Weltname schiebt sie nur zur Seite,
-   statt gekuerzt zu werden (beide Seitenspalten wachsen mindestens auf
-   ihren Inhalt). Die beiden Huellen treten zurueck, ihre Kinder ordnet
-   das Raster. */
 header {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  margin: 6px 0 22px;
+}
+
+h1 {
+  font-size: clamp(2.1rem, 9vw, 2.7rem);
+  line-height: 1;
+  margin: 0 0 4px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+}
+
+/* Der Kopf des Rechners: eine Zeile fuer Welt, Wortmarke und Menue, der
+   Untertitel zentriert darunter. Die Wortmarke steht in der Mitte des
+   Bildschirms, solange beide Knoepfe daneben passen; ein langer Weltname
+   schiebt sie nur zur Seite, statt gekuerzt zu werden (beide Seitenspalten
+   wachsen mindestens auf ihren Inhalt). Die beiden Huellen treten zurueck,
+   ihre Kinder ordnet das Raster. */
+.app-head {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   grid-template-areas: "world title menu" "sub sub sub";
@@ -269,21 +285,11 @@ header {
   gap: 6px 10px;
   margin: 6px 0 18px;
 }
-header > div, .head-bar { display: contents }
-header .world-pick { grid-area: world; justify-self: start }
-header .settings-pick { grid-area: menu; justify-self: end }
-header .world-name { overflow: visible }
-
-h1 {
-  grid-area: title;
-  text-align: center;
-  font-size: clamp(2.1rem, 9vw, 2.7rem);
-  line-height: 1;
-  margin: 0;
-  font-weight: 700;
-  letter-spacing: -.02em;
-  white-space: nowrap;
-}
+.app-head > div, .head-bar { display: contents }
+.app-head .world-pick { grid-area: world; justify-self: start }
+.app-head .settings-pick { grid-area: menu; justify-self: end }
+.app-head .world-name { overflow: visible }
+.app-head h1 { grid-area: title; margin: 0 }
 
 /* Die Wortmarke ist anklickbar (Easter Egg), soll aber nicht wie ein Button
    aussehen — nur der Fokusring verraet, dass sie bedienbar ist. */
@@ -297,7 +303,13 @@ h1 {
   display: inline-block;
 }
 
-.sub { grid-area: sub; color: var(--dim); margin: 0 auto; max-width: 42ch; font-size: .98rem; text-align: center; text-wrap: balance }
+/* Der Untertitel bleibt auch auf dem iPhone SE eine Zeile; notfalls wird
+   er kleiner, nie umgebrochen. */
+.sub {
+  grid-area: sub; justify-self: center;
+  color: var(--dim); margin: 0;
+  font-size: min(.98rem, 4.7vw); white-space: nowrap;
+}
 
 .settings-pick {
   flex: 0 0 auto;
@@ -311,7 +323,7 @@ h1 {
 /* Unter 380px reicht es selbst dann nicht fuer "Mount Killmore"; der
    Globus geht, der Rahmen sagt weiter, dass es ein Knopf ist. */
 @media (max-width: 380px) {
-  header .world-pick svg { display: none }
+  .app-head .world-pick svg { display: none }
 }
 .world-pick {
   display: flex; flex: 0 0 auto; align-items: center; gap: 6px;
@@ -1395,11 +1407,10 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
   main > .panel:nth-of-type(3) { grid-column: 1; grid-row: 3 }   /* Foerderchat */
 
   /* Quer ist Hoehe knapp: derselbe Kopf wie hochkant, nur kleiner. */
-  header { gap: 2px 10px; margin: 0 0 12px }
+  .app-head { gap: 2px 10px; margin: 0 0 12px }
   .world-pick, .settings-pick { height: 30px }
   h1 { font-size: 1.9rem }
-  /* Die Zeilenbreite von 42 Zeichen ist fuer schmale Geraete gedacht. */
-  .sub { font-size: .9rem; max-width: none }
+  .sub { font-size: .9rem }
 
   .panel { padding: 12px; margin-bottom: 12px }
   .panel h2 { margin-bottom: 8px }

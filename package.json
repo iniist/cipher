@@ -1,7 +1,7 @@
 {
   "name": "cipher",
   "version": "1.0.0",
-  "description": "Das Förder-Dashboard für Mäzen-Plätze & FP-Einsatz — ein inoffizielles Fan-Tool für Forge of Empires.",
+  "description": "FoE-Förderrechner & Archerechner — ein inoffizielles Fan-Tool für Forge of Empires.",
   "private": true,
   "license": "MIT",
   "repository": { "type": "git", "url": "https://github.com/iniist/cipher" },

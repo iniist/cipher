@@ -2784,7 +2784,7 @@
   // --------------------------------------------------------- Weltenauswahl
 
   function renderWorldPick() {
-    $("worldName").textContent = world ? worldById[world.active].name : "Welt";
+    $("worldName").textContent = world ? worldById[world.active].name : "Server";
   }
 
   /**
