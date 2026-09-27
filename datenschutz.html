@@ -70,6 +70,8 @@
     </ul>
     <p class="muted">Der Spielername ist die einzige Angabe, die überhaupt einen Personenbezug haben kann — er dient allein dazu, den Text für den Förderchat zusammenzusetzen, und wird ausschließlich lokal gespeichert. Die Speicherung erfolgt, weil sie für den von dir ausdrücklich gewünschten Dienst erforderlich ist (§ 25 Abs. 2 Nr. 2 TDDDG); eine Einwilligung ist dafür nicht nötig, ein Cookie-Banner entsprechend auch nicht. Du kannst die Daten jederzeit über die Einstellungen deines Browsers oder über den Knopf unten löschen.</p>
 
+    <p class="muted"><strong>Umzug von der alten Adresse.</strong> cipher lief früher unter <code>cipher-calc.netlify.app</code>. Browser trennen die lokale Speicherung je Adresse. Wer die alte Adresse aufruft, wird deshalb auf <code>foe-foerderrechner.com</code> weitergeleitet, und die oben genannten Einträge werden dabei mitgenommen. Sie stehen dafür kurz im Link hinter dem Zeichen „#“. Dieser Teil eines Links wird vom Browser nicht an den Server übertragen und taucht deshalb auch in keinem Server-Log auf. Auf der neuen Adresse übernimmt cipher die Einträge einmalig in den localStorage, sofern dort noch keine stehen, und entfernt den Anhang sofort wieder aus der Adresszeile. Unter der alten Adresse bleiben die Einträge gespeichert, bis du sie dort löschst.</p>
+
     <div class="card">
       <p><button type="button" class="link" id="wipe">Alle lokal gespeicherten cipher-Daten jetzt löschen</button></p>
       <p class="muted" id="wipeResult" role="status"></p>

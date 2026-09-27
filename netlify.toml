@@ -82,18 +82,38 @@
   [headers.values]
     X-Robots-Tag = "noindex"
 
+[[headers]]
+  for = "/umzug.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
 # ------------------------------------------------------ Eigene Domain
 
 # Netlify leitet die *.netlify.app-Adresse nicht von selbst auf die eigene
-# Domain um; ohne diese Regel liefe der Rechner unter zwei Adressen. 301 mit
-# Pfad: alte Links, Lesezeichen und Suchtreffer landen auf der neuen Domain,
-# und Google uebertraegt die Bewertung. Steht als erste Weiterleitung, damit
-# keine andere Regel vorher greift. Deploy-Vorschauen haben einen eigenen
-# Host (deploy-preview-…--cipher-calc.netlify.app) und bleiben unberuehrt.
+# Domain um; ohne diese Regeln liefe der Rechner unter zwei Adressen.
+#
+# Bewusst keine 301 auf dem Server: Browser trennen den localStorage je
+# Adresse, und eine Server-Weiterleitung greift, bevor ein Skript die
+# gespeicherten Daten (Favoriten, eigene Werte, Sammlung) mitnehmen kann.
+# Stattdessen beantwortet die alte Adresse jeden Pfad mit umzug.html; deren
+# Skript liest den Speicher und leitet mit Pfad auf die neue Domain weiter,
+# die Daten hinter dem "#". Suchmaschinen finden den Umzug ueber noindex und
+# canonical auf umzug.html und den canonical-Eintraegen der Seiten.
+#
+# umzug.js braucht eine eigene Regel davor, sonst bekaeme auch das Skript
+# umzug.html. Beide stehen als erste Weiterleitungen, damit keine andere
+# Regel vorher greift. Deploy-Vorschauen haben einen eigenen Host
+# (deploy-preview-…--cipher-calc.netlify.app) und bleiben unberuehrt.
+[[redirects]]
+  from = "https://cipher-calc.netlify.app/umzug.js"
+  to = "/umzug.js"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "https://cipher-calc.netlify.app/*"
-  to = "https://foe-foerderrechner.com/:splat"
-  status = 301
+  to = "/umzug.html"
+  status = 200
   force = true
 
 # --------------------------------------- Auslieferung: was nicht mit muss
