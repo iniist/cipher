@@ -2741,15 +2741,33 @@
     $("worldName").textContent = world ? worldById[world.active].name : "Welt";
   }
 
+  /**
+   * Die Liste hat zwei Stellungen. Gewoehnlich wechselt sie die Welt. Wer
+   * bei der ersten Wahl danebengetippt hat, haengt seinen Stand sonst an die
+   * falsche Welt — "Umbenennen" gibt ihn der richtigen. Zur Wahl stehen dann
+   * nur Welten, die noch nichts gespeichert haben; zwei Staende zu
+   * verschmelzen, hiesse einen davon wegzuwerfen.
+   */
+  var renamingWorld = false;
+
   function renderWorlds() {
-    $("worldsNote").textContent = world
-      ? "Jede Welt hat eigene Bauwerke, Faktoren, Favoriten und eine eigene Sammlung. Name, Darstellung und Kürzel gelten überall."
-      : "Was du bisher eingestellt und gemerkt hast, gehört dann zu der Welt, die du jetzt wählst.";
+    var active = world && worldById[world.active];
+    $("worldsTitle").textContent = renamingWorld ? "Welt umbenennen" : "Welt wählen";
+    $("worldsNote").textContent = renamingWorld
+      ? "Zu welcher Welt gehört der Stand von " + active.name + " wirklich? Welten, die schon etwas gespeichert haben, stehen nicht zur Wahl."
+      : world
+        ? "Jede Welt hat eigene Bauwerke, Faktoren, Favoriten und eine eigene Sammlung. Name, Darstellung und Kürzel gelten überall."
+        : "Was du bisher eingestellt und gemerkt hast, gehört dann zu der Welt, die du jetzt wählst.";
+    $("worldRename").hidden = !world;
+    if (world) {
+      $("worldRename").textContent = renamingWorld ? "Doch nicht umbenennen" : "Falsche Welt? " + active.name + " umbenennen";
+    }
     $("worldList").innerHTML = WORLDS.map(function (entry) {
       var current = world && world.active === entry.id;
       var used = !current && worldInUse(entry.id);
+      var blocked = renamingWorld && (current || used);
       return '<li><button type="button" class="picker-opt world-opt" data-world="' + entry.id + '"' +
-        (current ? ' aria-current="true"' : "") + ">" +
+        (current ? ' aria-current="true"' : "") + (blocked ? " disabled" : "") + ">" +
         "<b>" + escapeHtml(entry.name) + "</b>" +
         "<span>" + (used ? "genutzt · " : "") + entry.id + "</span></button></li>";
     }).join("");
@@ -2758,13 +2776,20 @@
   function openWorlds() {
     var dialog = $("worlds");
     if (dialog.open) return;
+    renamingWorld = false;
     renderWorlds();
     document.documentElement.classList.add("picker-open");
     dialog.showModal();
     $("worldPick").setAttribute("aria-expanded", "true");
-    var current = dialog.querySelector('[aria-current="true"]') || dialog.querySelector(".world-opt");
-    current.focus({ preventScroll: true });
-    current.scrollIntoView({ block: "center" });
+    focusWorldList();
+  }
+
+  function focusWorldList() {
+    var list = $("worldList");
+    var target = list.querySelector('[aria-current="true"]:not(:disabled)') ||
+      list.querySelector(".world-opt:not(:disabled)");
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ block: "center" });
   }
 
   function onWorldsClosed() {
@@ -2797,6 +2822,45 @@
     window.location.reload();
   }
 
+  /**
+   * Den Stand der offenen Welt einer anderen, noch leeren Welt geben.
+   *
+   * Die erste Welt liegt unter den alten Schluesseln; fuer sie aendert sich
+   * nur der Name in `cipher:world`. Jede andere zieht mit ihren Schluesseln
+   * um: erst kopieren, dann die Wahl umstellen, dann das Alte loeschen — so
+   * ist in keinem Moment ein Stand nur noch halb da.
+   */
+  function renameWorld(id) {
+    if (!world || !worldById[id] || id === world.active || worldInUse(id)) return;
+    var from = worldById[world.active].name;
+    persistState();
+
+    if (!awayFromHome) {
+      world = { home: id, active: id };
+      write(WORLD_KEY, world);
+      renderWorldPick();
+      $("worlds").close();
+      toast(from + " heißt jetzt " + worldById[id].name + ".");
+      return;
+    }
+
+    var oldPrefix = worldPrefix(world.active);
+    var moved = [];
+    try {
+      Object.keys(window.localStorage).forEach(function (key) {
+        if (key.indexOf(oldPrefix) !== 0) return;
+        window.localStorage.setItem(worldPrefix(id) + key.slice(oldPrefix.length), window.localStorage.getItem(key));
+        moved.push(key);
+      });
+    } catch (error) {
+      toast("Umbenennen ging nicht — der Speicher ist gesperrt.");
+      return;
+    }
+    write(WORLD_KEY, { home: world.home, active: id });
+    moved.forEach(remove);
+    window.location.reload();
+  }
+
   function bindWorlds() {
     var dialog = $("worlds");
     $("worldPick").addEventListener("click", openWorlds);
@@ -2810,7 +2874,14 @@
     });
     $("worldList").addEventListener("click", function (event) {
       var button = event.target.closest("[data-world]");
-      if (button) chooseWorld(button.dataset.world);
+      if (!button || button.disabled) return;
+      if (renamingWorld) renameWorld(button.dataset.world);
+      else chooseWorld(button.dataset.world);
+    });
+    $("worldRename").addEventListener("click", function () {
+      renamingWorld = !renamingWorld;
+      renderWorlds();
+      focusWorldList();
     });
   }
 

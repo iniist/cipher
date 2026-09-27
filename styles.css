@@ -821,6 +821,9 @@ html.picker-open { overflow: hidden; scrollbar-gutter: stable }
   font: inherit; color: inherit; background: transparent;
 }
 .world-opt[aria-current="true"] b { color: var(--gold) }
+.world-opt:disabled { cursor: default; opacity: .45 }
+.world-opt:disabled:hover { background: transparent }
+.worlds-foot { margin: 0; padding: 10px 16px 14px; border-top: 1px solid var(--field-border); font-size: .9rem }
 .world-opt[aria-current="true"]::before {
   content: "✓";
   content: "✓" / "";

@@ -136,3 +136,65 @@ test("der Loeschknopf nimmt auch die Welten mit", async ({ page }) => {
   await page.click("#wipe");
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
 });
+
+test.describe("Umbenennen", () => {
+  test("die erste Welt bekommt nur einen anderen Namen, die Daten bleiben liegen", async ({ page }) => {
+    await altbestandLaden(page);
+    await weltWaehlen(page, "Brisgard");
+
+    await page.click("#worldPick");
+    await page.click("#worldRename");
+    await expect(page.locator("#worldsTitle")).toHaveText("Welt umbenennen");
+    // Die offene Welt selbst steht nicht zur Wahl.
+    await expect(page.locator(".world-opt", { hasText: "Brisgard" })).toBeDisabled();
+    await page.locator(".world-opt", { hasText: "Cirgard" }).click();
+
+    await expect(page.locator("#worldName")).toHaveText("Cirgard");
+    expect(JSON.parse(await speicher(page, "cipher:world"))).toEqual({ home: "de3", active: "de3" });
+    for (const key of Object.keys(ALTBESTAND)) {
+      expect(await speicher(page, key)).toBe(ALTBESTAND[key]);
+    }
+  });
+
+  test("eine weitere Welt zieht mit ihren Eintraegen um", async ({ page }) => {
+    await altbestandLaden(page);
+    await weltWaehlen(page, "Brisgard");
+    await weltWaehlen(page, "Korch");
+    await page.fill("#level", "66");
+    await page.locator("#level").blur();
+    await page.click("#favSave");
+
+    await page.click("#worldPick");
+    await page.click("#worldRename");
+    // Schon genutzte Welten sind gesperrt: dort liegt ein eigener Stand.
+    await expect(page.locator(".world-opt", { hasText: "Brisgard" })).toBeDisabled();
+    await page.locator(".world-opt", { hasText: "Langendorn" }).click();
+
+    await expect(page.locator("#worldName")).toHaveText("Langendorn");
+    await expect(page.locator("#level")).toHaveValue("66");
+    await expect(page.locator("#favList li")).toHaveCount(1);
+    const keys = await page.evaluate(() => Object.keys(localStorage).sort());
+    expect(keys.some((key) => key.startsWith("cipher:w:de10:"))).toBe(false);
+    expect(keys).toContain("cipher:w:de11:state");
+    expect(keys).toContain("cipher:w:de11:favorites");
+    expect(JSON.parse(await speicher(page, "cipher:world"))).toEqual({ home: "de2", active: "de11" });
+    // Die erste Welt bleibt, wie sie war.
+    expect(await speicher(page, "cipher:favorites")).toBe(ALTBESTAND["cipher:favorites"]);
+  });
+
+  test("ohne gewaehlte Welt gibt es nichts umzubenennen", async ({ page }) => {
+    await page.goto("/index.html");
+    await page.click("#worldPick");
+    await expect(page.locator("#worldRename")).toBeHidden();
+  });
+
+  test("ein zweiter Klick bricht das Umbenennen ab", async ({ page }) => {
+    await altbestandLaden(page);
+    await weltWaehlen(page, "Brisgard");
+    await page.click("#worldPick");
+    await page.click("#worldRename");
+    await page.click("#worldRename");
+    await expect(page.locator("#worldsTitle")).toHaveText("Welt wählen");
+    await expect(page.locator(".world-opt:disabled")).toHaveCount(0);
+  });
+});

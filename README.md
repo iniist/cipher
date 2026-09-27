@@ -473,6 +473,13 @@ Wechsel lädt die Seite neu; der Start liest dann aus den Schlüsseln der neuen
 Welt und prüft alles wie immer. Solange keine Welt gewählt ist, speichert
 cipher dazu nichts.
 
+Wer bei der ersten Wahl danebengetippt hat, findet unter der Liste
+„Falsche Welt? … umbenennen“. Der Stand der offenen Welt geht dann an eine
+andere — aber nur an eine, die noch nichts gespeichert hat, denn zwei Stände
+zu verschmelzen hieße einen davon wegzuwerfen. Bei der ersten Welt ändert sich
+dafür nur der Name in `cipher:world`; jede weitere zieht mit ihren Schlüsseln
+um: erst kopieren, dann die Wahl umstellen, dann das Alte löschen.
+
 ### Wenn Daten fehlen
 
 Für sehr hohe Stufen und für neue Bauwerke kennt der Datensatz nicht immer
