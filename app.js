@@ -1366,7 +1366,7 @@
       item.querySelector(".slot-reset").hidden = !pinned;
       // Der Zustand steht als Wort da, nicht nur als Farbe: im Kontrastmodus
       // ist Gold schwarz, dort traegt die Faerbung nichts.
-      item.querySelector(".slot-state").textContent = pinned ? "eigen" : "folgt";
+      item.querySelector(".slot-state").textContent = pinned ? "angepasst" : "folgt";
       item.querySelector(".slot-hint").textContent = slotHint(index, unit, row);
       item.querySelector('[data-slot-step="-1"]').disabled = values[index] <= FACTOR_MIN;
       item.querySelector('[data-slot-step="1"]').disabled = values[index] >= FACTOR_MAX;
@@ -1435,7 +1435,7 @@
     $("slotsBadge").hidden = own === 0;
     if (own === 0) return;
     if (anyPay) {
-      $("slotsBadge").textContent = own + (own === 1 ? " eigen" : " eigene");
+      $("slotsBadge").textContent = own + " angepasst";
       return;
     }
     var low = Math.min.apply(null, values);
@@ -1768,7 +1768,7 @@
       button.textContent = formatNumber(row.contribution);
       button.disabled = !payEditable(row, index);
       button.setAttribute("aria-label", "P" + row.slot + " zahlt " + formatNumber(row.contribution) +
-        " FP" + (own ? ", eigener Wert" : "") + " — ändern");
+        " FP" + (own ? ", angepasst" : "") + " — ändern");
       button.hidden = editing;
       renderPayInput(pay, index, row, editing);
       if (previous.length && previous[index] !== row.contribution) flashCell(pay);

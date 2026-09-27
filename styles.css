@@ -619,6 +619,15 @@ select, .pick {
 .slot-state { color: var(--dim); font-size: .8rem; flex: 0 0 auto }
 .slot-list li.own .slot-state { color: var(--gold); font-weight: 600 }
 :root[data-theme="contrast"] .slot-list li.own .slot-state { color: #000; text-decoration: underline }
+/* "angepasst" ist fast doppelt so breit wie frueher "eigen". Bei 320 Pixeln
+   ginge das ganz vom Feld ab, und von "1,85" bliebe "1" stehen. Die Knoepfe,
+   die Abstaende und das Wort geben darum dort je etwas her. */
+@media (max-width: 374px) {
+  .slot-row { gap: 6px }
+  .step.mini button { flex-basis: 28px }
+  .step.mini input { padding-left: 2px; padding-right: 2px }
+  .slot-state { font-size: .72rem }
+}
 
 .slot-reset {
   font: inherit; font-size: 1rem; line-height: 1;

@@ -47,7 +47,8 @@ kennt: **Kosten** zahlt der Förderer, **Sichern** ist dein Schritt je Platz,
 Kasten darunter sagte „vorab einzahlen“ zu dem, was *du* zahlst. Dasselbe
 Verb für zwei Leute, direkt untereinander. Nur „Belohnung“ bleibt, weil das
 Spiel es so nennt. Unten steht „Förderer“ statt „Fremd“: Spielsprache statt
-Buchhaltung.
+Buchhaltung. Und weil „Eigen“ jetzt deine FP meint, heißt ein Platz
+mit eigenem Faktor oder Betrag „angepasst“ statt „eigen“.
 
 Grün heißt überall „deine FP“: die Eigen-Spalte, die Zahl im Kasten, der
 Eigen-Teil im Balken und „Eigen“ unten. Früher war die Zahl im Kasten grün,
@@ -207,8 +208,9 @@ eigener Wert.
 Das Modell in zwei Sätzen:
 
 - Ein Platz **folgt** dem Wert oben, bis du ihn anfasst. Danach ist er
-  **eigen**, trägt das Wort daneben und bleibt stehen, wenn der obere Wert
-  sich bewegt.
+  **angepasst**, trägt das Wort daneben und bleibt stehen, wenn der obere
+  Wert sich bewegt. Früher hieß das „eigen“ — seit „Eigen“ im Förderplan
+  deine FP meint, wäre das doppelt belegt.
 - **„Alle wieder angleichen“** nimmt alle fünf zurück aufs Folgen, ein
   einzelnes × nur einen.
 
