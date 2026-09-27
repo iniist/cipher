@@ -256,5 +256,18 @@ if (dryRun) {
   process.stdout.write(`\nProbelauf — ${TARGET} wurde nicht verändert.\n`);
 } else {
   fs.writeFileSync(TARGET, out);
-  process.stdout.write(`\n${path.relative(ROOT, TARGET)} geschrieben. Jetzt: npm run test:unit\n`);
+  process.stdout.write(`\n${path.relative(ROOT, TARGET)} geschrieben.\n`);
+  // Den Stand auch fest in index.html schreiben: app.js setzt ihn zwar beim
+  // Start, aber wer die Seite ohne JavaScript abruft (Suchmaschinen,
+  // Vorschauen), saehe sonst „Stand .“. Nur beim echten data.js, nicht
+  // bei --out, sonst verstellen Probelaeufe die Seite.
+  if (TARGET === SOURCE) {
+    const [y, m, d] = generated.split("-").map(Number);
+    const html = path.join(ROOT, "index.html");
+    const before = fs.readFileSync(html, "utf8");
+    const after = before.replace(/(<span id="dataDate">)[^<]*(<\/span>)/, `$1${d}.${m}.${y}$2`);
+    if (after !== before) fs.writeFileSync(html, after);
+    process.stdout.write("Stand in index.html nachgezogen.\n");
+  }
+  process.stdout.write("Jetzt: npm run test:unit\n");
 }

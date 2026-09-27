@@ -16,6 +16,14 @@ test("der Datensatz traegt ein plausibles Datum", () => {
   assert.ok(generated > new Date("2020-01-01"));
 });
 
+test("index.html nennt den Stand auch ohne JavaScript", () => {
+  // app.js ueberschreibt den Wert beim Start; ohne JavaScript bliebe sonst
+  // „Stand .“ stehen. tools/build-data.js zieht ihn beim Import nach.
+  const html = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "index.html"), "utf8");
+  const [y, m, d] = DATA.generated.split("-").map(Number);
+  assert.match(html, new RegExp(`<span id="dataDate">${d}\\.${m}\\.${y}</span>`));
+});
+
 test("jedes Bauwerk ist vollstaendig beschrieben", () => {
   assert.ok(DATA.buildings.length > 40);
 
