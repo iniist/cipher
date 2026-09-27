@@ -71,6 +71,23 @@ während P3 angeboten wird, macht niemand mit Absicht. Steht ein Platz auf
 „aus“, während ein kleinerer darunter noch im Spiel ist, sagt cipher das
 und zeigt den Weg zu „vergeben“.
 
+### Deine FP schon im Bauwerk
+
+„Vergeben“ nimmt an, dass du vor jedem Platz der Reihe nach gesichert hast.
+Manchmal zahlen P1 und P2 aber, bevor du überhaupt etwas eingezahlt hast —
+etwa P1 10.000 und P2 9.999 auf einer Arche 181 (66.154 FP). Dann rechnet
+cipher, als wären schon 46.154 FP von dir drin, und für P3 bis P5 bleibt
+nur 1 FP: „passt nicht“.
+
+Sobald ein Platz vergeben ist, erscheint unter der Tabelle das Feld „Deine
+FP schon im Bauwerk“. Trägst du dort ein, was du wirklich drin hast (auch
+0), rechnet cipher vom jetzigen Stand aus: Die vergebenen Plätze sind mit
+ihrer Einzahlung drin, und der erste offene Platz sichert sie gleich mit
+ab. Im Beispiel mit Faktor 2,0 heißt das: +43.715 vor P3, +600 vor P4, +190
+vor P5, danach 60 FP zum Leveln — 44.565 FP Eigenanteil. Leer heißt wieder
+„der Reihe nach gesichert“. Der Stand gilt nur für das Bauwerk und die
+Stufe, auf der du ihn eingetragen hast.
+
 ### Schritt oder Summe
 
 Dieselbe Spalte, zwei verbreitete Lesarten. Manche wollen wissen, was

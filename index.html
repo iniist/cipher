@@ -329,6 +329,16 @@
       <tbody id="rows"></tbody>
     </table>
 
+    <!-- Nur sichtbar, solange ein Platz vergeben ist. Leer rechnet cipher
+         wie bisher: vor jedem vergebenen Platz der Reihe nach abgesichert.
+         Mit Zahl rechnet es vom Stand aus, der jetzt im Bauwerk ist — etwa
+         wenn P1 und P2 eingezahlt haben, bevor du selbst etwas gesichert hast. -->
+    <div class="own-in" id="ownIn" hidden>
+      <label class="l" for="ownPaid">Deine FP schon im Bauwerk</label>
+      <input id="ownPaid" type="text" inputmode="numeric" autocomplete="off" placeholder="leer = der Reihe nach gesichert" aria-describedby="ownPaidHint">
+      <p class="own-in-hint" id="ownPaidHint">Haben die vergebenen Plätze eingezahlt, bevor du gesichert hast? Trag ein, was du selbst schon drin hast (auch 0) — dann rechnet cipher vom jetzigen Stand aus.</p>
+    </div>
+
     <div class="lump" id="lump" hidden>
       <div class="lump-n"><b id="lumpValue">0</b><span>vorab einzahlen</span></div>
       <p id="lumpText"></p>

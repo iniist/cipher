@@ -815,3 +815,68 @@ test("bei 1,80, 1,90 und 2,00 ist P2 nach P1 immer sicher", () => {
     }
   }
 });
+
+test("buildPlan: mit eigenem Stand rechnet der Plan vom jetzigen Bauwerk aus", () => {
+  // P1 und P2 haben mit hohem Faktor eingezahlt, bevor irgendetwas gesichert
+  // war. Ohne Stand nimmt der Plan an, du haettest vor P1 schon 46.154 FP
+  // eingezahlt — dann bleibt fuer P3 bis P5 nichts mehr.
+  const base = {
+    total: 66154,
+    p1: 3670,
+    factor: 200,
+    payments: [10000, 9999, null, null, null],
+    enabled: allOn,
+    taken: [true, true, false, false, false]
+  };
+  const classic = Calc.buildPlan(base);
+  assert.equal(classic.rows[2].tooTight, true);
+
+  const now = Calc.buildPlan({ ...base, ownPaid: 0 });
+  assert.equal(now.anyTooTight, false);
+  assert.deepEqual(now.rows.map((row) => row.contribution), [10000, 9999, 1220, 310, 60]);
+  assert.deepEqual(now.rows.map((row) => row.secure), [0, 0, 43715, 600, 190]);
+  assert.deepEqual(now.rows.map((row) => row.taken), [true, true, false, false, false]);
+  assert.equal(now.upfrontOpen, 44505);
+  assert.equal(now.remainder, 60);
+  assert.equal(now.external, 21589);
+  assert.equal(now.ownShare, 44565);
+  assert.equal(now.ownShare, now.upfront + now.remainder);
+});
+
+test("buildPlan: mit eigenem Stand zaehlt, was du schon eingezahlt hast", () => {
+  const plan = Calc.buildPlan({
+    total: 66154,
+    p1: 3670,
+    factor: 200,
+    payments: [10000, 9999, null, null, null],
+    enabled: allOn,
+    taken: [true, true, false, false, false],
+    ownPaid: 40000
+  });
+  assert.equal(plan.rows[2].secure, 3715);
+  assert.equal(plan.ownPaid, 40000);
+  assert.equal(plan.upfront, 40000 + 3715 + 600 + 190);
+  assert.equal(plan.ownShare, 44565);
+});
+
+test("buildPlan: mit eigenem Stand werden auch vergebene Plaetze abgesichert", () => {
+  // Nichts mehr offen anzubieten ausser P3, und P3 zahlt viel: trotzdem darf
+  // hoechstens so viel offen bleiben, wie P2 eingezahlt hat.
+  const plan = Calc.buildPlan({
+    total: 30000,
+    p1: 1000,
+    factor: 200,
+    payments: [3000, 2000, 1900, null, null],
+    enabled: [true, true, true, false, false],
+    taken: [true, true, false, false, false],
+    ownPaid: 0
+  });
+  // offen 25.000; P2 verlangt hoechstens 2.000 offen, P3 haette 3.800 erlaubt
+  assert.equal(plan.rows[2].secure, 23000);
+  assert.equal(plan.remainder, 100);
+});
+
+test("buildPlan: ohne Stand bleibt alles wie bisher", () => {
+  const plan = Calc.buildPlan({ total: 10000, p1: 800, factor: 190, enabled: allOn });
+  assert.equal(plan.ownPaid, 0);
+});

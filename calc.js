@@ -417,11 +417,19 @@
    *   Rechnung: seine Einzahlung zaehlt als Fremdkapital, seine Absicherung
    *   ist schon geleistet. Gilt nur fuer Plaetze, die auch `enabled` sind —
    *   wer einen Platz nicht anbietet, hat ihn auch nicht vergeben.
+   * @param {number|null} [options.ownPaid] Was du selbst schon im Bauwerk hast.
+   *   Fehlt die Zahl, nimmt der Plan an, dass du vor jedem vergebenen Platz
+   *   der Reihe nach abgesichert hast. Mit der Zahl rechnet er vom Stand aus,
+   *   der jetzt im Bauwerk ist: vergebene Plaetze sind mit ihrer Einzahlung
+   *   drin, ohne dass davor etwas gesichert sein muss — so wie wenn P1 und P2
+   *   eingezahlt haben, bevor du selbst etwas eingezahlt hast. Die offenen
+   *   Plaetze werden von dort aus abgesichert, und zwar so, dass auch die
+   *   vergebenen nicht mehr ueberboten werden koennen.
    * @returns {{
    *   rows: Array<{slot:number, reward:number, factor:number, contribution:number,
    *                offered:boolean, taken:boolean, secure:number|null,
    *                tooTight:boolean, fixed:boolean, outOfOrder:boolean}>,
-   *   total:number, external:number, ownShare:number,
+   *   total:number, external:number, ownShare:number, ownPaid:number,
    *   upfront:number, upfrontOpen:number, remainder:number,
    *   anyTooTight:boolean, anyOutOfOrder:boolean
    * }}
@@ -434,6 +442,7 @@
     var fixed = options.payments || [];
     var enabled = options.enabled;
     var taken = options.taken || [];
+    var ownPaid = options.ownPaid != null && options.ownPaid >= 0 ? Math.floor(options.ownPaid) : null;
 
     /** Der Faktor, der fuer diesen Platz tatsaechlich gilt. */
     function factorFor(index) {
@@ -462,6 +471,7 @@
      * @param {number[]} securePay Einzahlung je Platz, mit der `needed` rechnet
      */
     function planWith(securePay) {
+      if (ownPaid != null) return planFromNow(securePay);
       var remaining = total;
       var upfront = 0; // Was du zahlst, bevor alle Plaetze vergeben sind
       var upfrontOpen = 0; // Davon der Teil fuer Plaetze, die noch offen sind
@@ -523,7 +533,81 @@
         total: total,
         external: external,
         ownShare: upfront + remaining,
+        ownPaid: 0,
         upfront: upfront,
+        upfrontOpen: upfrontOpen,
+        remainder: remaining,
+        anyTooTight: anyTooTight,
+        anyOutOfOrder: markOutOfOrder(rows)
+      };
+    }
+
+    /**
+     * Den Plan vom Stand aus rechnen, der jetzt im Bauwerk ist.
+     *
+     * Vergebene Plaetze sind mit ihrer Einzahlung drin, dazu das, was du
+     * selbst schon eingezahlt hast. Ein vergebener Platz ist sicher, sobald
+     * hoechstens noch seine Einzahlung offen ist — solange mehr offen ist,
+     * koennte jemand an ihm vorbeiziehen. Der erste offene Platz sichert
+     * deshalb nicht nur sich selbst, sondern auch die vergebenen ab.
+     * @param {number[]} securePay Einzahlung je Platz, mit der `needed` rechnet
+     */
+    function planFromNow(securePay) {
+      var rows = rewardChain(options.p1).map(function (reward, index) {
+        var inPlay = Boolean(enabled[index]) && reward > 0;
+        return {
+          slot: index + 1,
+          reward: reward,
+          factor: factorFor(index),
+          contribution: payments[index],
+          offered: inPlay && !taken[index],
+          taken: inPlay && Boolean(taken[index]),
+          secure: null,
+          tooTight: false,
+          fixed: isFixed(index),
+          outOfOrder: false
+        };
+      });
+
+      var external = 0;
+      var cap = Infinity; // Hoechstens so viel darf offen sein, damit kein vergebener Platz faellt
+      rows.forEach(function (row) {
+        if (!row.taken) return;
+        external += row.contribution;
+        row.secure = 0;
+        cap = Math.min(cap, row.contribution);
+      });
+
+      var remaining = Math.max(0, total - ownPaid - external);
+      var upfrontOpen = 0;
+      var anyTooTight = false;
+
+      rows.forEach(function (row, index) {
+        if (!row.offered) return;
+        var pay = row.contribution;
+        // Wie im Plan ohne Stand: nach der Einzahlung bleibt hoechstens `pay`
+        // offen. Dazu darf nie mehr offen sein als der kleinste vergebene
+        // Platz eingezahlt hat.
+        var needed = Math.max(0, remaining - Math.min(2 * securePay[index], cap));
+        if (remaining - needed < pay) {
+          row.offered = false;
+          row.tooTight = true;
+          anyTooTight = true;
+          return;
+        }
+        upfrontOpen += needed;
+        remaining -= needed + pay;
+        row.secure = needed;
+        external += pay;
+      });
+
+      return {
+        rows: rows,
+        total: total,
+        external: external,
+        ownShare: total - external,
+        ownPaid: ownPaid,
+        upfront: ownPaid + upfrontOpen,
         upfrontOpen: upfrontOpen,
         remainder: remaining,
         anyTooTight: anyTooTight,
