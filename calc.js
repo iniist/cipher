@@ -50,11 +50,13 @@
    *
    * Der Wert ist gemessen, nicht geschaetzt: Er ist fuer alle Zeitalter
    * gemeinsam bestimmt, weil die meisten zu wenige hohe Stufen kennen, um
-   * ihre Kruemmung selbst zu zeigen. Mit -0,002 trifft die Hochrechnung
-   * alle im Spiel abgelesenen Stufen oberhalb des Wikis, und der
-   * Ausblendtest ueber alle Zeitalter verfehlt 40 statt 150 Stufen um mehr
-   * als 5 FP. Schon -0,00175 und -0,00225 verfehlen wieder einzelne
-   * Spielwerte — neue Ablesungen sollten den Wert pruefen, siehe
+   * ihre Kruemmung selbst zu zeigen. Gemessen an 49 abgelesenen Stufen
+   * oberhalb des Wikis (Spiel und Graldron-Rechner), jede einzeln
+   * ausgeblendet und vorhergesagt: die reine Potenzkurve verfehlte 14 um
+   * bis zu 10 FP, mit -0,002 sind es 6 um je 5 FP. Zwischen -0,00175 und
+   * -0,00225 ist das Ergebnis gleich gut, darueber und darunter schlechter.
+   * Der Ausblendtest ueber die Wiki-Werte verfehlt 40 statt 150 Stufen um
+   * mehr als 5 FP. Neue Ablesungen sollten den Wert pruefen, siehe
    * test/calc.test.js. Derselbe Wert steht in tools/import.html.
    */
   var CURVATURE = -0.002;
