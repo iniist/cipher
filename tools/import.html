@@ -185,6 +185,13 @@ const CHECKS = {
   // Aus dem Graldron-Rechner. Das Wiki kennt die Eisenzeit nur bis Stufe
   // 20; hochgerechnet lag die reine Potenzkurve bei 250 um 30 FP zu hoch,
   // die gekrümmte um 15.
+  // Aus dem Graldron-Rechner. Das Wiki kennt das Hochmittelalter nur bis
+  // Stufe 60; hochgerechnet lag die gekrümmte Kurve bei 175 und 200 um
+  // 10 FP zu hoch, die reine Potenzkurve um 15.
+  "St._Mark's_Basilica": {
+    70: [2860, 715], 90: [4687, 965], 110: [7679, 1230], 130: [12583, 1500],
+    150: [20619, 1785], 175: [38226, 2145], 200: [70868, 2520]
+  },
   Lighthouse_of_Alexandria: {
     60: [1891, 510], 70: [2420, 610], 80: [3098, 720], 90: [3966, 825],
     100: [5076, 940], 120: [8318, 1170], 150: [17447, 1530], 170: [28588, 1780],
@@ -198,7 +205,13 @@ const CHECKS = {
   // Stufe 142 der Fliegenden Insel, 22 Stufen über dem höchsten
   // Wiki-Wert der Venus. Sie belegt nebenbei das Zeitalter: als Venus
   // liegt die Kurve 5 FP daneben, als Virtuelle Zukunft wären es 350.
-  Flying_Island: { 142: [35147, 3455] },
+  Flying_Island: {
+    142: [35147, 3455],
+    // Aus dem Graldron-Rechner; hochgerechnet lag die gekrümmte Kurve
+    // höchstens 5 FP daneben, die reine Potenzkurve 10.
+    160: [54817, 3990], 170: [70171, 4295], 180: [89824, 4600],
+    200: [147187, 5220], 201: [150867, 5250]
+  },
   // Im Förderfenster abgelesen. Stufe 202 liegt über allem, was das Wiki
   // für die Bronzezeit kennt, und zieht deren Kurve am oberen Ende gerade.
   Statue_of_Zeus: { 111: [6176, 975], 125: [8726, 1125], 202: [58419, 2005] },
