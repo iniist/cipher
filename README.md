@@ -117,6 +117,14 @@ Bauwerk braucht einen Eintrag in `abbr.js` — `test/abbr.test.js` schlägt sons
 an. Widersprüchliche oder aus der Kurve fallende Wiki-Werte werden als
 `source: "x"` markiert; die Anwendung weist darauf hin.
 
+Als Gegenprobe vergleicht `tools/build-data.js … --foe-helper <datei>` die
+P1-Kurven mit der im Spiel gemessenen Tabelle des
+[FoE-Helpers](https://github.com/mainIine/foe-helfer-extension)
+(`js/web/greatbuildings/js/greatbuildings.js`). Der Workflow lädt sie dafür
+selbst herunter. Der Abgleich meldet nur Abweichungen und ändert nichts am
+Datensatz; die Tabelle steht unter AGPLv3 und wird weder mitgeliefert noch
+übernommen.
+
 ## Lizenz
 
 Quellcode: [MIT](./LICENSE). Abweichend lizenziert (Details in

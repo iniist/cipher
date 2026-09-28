@@ -50,8 +50,24 @@ jobs:
         id: lauf
         run: node tools/import-run.js lg-daten.json
 
+      # Gegenprobe gegen die P1-Tabelle des FoE-Helpers (siehe
+      # tools/foe-helper.js). Nur ein Bericht, der Datensatz bleibt davon
+      # unberuehrt. Ist GitHub gerade nicht erreichbar, laeuft der Import
+      # ohne Abgleich weiter, statt daran zu scheitern.
+      - name: FoE-Helper-Tabelle holen
+        continue-on-error: true
+        run: >-
+          curl -fsSL --retry 3 -o foe-helper.js
+          https://raw.githubusercontent.com/mainIine/foe-helfer-extension/master/js/web/greatbuildings/js/greatbuildings.js
+
       - name: Datensatz erzeugen
-        run: node tools/build-data.js lg-daten.json | tee build-bericht.txt
+        run: |
+          set -o pipefail
+          if [ -s foe-helper.js ]; then
+            node tools/build-data.js lg-daten.json --foe-helper foe-helper.js | tee build-bericht.txt
+          else
+            node tools/build-data.js lg-daten.json | tee build-bericht.txt
+          fi
 
       # Hier laeuft die volle Suite, nicht nur die Datentests — und das aus
       # einem Grund, der erst der erste Lauf gezeigt hat: Einen Pull Request,
@@ -160,6 +176,7 @@ jobs:
             echo "- **Wiki-Werte verworfen**: erwartet werden die bekannten Stellen der Jahrhundertwende. Deutlich mehr hiesse, die Regel greift zu scharf."
             echo "- **Spielwerte passen**: muss vollstaendig aufgehen — das sind die im Spiel abgelesenen Werte aus \`CHECKS\`."
             echo "- **uebernommen**: Hinweise, in denen Werte aus dem bisherigen Datensatz weitergetragen wurden (etwa der Siphon, den das Wiki nicht kennt)."
+            echo "- **Abgleich mit FoE-Helper**: Wiki-Werte, die einer Messung des FoE-Helpers widersprechen, genau ansehen. Abweichungen geschaetzter Werte um 5 bis 10 FP sind bekannt."
             echo
             echo "Einheiten- und Browsertests sind in diesem Lauf bereits gruen gelaufen — der Lauf \"Tests\" an diesem Pull Request bleibt auf \"action_required\" stehen, weil ein Arbeitsablauf ihn aufgemacht hat. Wer ihn trotzdem sehen will, gibt ihn in den Actions frei."
           } > pr-text.md

@@ -4,6 +4,9 @@
  *   node tools/build-data.js lg-daten.json
  *   node tools/build-data.js lg-daten.json --dry          (nur berichten)
  *   node tools/build-data.js lg-daten.json --out tmp.js   (woanders hinschreiben)
+ *   node tools/build-data.js lg-daten.json --foe-helper greatbuildings.js
+ *                                  (P1-Kurven gegen den FoE-Helper pruefen,
+ *                                   siehe tools/foe-helper.js)
  *
  * Der Importer liest das Wiki und kennt darum nur, was dort steht. Zwei
  * Dinge stehen nicht zwingend im Wiki und werden deshalb aus dem bestehenden
@@ -30,21 +33,42 @@ const SOURCE = path.join(ROOT, "data.js");
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry");
 
-// --out schreibt woandershin; gerettet wird weiterhin aus data.js.
-const outFlag = args.indexOf("--out");
-const TARGET = outFlag >= 0 && args[outFlag + 1]
-  ? path.resolve(args[outFlag + 1])
-  : SOURCE;
+/** Wert hinter einer Option, oder null, wenn sie fehlt. */
+const optionValue = (name) => {
+  const index = args.indexOf(name);
+  return index >= 0 && args[index + 1] ? args[index + 1] : null;
+};
 
-// Ohne --out ist outFlag -1; der Wert danach darf dann nicht ausgefiltert
-// werden, sonst verschwindet das erste Argument.
-const outValueIndex = outFlag >= 0 ? outFlag + 1 : -1;
-const positional = args.filter((arg, index) => !arg.startsWith("--") && index !== outValueIndex);
+// --out schreibt woandershin; gerettet wird weiterhin aus data.js.
+const outValue = optionValue("--out");
+const TARGET = outValue ? path.resolve(outValue) : SOURCE;
+const helperPath = optionValue("--foe-helper");
+
+// Die Werte hinter den Optionen sind keine Eingabedatei. Fehlt eine Option,
+// ist ihr Index -1 und es darf nichts ausgefiltert werden, sonst verschwindet
+// das erste Argument.
+const valueIndices = ["--out", "--foe-helper"]
+  .map((name) => args.indexOf(name))
+  .filter((index) => index >= 0)
+  .map((index) => index + 1);
+const positional = args.filter((arg, index) => !arg.startsWith("--") && !valueIndices.includes(index));
 const inputPath = positional[0];
 
 if (!inputPath) {
-  process.stderr.write("Aufruf: node tools/build-data.js <lg-daten.json> [--dry] [--out <datei>]\n");
+  process.stderr.write("Aufruf: node tools/build-data.js <lg-daten.json> [--dry] [--out <datei>] [--foe-helper <greatbuildings.js>]\n");
   process.exit(2);
+}
+
+// Die Gegenprobe ist freiwillig; wer sie verlangt, soll aber nicht
+// stillschweigend ohne sie auskommen, weil der Pfad nicht stimmt.
+let helperSource = null;
+if (helperPath) {
+  try {
+    helperSource = fs.readFileSync(helperPath, "utf8");
+  } catch (error) {
+    process.stderr.write(`FoE-Helper-Datei nicht lesbar: ${helperPath}\n`);
+    process.exit(2);
+  }
 }
 
 const warnings = [];
@@ -250,6 +274,16 @@ process.stdout.write(report.join("\n") + "\n");
 
 if (warnings.length) {
   process.stdout.write("\nHinweise:\n" + warnings.map((w) => "  - " + w).join("\n") + "\n");
+}
+
+// Nur berichten: am Datensatz aendert der Abgleich nichts.
+if (helperSource !== null) {
+  const { parseRewards, compareCurves } = require("./foe-helper.js");
+  const rewards = parseRewards(helperSource);
+  const lines = rewards
+    ? compareCurves(curves, rewards).lines
+    : ["Keine Tabelle \"Rewards\" gefunden — hat der FoE-Helper sein Format geändert? Abgleich übersprungen."];
+  process.stdout.write("\nAbgleich mit FoE-Helper:\n" + lines.map((line) => "  - " + line).join("\n") + "\n");
 }
 
 if (dryRun) {

@@ -7,6 +7,7 @@ blob-report/
 # Zwischenergebnis eines Importlaufs
 lg-daten.json
 build-bericht.txt
+/foe-helper.js
 
 # Arbeitskopien der Agenten — reine Scratch-Verzeichnisse
 .claude/worktrees/
