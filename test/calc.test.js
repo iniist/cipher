@@ -177,6 +177,49 @@ test("der Fit reproduziert jeden geschaetzten Wert des Datensatzes", () => {
   assert.ok(checked > 1000, `es wurden nur ${checked} geschaetzte Stufen geprueft`);
 });
 
+/** Eine Kurve aus wenigen echten Stuetzpunkten, der Rest geschaetzt. */
+function sparseCurve(points, levels) {
+  const p1 = new Array(levels).fill(5);
+  const source = new Array(levels).fill("e");
+  for (const [level, value] of points) {
+    p1[level - 1] = value;
+    source[level - 1] = "w";
+  }
+  return { p1, source: source.join("") };
+}
+
+/**
+ * Die im Spiel abgelesenen Stufen des Stellaren Kriegsschiffs trifft keine
+ * Kurve aus dem Raster: Der Bereich, der alle trifft, ist schmaler als ein
+ * Rasterschritt. Das Raster verfehlte darum Stufe 212 und setzte die
+ * Schaetzungen darunter 5 FP zu hoch an.
+ */
+test("fitCurve trifft verstreute Spielwerte, auch zwischen den Rasterschritten", () => {
+  const points = [[40, 825], [41, 850], [50, 1085], [60, 1350], [120, 3115], [212, 6180]];
+  const fit = Calc.fitCurve(sparseCurve(points, 212));
+  for (const [level, value] of points) {
+    assert.equal(Calc.roundTo5(fit.factor * Math.pow(level, fit.exponent)), value, `Stufe ${level}`);
+  }
+  assert.equal(fit.miss, 0);
+});
+
+test("fitCurve bleibt beim Raster, wenn das schon alle Punkte trifft", () => {
+  // Liegt genau auf dem ueblichen Exponenten: Das Raster nimmt ihn, die
+  // exakte Suche wuerde irgendwo in den gleichwertigen Bereich greifen.
+  const points = [30, 45, 60, 90, 150].map((level) => [level, Calc.roundTo5(10 * Math.pow(level, 1.206))]);
+  const fit = Calc.fitCurve(sparseCurve(points, 150));
+  assert.equal(fit.exponent, 1.206);
+  assert.equal(fit.miss, 0);
+});
+
+test("fitCurve faellt aufs Raster zurueck, wenn keine Kurve alle Punkte trifft", () => {
+  // Stufe 61 widerspricht ihren Nachbarn: Mit ihr trifft keine Kurve alles.
+  const points = [[40, 825], [50, 1085], [60, 1350], [61, 1300], [120, 3115]];
+  const fit = Calc.fitCurve(sparseCurve(points, 120));
+  assert.ok(fit, "ohne exakte Kurve gibt es trotzdem einen Fit");
+  assert.ok(fit.miss > 0, "der Fit meldet den verfehlten Punkt");
+});
+
 /**
  * Der Ausblendtest ist die Grundlage dafuer, wie laut die Oberflaeche einen
  * hochgerechneten Wert kommentiert. Er darf darum weder eine saubere Kurve

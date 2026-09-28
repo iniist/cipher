@@ -147,7 +147,8 @@
 
   /**
    * Aus den echten Werten einer Kurve die Potenzfunktion C * Stufe^e
-   * bestimmen, die moeglichst viele davon auf den Punkt trifft.
+   * bestimmen, die moeglichst viele davon auf den Punkt trifft — alle, wenn
+   * es eine solche Kurve gibt (siehe exactFit).
    *
    * Dieselbe Rechnung steht in tools/import.html, das damit die Luecken im
    * Datensatz fuellt. Hier wird sie gebraucht, weil der Datensatz nur so
@@ -215,7 +216,67 @@
         best = { exponent: exponent, factor: factor, miss: miss, distance: distance };
       }
     }
-    return best;
+    if (best.miss === 0) return best;
+    return exactFit(use) || best;
+  }
+
+  /**
+   * Die Kurve suchen, die jeden Stuetzpunkt trifft, wo das Raster keine hat.
+   *
+   * Das Raster oben geht in Schritten von 0,0005 und nimmt den Median als
+   * Faktor. Liegen die Stuetzpunkte weit auseinander — etwa ein paar im
+   * Spiel abgelesene Stufen zwischen 40 und 212 —, ist der Bereich, der alle
+   * trifft, oft schmaler als ein Rasterschritt, und das Raster greift an ihm
+   * vorbei. Hier wird er direkt gesucht.
+   *
+   * Ein Punkt [l, v] wird getroffen, wenn v - 2,5 <= C * l^e < v + 2,5 ist,
+   * logarithmisch also ln(v - 2,5) - e ln l <= ln C < ln(v + 2,5) - e ln l.
+   * Der Spielraum fuer ln C, kleinste Obergrenze minus groesste Untergrenze,
+   * ist als Minimum minus Maximum linearer Funktionen in e konkav — eine
+   * Ternaersuche findet sein Maximum. Ist er dort positiv, gibt es die
+   * Kurve, und genommen wird die mit dem groessten Abstand zu allen
+   * Rundungsgrenzen: Exponent am Maximum, ln C in der Mitte des Spielraums.
+   *
+   * Greift nur, wenn das Raster Punkte verfehlt. Trifft es alle, bleibt es
+   * bei seinem Ergebnis nahe am ueblichen Exponenten; eine andere Kurve aus
+   * dem gleichwertigen Bereich wuerde die Schaetzungen nur grundlos
+   * verschieben. Dieselbe Rechnung steht in tools/import.html.
+   *
+   * @param {Array<number[]>} use Stuetzpunkte [Stufe, Belohnung]
+   * @returns {{factor: number, exponent: number, miss: number, distance: number}|null}
+   */
+  function exactFit(use) {
+    function room(exponent) {
+      var low = -Infinity;
+      var high = Infinity;
+      for (var i = 0; i < use.length; i++) {
+        var shift = exponent * Math.log(use[i][0]);
+        low = Math.max(low, Math.log(use[i][1] - 2.5) - shift);
+        high = Math.min(high, Math.log(use[i][1] + 2.5) - shift);
+      }
+      return { low: low, high: high };
+    }
+
+    var from = EXPONENT_MIN;
+    var to = EXPONENT_MAX;
+    for (var step = 0; step < 200; step++) {
+      var left = from + (to - from) / 3;
+      var right = to - (to - from) / 3;
+      var a = room(left);
+      var b = room(right);
+      if (a.high - a.low < b.high - b.low) from = left;
+      else to = right;
+    }
+
+    var exponent = (from + to) / 2;
+    var bounds = room(exponent);
+    if (!(bounds.low < bounds.high)) return null;
+
+    var factor = Math.exp((bounds.low + bounds.high) / 2);
+    for (var i = 0; i < use.length; i++) {
+      if (roundTo5(factor * Math.pow(use[i][0], exponent)) !== use[i][1]) return null;
+    }
+    return { exponent: exponent, factor: factor, miss: 0, distance: Math.abs(exponent - DEFAULT_EXPONENT) };
   }
 
   /**

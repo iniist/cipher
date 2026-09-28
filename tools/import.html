@@ -354,7 +354,35 @@ function fitCurve(pts) {
     const miss = use.filter(([l, v]) => r5(C * l ** e) !== v).length, d = Math.abs(e - DEF_EXP);
     if (miss < best.miss || (miss === best.miss && d < best.d)) best = { e, C, miss, d };
   }
-  return best;
+  if (use.length < 3 || best.miss === 0) return best;
+  return exactFit(use) || best;
+}
+/* Verfehlt das Raster Punkte, die Kurve suchen, die alle trifft: Der Bereich
+   liegt oft zwischen zwei Rasterschritten. Logarithmisch ist der Spielraum
+   fuer ln C konkav im Exponenten; die Ternaersuche nimmt sein Maximum, ln C
+   die Mitte. Begruendung und dieselbe Rechnung: exactFit in calc.js — beide
+   muessen bitgleich rechnen, sonst passen Datensatz und App nicht zusammen. */
+function exactFit(use) {
+  const room = e => {
+    let low = -Infinity, high = Infinity;
+    for (let i = 0; i < use.length; i++) {
+      const shift = e * Math.log(use[i][0]);
+      low = Math.max(low, Math.log(use[i][1] - 2.5) - shift);
+      high = Math.min(high, Math.log(use[i][1] + 2.5) - shift);
+    }
+    return { low, high };
+  };
+  let from = 1.18, to = 1.2305;
+  for (let step = 0; step < 200; step++) {
+    const left = from + (to - from) / 3, right = to - (to - from) / 3;
+    const a = room(left), b = room(right);
+    if (a.high - a.low < b.high - b.low) from = left; else to = right;
+  }
+  const e = (from + to) / 2, bounds = room(e);
+  if (!(bounds.low < bounds.high)) return null;
+  const C = Math.exp((bounds.low + bounds.high) / 2);
+  for (let i = 0; i < use.length; i++) if (r5(C * Math.pow(use[i][0], e)) !== use[i][1]) return null;
+  return { e, C, miss: 0, d: Math.abs(e - DEF_EXP) };
 }
 /* Das Wiki wird abgetippt, und Tippfehler sehen aus wie Wahrheit: dreimal
    dieselbe Zahl hintereinander, eine um eine Zeile verrutschte Spalte. Solche
