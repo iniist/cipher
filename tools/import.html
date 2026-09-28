@@ -148,7 +148,10 @@ Shattered_Horizon_Siphon | Horizontriss-Siphon | Stellares Zeitalter`;
    meist die Kosten, denn die stimmen ohnehin per Formel. Diese Tabelle
    schlägt jede Wiki-Angabe und schärft die Kurve des ganzen Zeitalters. */
 const CHECKS = {
-  Stellar_Warship: { 50: [38477, 1085], 60: [49254, 1350], 120: [216707, 3115], 212: [2101199, 6180] },
+  // Stufe 41 im Förderfenster abgelesen: P1 850, die Kurve schätzte 855 und
+  // setzte damit P1 und P2 je rund 10 FP zu hoch an. Stufe 40 abgelesen:
+  // P1 825, die Kurve schätzte 830.
+  Stellar_Warship: { 40: [30059, 825], 41: [30810, 850], 50: [38477, 1085], 60: [49254, 1350], 120: [216707, 3115], 212: [2101199, 6180] },
   Saturn_VI_Gate_PEGASUS: { 12: [2648, 185], 60: [8662, 1310], 63: [9328, 1390], 80: [14193, 1850] },
   // Im Förderfenster abgelesen, Stufe 141 und 150. Beide liegen weit
   // oberhalb der Stufe 110, bis zu der das Wiki die Virtuelle Zukunft
@@ -342,12 +345,44 @@ function fitCurve(pts) {
   if (use.length < 5) use = pts.filter(([l]) => l >= 11);
   if (!use.length) return null;
   let best = { e: DEF_EXP, C: median(use.map(([l, v]) => v / l ** DEF_EXP)), miss: Infinity, d: 0 };
-  if (use.length >= 3) for (let e = 1.18; e <= 1.2305; e += 0.0005) {
+  // Den Exponenten vor dem Rechnen runden, genau wie fitPoints in calc.js:
+  // Bei Gleichstand entscheidet sonst Gleitkomma-Rauschen im Abstand zu
+  // DEF_EXP, und Importer und Laufzeit waehlen verschiedene Kurven.
+  if (use.length >= 3) for (let step = 1.18; step <= 1.2305; step += 0.0005) {
+    const e = +step.toFixed(4);
     const C = median(use.map(([l, v]) => v / l ** e));
     const miss = use.filter(([l, v]) => r5(C * l ** e) !== v).length, d = Math.abs(e - DEF_EXP);
-    if (miss < best.miss || (miss === best.miss && d < best.d)) best = { e: +e.toFixed(4), C, miss, d };
+    if (miss < best.miss || (miss === best.miss && d < best.d)) best = { e, C, miss, d };
   }
-  return best;
+  if (use.length < 3 || best.miss === 0) return best;
+  return exactFit(use) || best;
+}
+/* Verfehlt das Raster Punkte, die Kurve suchen, die alle trifft: Der Bereich
+   liegt oft zwischen zwei Rasterschritten. Logarithmisch ist der Spielraum
+   fuer ln C konkav im Exponenten; die Ternaersuche nimmt sein Maximum, ln C
+   die Mitte. Begruendung und dieselbe Rechnung: exactFit in calc.js — beide
+   muessen bitgleich rechnen, sonst passen Datensatz und App nicht zusammen. */
+function exactFit(use) {
+  const room = e => {
+    let low = -Infinity, high = Infinity;
+    for (let i = 0; i < use.length; i++) {
+      const shift = e * Math.log(use[i][0]);
+      low = Math.max(low, Math.log(use[i][1] - 2.5) - shift);
+      high = Math.min(high, Math.log(use[i][1] + 2.5) - shift);
+    }
+    return { low, high };
+  };
+  let from = 1.18, to = 1.2305;
+  for (let step = 0; step < 200; step++) {
+    const left = from + (to - from) / 3, right = to - (to - from) / 3;
+    const a = room(left), b = room(right);
+    if (a.high - a.low < b.high - b.low) from = left; else to = right;
+  }
+  const e = (from + to) / 2, bounds = room(e);
+  if (!(bounds.low < bounds.high)) return null;
+  const C = Math.exp((bounds.low + bounds.high) / 2);
+  for (let i = 0; i < use.length; i++) if (r5(C * Math.pow(use[i][0], e)) !== use[i][1]) return null;
+  return { e, C, miss: 0, d: Math.abs(e - DEF_EXP) };
 }
 /* Das Wiki wird abgetippt, und Tippfehler sehen aus wie Wahrheit: dreimal
    dieselbe Zahl hintereinander, eine um eine Zeile verrutschte Spalte. Solche
