@@ -451,6 +451,43 @@
   }
 
   /**
+   * Um wie viel FP ein geschaetztes P1 hoechstens zu hoch liegen kann, je
+   * nach Abstand zur naechsten gesicherten Stufe ("w") desselben Zeitalters.
+   *
+   * Gemessen, nicht geschaetzt: In jedem Zeitalter wurde die Kurve nur auf
+   * die gesicherten Stufen bis zu einem Schnitt gelegt und gegen die
+   * gesicherten Stufen darueber geprueft — ueber 10000 Proben. Zu hoch lag
+   * sie in 99 von 100 Faellen hoechstens um:
+   *
+   *   Abstand bis 25 Stufen      5 FP
+   *   Abstand 26 bis 100        10 FP
+   *   Abstand 101 bis 150       25 FP
+   *   Abstand darueber          35 FP
+   *
+   * Ein zu hohes P1 ist die gefaehrliche Richtung: Die Absicherung faellt
+   * dann zu klein aus, und ein Platz bleibt ueberbietbar. Frueher galten
+   * ueberall 5 FP — auf Stufe 151 des Saturn-VI-Tors lag die damalige
+   * Kurve aber 10 FP, beim Horizontriss-Siphon bis 65 FP zu hoch.
+   */
+  var SLACK_STEPS = [[25, 5], [100, 10], [150, 25], [Infinity, 35]];
+
+  /**
+   * @param {object} curve Eintrag aus CIPHER_DATA.curves
+   * @param {number} level Stufe (1-basiert)
+   * @returns {number} Zuschlag in FP, mindestens 5
+   */
+  function p1Slack(curve, level) {
+    var nearest = Infinity;
+    for (var i = 0; i < curve.source.length; i++) {
+      if (curve.source[i] === "w") nearest = Math.min(nearest, Math.abs(i + 1 - level));
+    }
+    for (var step = 0; step < SLACK_STEPS.length; step++) {
+      if (nearest <= SLACK_STEPS[step][0]) return SLACK_STEPS[step][1];
+    }
+    return SLACK_STEPS[SLACK_STEPS.length - 1][1];
+  }
+
+  /**
    * Plaetze markieren, die einen Platz ueber sich ueberholen: kleinere
    * Belohnung, aber hoehere Einzahlung.
    *
@@ -763,6 +800,7 @@
     contribution: contribution,
     totalCost: totalCost,
     p1Reward: p1Reward,
+    p1Slack: p1Slack,
     fitCurve: fitCurve,
     curveValue: curveValue,
     CURVATURE: CURVATURE,

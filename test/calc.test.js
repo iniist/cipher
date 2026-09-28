@@ -263,6 +263,44 @@ test("die Kurve trifft jede abgelesene Stufe, auch ohne sie zu kennen", () => {
   }
 });
 
+test("p1Slack waechst mit dem Abstand zur naechsten gesicherten Stufe", () => {
+  const curve = sparseCurve([[50, 1000], [120, 3000]], 400);
+  assert.equal(Calc.p1Slack(curve, 50), 5, "auf der gesicherten Stufe selbst");
+  assert.equal(Calc.p1Slack(curve, 75), 5, "25 Stufen daneben");
+  assert.equal(Calc.p1Slack(curve, 95), 5, "zwischen zwei Stufen zaehlt die naehere");
+  assert.equal(Calc.p1Slack(curve, 146), 10);
+  assert.equal(Calc.p1Slack(curve, 220), 10);
+  assert.equal(Calc.p1Slack(curve, 221), 25);
+  assert.equal(Calc.p1Slack(curve, 270), 25);
+  assert.equal(Calc.p1Slack(curve, 271), 35);
+});
+
+/**
+ * Wofuer der Zuschlag da ist: Die Absicherung rechnet mit P1 minus Zuschlag
+ * und darf damit nie ueber dem echten P1 liegen. Geprueft an jeder
+ * abgelesenen Stufe aus CHECKS, die im Datensatz steht — jeweils so, als
+ * haette es sie nicht gegeben.
+ */
+test("mit Zuschlag liegt die Absicherung bei keiner abgelesenen Stufe zu hoch", () => {
+  let checked = 0;
+  for (const [era, curve] of Object.entries(DATA.curves)) {
+    for (let index = 0; index < curve.p1.length; index++) {
+      if (curve.source[index] !== "w" || index + 1 < 30) continue;
+      const level = index + 1;
+      const ohne = {
+        p1: curve.p1,
+        source: curve.source.slice(0, index) + "e" + curve.source.slice(level)
+      };
+      const guess = Calc.roundTo5(Calc.curveValue(Calc.fitCurve(ohne), level));
+      const secure = guess - Calc.p1Slack(ohne, level);
+      assert.ok(secure <= curve.p1[index],
+        `${era} Stufe ${level}: gesichert wird mit ${secure}, echt sind ${curve.p1[index]}`);
+      checked++;
+    }
+  }
+  assert.ok(checked > 1500, `nur ${checked} Stufen geprueft`);
+});
+
 /**
  * Der Ausblendtest ist die Grundlage dafuer, wie laut die Oberflaeche einen
  * hochgerechneten Wert kommentiert. Er darf darum weder eine saubere Kurve
