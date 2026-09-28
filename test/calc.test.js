@@ -241,7 +241,11 @@ const SPIELWERTE = [
   ["Space_Carrier", 210, 5345],
   ["Saturn_VI_Gate_PEGASUS", 201, 5615], ["Shattered_Horizon_Siphon", 163, 4645],
   ["Lighthouse_of_Alexandria", 250, 2825], ["St._Mark's_Basilica", 200, 2520],
-  ["Flying_Island", 201, 5250]
+  ["Flying_Island", 201, 5250],
+  // Die Moderne trifft keine Kurve ganz: ausgeblendet liegt Atomium 175 um
+  // 5 FP darunter und 200 um 5 FP darueber. Beide stehen abgelesen im
+  // Datensatz; hier steht die hoechste Stufe, die ausgeblendet exakt sitzt.
+  ["Atomium", 150, 2420], ["Capitol", 175, 2605], ["Deal_Castle", 200, 2880]
 ];
 
 test("die Kurve trifft jede abgelesene Stufe, auch ohne sie zu kennen", () => {

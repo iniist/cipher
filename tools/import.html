@@ -192,6 +192,17 @@ const CHECKS = {
     70: [2860, 715], 90: [4687, 965], 110: [7679, 1230], 130: [12583, 1500],
     150: [20619, 1785], 175: [38226, 2145], 200: [70868, 2520]
   },
+  // Aus dem Graldron-Rechner, oberhalb des Wikis (bis 100). Der erste
+  // Satz, der erst nach der Krümmung (CURVATURE) kam: Sie hat 11 der 13
+  // Stufen exakt vorhergesagt und zwei um je 5 FP verfehlt (Atomium 175
+  // darunter, Deal Castle 200 darüber). Die reine Potenzkurve lag bei 9
+  // von 13 daneben, bis 10 FP zu hoch.
+  Atomium: { 110: [10397, 1665], 150: [27915, 2420], 175: [51752, 2915], 200: [95944, 3420] },
+  Capitol: { 110: [9333, 1490], 130: [15293, 1825], 150: [25060, 2165], 175: [46459, 2605] },
+  Deal_Castle: {
+    110: [8743, 1405], 130: [14326, 1715], 150: [23474, 2040],
+    175: [43519, 2455], 200: [80681, 2880]
+  },
   Lighthouse_of_Alexandria: {
     60: [1891, 510], 70: [2420, 610], 80: [3098, 720], 90: [3966, 825],
     100: [5076, 940], 120: [8318, 1170], 150: [17447, 1530], 170: [28588, 1780],
