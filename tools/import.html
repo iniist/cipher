@@ -203,6 +203,13 @@ const CHECKS = {
     110: [8743, 1405], 130: [14326, 1715], 150: [23474, 2040],
     175: [43519, 2455], 200: [80681, 2880]
   },
+  // Aus dem Graldron-Rechner, oberhalb des Wikis. Die gekrümmte Kurve lag
+  // an allen fünfzehn Stufen höchstens 5 FP daneben, also innerhalb des
+  // Sicherheitsabschlags (Calc.p1Slack).
+  Observatory: { 130: [12583, 1500], 150: [20619, 1785], 175: [38226, 2145], 207: [84240, 2625] },
+  Star_Gazer: { 130: [24198, 2895], 150: [39651, 3440], 175: [73511, 4140], 200: [136284, 4860] },
+  Cape_Canaveral: { 150: [27915, 2550], 175: [51752, 3065], 200: [95944, 3600] },
+  "A.I._Core": { 130: [26908, 3215], 150: [44092, 3820], 175: [81744, 4600], 200: [151548, 5400] },
   Lighthouse_of_Alexandria: {
     60: [1891, 510], 70: [2420, 610], 80: [3098, 720], 90: [3966, 825],
     100: [5076, 940], 120: [8318, 1170], 150: [17447, 1530], 170: [28588, 1780],
@@ -235,7 +242,9 @@ const CHECKS = {
   Château_Frontenac: {
     99: [7474, 1390], 164: [37201, 2555], 165: [38131, 2570],
     169: [42090, 2645], 174: [47621, 2740], 175: [48811, 2760],
-    177: [51282, null], 183: [59472, 2910], 197: [84032, 3180], 240: [242979, 4035]
+    177: [51282, null], 183: [59472, 2910], 197: [84032, 3180], 240: [242979, 4035],
+    // Aus dem Graldron-Rechner, oberhalb der letzten Wiki-Stufe 240.
+    260: [398148, 4445], 280: [652412, 4855], 300: [1069053, 5275]
   },
   // Im Spiel abgelesen; das Wiki kennt den Siphon gar nicht. Mit der fünften
   // Stufe ist die Schwelle erreicht, ab der finalize die Kostenbasis selbst
