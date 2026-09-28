@@ -170,7 +170,7 @@ const CHECKS = {
   // Die folgenden im Förderfenster abgelesen, alle oberhalb des Wikis. Die
   // reine Potenzkurve lag bei jeder außer Aachen und dem Katalysator 5 FP
   // zu hoch, die gekrümmte trifft alle.
-  Arctic_Orangery: { 195: [106965, 4190], 202: [127147, 4370] },
+  Arctic_Orangery: { 195: [106965, 4190], 202: [127147, 4370], 300: [1429697, 7035] },
   // 161 im Förderfenster abgelesen, die übrigen aus dem Graldron-Rechner.
   // Das Wiki kennt den Asteroidengürtel nur bis 100; die reine Potenzkurve
   // lag bei 200 und 210 um 20 FP zu hoch.
@@ -211,7 +211,16 @@ const CHECKS = {
   // in tools/build-data.js muss sie nicht mehr weitertragen. Die P1-Kurve des
   // Stellaren Zeitalters entsteht aus denselben fünf Stützpunkten und trifft
   // alle fünf auf den Punkt.
-  Shattered_Horizon_Siphon: { 11: [14894, 175], 19: [18146, 345], 25: [21044, 480], 33: [25640, 675], 41: [31240, 880] }
+  // 55-163 aus dem Graldron-Rechner. Mit nur den fünf Stufen bis 41 lag
+  // die reine Potenzkurve bei 160 um 65 FP zu hoch, die gekrümmte um 20 —
+  // und die Kostenbasis bis 5 FP zu niedrig.
+  Shattered_Horizon_Siphon: {
+    11: [14894, 175], 19: [18146, 345], 25: [21044, 480], 33: [25640, 675], 41: [31240, 880],
+    55: [44141, 1255], 60: [49942, 1390], 70: [63929, 1675], 80: [81835, 1970],
+    90: [104756, 2270], 100: [134096, 2580], 110: [171654, 2895], 120: [219731, 3210],
+    130: [281274, 3535], 140: [360055, 3865], 150: [460901, 4200], 160: [589992, 4540],
+    163: [635356, 4645]
+  }
 };
 
 const API = 'https://forgeofempires.fandom.com/api.php';

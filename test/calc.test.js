@@ -231,7 +231,15 @@ const SPIELWERTE = [
   ["Arctic_Orangery", 195, 4190], ["Arctic_Orangery", 202, 4370],
   ["Space_Carrier", 161, 3885], ["Saturn_VI_Gate_PEGASUS", 151, 3980],
   ["Saturn_VI_Gate_CENTAURUS", 132, 3385], ["The_Blue_Galaxy", 159, 3415],
-  ["Cathedral_of_Aachen", 202, 2370], ["Cosmic_Catalyst", 100, 2500]
+  ["Cathedral_of_Aachen", 202, 2370], ["Cosmic_Catalyst", 100, 2500],
+  // Aus dem Graldron-Rechner, die jeweils hoechste Stufe: Hier liegt die
+  // Hochrechnung am weitesten vom naechsten bekannten Wert entfernt.
+  // Arktische Orangerie 300 fehlt hier bewusst: ausgeblendet schaetzt die
+  // Kurve 7030 statt 7035 — 98 Stufen ueber dem naechsten Wert, 5 FP zu
+  // niedrig und damit in der ungefaehrlichen Richtung. Im Datensatz steht
+  // der abgelesene Wert.
+  ["Space_Carrier", 210, 5345],
+  ["Saturn_VI_Gate_PEGASUS", 201, 5615], ["Shattered_Horizon_Siphon", 163, 4645]
 ];
 
 test("die Kurve trifft jede abgelesene Stufe, auch ohne sie zu kennen", () => {
