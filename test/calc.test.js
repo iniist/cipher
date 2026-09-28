@@ -170,7 +170,7 @@ test("der Fit reproduziert jeden geschaetzten Wert des Datensatzes", () => {
       if (curve.source[index] !== "e") continue;
       checked++;
       assert.equal(
-        Calc.roundTo5(fit.factor * Math.pow(index + 1, fit.exponent)), curve.p1[index],
+        Calc.roundTo5(Calc.curveValue(fit, index + 1)), curve.p1[index],
         `${era} Stufe ${index + 1}: Laufzeit-Fit weicht vom Datensatz ab`);
     }
   }
@@ -198,7 +198,7 @@ test("fitCurve trifft verstreute Spielwerte, auch zwischen den Rasterschritten",
   const points = [[40, 825], [41, 850], [50, 1085], [60, 1350], [120, 3115], [212, 6180]];
   const fit = Calc.fitCurve(sparseCurve(points, 212));
   for (const [level, value] of points) {
-    assert.equal(Calc.roundTo5(fit.factor * Math.pow(level, fit.exponent)), value, `Stufe ${level}`);
+    assert.equal(Calc.roundTo5(Calc.curveValue(fit, level)), value, `Stufe ${level}`);
   }
   assert.equal(fit.miss, 0);
 });
@@ -206,7 +206,7 @@ test("fitCurve trifft verstreute Spielwerte, auch zwischen den Rasterschritten",
 test("fitCurve bleibt beim Raster, wenn das schon alle Punkte trifft", () => {
   // Liegt genau auf dem ueblichen Exponenten: Das Raster nimmt ihn, die
   // exakte Suche wuerde irgendwo in den gleichwertigen Bereich greifen.
-  const points = [30, 45, 60, 90, 150].map((level) => [level, Calc.roundTo5(10 * Math.pow(level, 1.206))]);
+  const points = [30, 45, 60, 90, 150].map((level) => [level, Calc.roundTo5(Calc.curveValue({ factor: 10, exponent: 1.206 }, level))]);
   const fit = Calc.fitCurve(sparseCurve(points, 150));
   assert.equal(fit.exponent, 1.206);
   assert.equal(fit.miss, 0);
@@ -221,16 +221,45 @@ test("fitCurve faellt aufs Raster zurueck, wenn keine Kurve alle Punkte trifft",
 });
 
 /**
+ * Die Kruemmung der Kurve (CURVATURE) ist an diesen Stufen gemessen: alle
+ * im Foerderfenster abgelesen, alle oberhalb dessen, was das Wiki fuer ihr
+ * Zeitalter kennt. Die reine Potenzkurve lag bei sieben davon 5 bis 10 FP
+ * zu hoch. Jede muss die Kurve treffen, ohne sie zu kennen — sonst rechnet
+ * sie genau dort falsch, wo niemand nachgesehen hat.
+ */
+const SPIELWERTE = [
+  ["Arctic_Orangery", 195, 4190], ["Arctic_Orangery", 202, 4370],
+  ["Space_Carrier", 161, 3885], ["Saturn_VI_Gate_PEGASUS", 151, 3980],
+  ["Saturn_VI_Gate_CENTAURUS", 132, 3385], ["The_Blue_Galaxy", 159, 3415],
+  ["Cathedral_of_Aachen", 202, 2370], ["Cosmic_Catalyst", 100, 2500]
+];
+
+test("die Kurve trifft jede abgelesene Stufe, auch ohne sie zu kennen", () => {
+  for (const [id, level, value] of SPIELWERTE) {
+    const building = DATA.buildings.find((b) => b.id === id);
+    assert.equal(Calc.p1Reward(building, level, DATA.curves, {}).value, value, `${id} ${level} im Datensatz`);
+
+    const curve = DATA.curves[building.curve];
+    const ohne = {
+      p1: curve.p1.slice(),
+      source: curve.source.slice(0, level - 1) + "e" + curve.source.slice(level)
+    };
+    const fit = Calc.fitCurve(ohne);
+    assert.equal(Calc.roundTo5(Calc.curveValue(fit, level)), value, `${id} ${level} ausgeblendet`);
+  }
+});
+
+/**
  * Der Ausblendtest ist die Grundlage dafuer, wie laut die Oberflaeche einen
  * hochgerechneten Wert kommentiert. Er darf darum weder eine saubere Kurve
  * schlechtreden noch eine krumme durchwinken.
  */
 test("curveReliability findet auf einer exakten Kurve keine Abweichung", () => {
-  // Eine Kurve, die genau der Potenzfunktion folgt, die der Fit sucht.
+  // Eine Kurve, die genau der Form folgt, die der Fit sucht.
   const levels = 120;
   const curve = { p1: [], source: "w".repeat(levels) };
   for (let level = 1; level <= levels; level++) {
-    curve.p1.push(Calc.roundTo5(30 * Math.pow(level, 1.206)));
+    curve.p1.push(Calc.roundTo5(Calc.curveValue({ factor: 30, exponent: 1.206 }, level)));
   }
 
   const result = Calc.curveReliability("Prueffall exakt", curve);
@@ -273,9 +302,9 @@ test("der Ausblendtest trennt verlaessliche von wackligen Kurven", () => {
   // den Test ohne Fehlschuss bestand — und der Test fiel um, obwohl der
   // Datensatz besser geworden war. Geprueft wird darum das Verfahren, nicht
   // der Stand des Wikis: zwei gerechnete Kurven, eine sauber, eine krumm.
-  const sauber = kurve(140, (level) => 8 * Math.pow(level, 1.206));
+  const sauber = kurve(140, (level) => Calc.curveValue({ factor: 8, exponent: 1.206 }, level));
   const glatt = Calc.curveReliability("sauber", sauber);
-  assert.equal(glatt.misses, 0, "eine reine Potenzkurve trifft jede ausgeblendete Stufe");
+  assert.equal(glatt.misses, 0, "eine Kurve in der Form des Fits trifft jede ausgeblendete Stufe");
 
   // Ein Exponentenknick bei Stufe 70: wer nur unten fittet, verfehlt oben.
   const krumm = kurve(140, (level) => (level <= 70

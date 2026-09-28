@@ -28,15 +28,53 @@
   var EPSILON = 1e-7;
 
   /**
-   * Die P1-Kurve eines Zeitalters folgt C * Stufe^e. Diese Grenzen fuer den
-   * Exponenten stammen aus tools/import.html, das denselben Fit auf die
-   * Wiki-Werte legt; der Vorgabewert gilt, wenn zu wenige Stuetzpunkte da
-   * sind, um ihn auszurechnen.
+   * Die P1-Kurve eines Zeitalters folgt C * Stufe^e * exp(K * ln(Stufe/100)^2).
+   * Diese Grenzen fuer den Exponenten stammen aus tools/import.html, das
+   * denselben Fit auf die Wiki-Werte legt; der Vorgabewert gilt, wenn zu
+   * wenige Stuetzpunkte da sind, um ihn auszurechnen.
    */
   var DEFAULT_EXPONENT = 1.206;
   var EXPONENT_MIN = 1.18;
   var EXPONENT_MAX = 1.2305;
   var EXPONENT_STEP = 0.0005;
+
+  /**
+   * Kruemmung der P1-Kurve, fuer alle Zeitalter gleich.
+   *
+   * Eine reine Potenzkurve C * Stufe^e ist oben zu steil: Sie traf die
+   * Wiki-Werte, lag aber oberhalb davon immer weiter zu hoch — Saturn VI
+   * Tor PEGASUS auf Stufe 189 um 20 FP (Spiel und Graldron-Rechner: 5210,
+   * Kurve: 5230). Der Faktor exp(K * ln(Stufe/100)^2) biegt die Kurve
+   * leicht nach unten; e bleibt dabei die Steigung um Stufe 100 und damit
+   * im gewohnten Bereich.
+   *
+   * Der Wert ist gemessen, nicht geschaetzt: Er ist fuer alle Zeitalter
+   * gemeinsam bestimmt, weil die meisten zu wenige hohe Stufen kennen, um
+   * ihre Kruemmung selbst zu zeigen. Mit -0,002 trifft die Hochrechnung
+   * alle im Spiel abgelesenen Stufen oberhalb des Wikis, und der
+   * Ausblendtest ueber alle Zeitalter verfehlt 40 statt 150 Stufen um mehr
+   * als 5 FP. Schon -0,00175 und -0,00225 verfehlen wieder einzelne
+   * Spielwerte — neue Ablesungen sollten den Wert pruefen, siehe
+   * test/calc.test.js. Derselbe Wert steht in tools/import.html.
+   */
+  var CURVATURE = -0.002;
+  var PIVOT_LOG = Math.log(100);
+
+  /** Der Kruemmungsanteil der Kurve, in ln(P1) gerechnet. */
+  function bend(level) {
+    var distance = Math.log(level) - PIVOT_LOG;
+    return CURVATURE * distance * distance;
+  }
+
+  /**
+   * Den Wert einer gefitteten Kurve an einer Stufe ausrechnen, ungerundet.
+   * @param {{factor: number, exponent: number}} fit
+   * @param {number} level
+   * @returns {number}
+   */
+  function curveValue(fit, level) {
+    return fit.factor * Math.pow(level, fit.exponent) * Math.exp(bend(level));
+  }
 
   /**
    * Kaufmaennisch auf ein Vielfaches von 5 runden.
@@ -146,8 +184,9 @@
   }
 
   /**
-   * Aus den echten Werten einer Kurve die Potenzfunktion C * Stufe^e
-   * bestimmen, die moeglichst viele davon auf den Punkt trifft — alle, wenn
+   * Aus den echten Werten einer Kurve die Funktion C * Stufe^e (mal der
+   * festen Kruemmung, siehe CURVATURE) bestimmen, die moeglichst viele
+   * davon auf den Punkt trifft — alle, wenn
    * es eine solche Kurve gibt (siehe exactFit).
    *
    * Dieselbe Rechnung steht in tools/import.html, das damit die Luecken im
@@ -190,13 +229,16 @@
     if (!use.length) return null;
 
     function factorFor(exponent) {
-      return median(use.map(function (point) { return point[1] / Math.pow(point[0], exponent); }));
+      return median(use.map(function (point) {
+        return point[1] / (Math.pow(point[0], exponent) * Math.exp(bend(point[0])));
+      }));
     }
 
     /** Wie viele Stuetzpunkte dieser Exponent verfehlt. */
     function misses(exponent, factor) {
+      var fit = { factor: factor, exponent: exponent };
       return use.filter(function (point) {
-        return roundTo5(factor * Math.pow(point[0], exponent)) !== point[1];
+        return roundTo5(curveValue(fit, point[0])) !== point[1];
       }).length;
     }
 
@@ -229,8 +271,9 @@
    * trifft, oft schmaler als ein Rasterschritt, und das Raster greift an ihm
    * vorbei. Hier wird er direkt gesucht.
    *
-   * Ein Punkt [l, v] wird getroffen, wenn v - 2,5 <= C * l^e < v + 2,5 ist,
-   * logarithmisch also ln(v - 2,5) - e ln l <= ln C < ln(v + 2,5) - e ln l.
+   * Ein Punkt [l, v] wird getroffen, wenn v - 2,5 <= C * l^e * B(l) < v + 2,5
+   * ist, mit B der festen Kruemmung; logarithmisch also
+   * ln(v - 2,5) - e ln l - ln B(l) <= ln C < ln(v + 2,5) - e ln l - ln B(l).
    * Der Spielraum fuer ln C, kleinste Obergrenze minus groesste Untergrenze,
    * ist als Minimum minus Maximum linearer Funktionen in e konkav — eine
    * Ternaersuche findet sein Maximum. Ist er dort positiv, gibt es die
@@ -250,7 +293,7 @@
       var low = -Infinity;
       var high = Infinity;
       for (var i = 0; i < use.length; i++) {
-        var shift = exponent * Math.log(use[i][0]);
+        var shift = exponent * Math.log(use[i][0]) + bend(use[i][0]);
         low = Math.max(low, Math.log(use[i][1] - 2.5) - shift);
         high = Math.min(high, Math.log(use[i][1] + 2.5) - shift);
       }
@@ -273,8 +316,9 @@
     if (!(bounds.low < bounds.high)) return null;
 
     var factor = Math.exp((bounds.low + bounds.high) / 2);
+    var fit = { factor: factor, exponent: exponent };
     for (var i = 0; i < use.length; i++) {
-      if (roundTo5(factor * Math.pow(use[i][0], exponent)) !== use[i][1]) return null;
+      if (roundTo5(curveValue(fit, use[i][0])) !== use[i][1]) return null;
     }
     return { exponent: exponent, factor: factor, miss: 0, distance: Math.abs(exponent - DEFAULT_EXPONENT) };
   }
@@ -346,7 +390,7 @@
       points.forEach(function (point) {
         if (point[0] <= cut) return;
         samples++;
-        var off = Math.abs(roundTo5(fit.factor * Math.pow(point[0], fit.exponent)) - point[1]);
+        var off = Math.abs(roundTo5(curveValue(fit, point[0])) - point[1]);
         if (off > worst) worst = off;
         if (off > RELIABILITY_TOLERANCE) misses++;
       });
@@ -401,7 +445,7 @@
     // Jenseits der gespeicherten Stufen: die Kurve des Zeitalters weiterrechnen.
     var fit = curveFit(building.curve, curve);
     if (!fit) return { value: null, source: null };
-    return { value: roundTo5(fit.factor * Math.pow(level, fit.exponent)), source: "derived" };
+    return { value: roundTo5(curveValue(fit, level)), source: "derived" };
   }
 
   /**
@@ -718,6 +762,8 @@
     totalCost: totalCost,
     p1Reward: p1Reward,
     fitCurve: fitCurve,
+    curveValue: curveValue,
+    CURVATURE: CURVATURE,
     curveReliability: curveReliability,
     buildPlan: buildPlan,
     chatLine: chatLine
