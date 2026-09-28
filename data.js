@@ -186,5 +186,5 @@
     },
   };
 
-  return { generated: "2026-09-22", buildings: buildings, curves: curves };
+  return { generated: "2026-09-28", buildings: buildings, curves: curves };
 });
