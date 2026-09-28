@@ -152,7 +152,51 @@ const CHECKS = {
   // setzte damit P1 und P2 je rund 10 FP zu hoch an. Stufe 40 abgelesen:
   // P1 825, die Kurve schätzte 830.
   Stellar_Warship: { 40: [30059, 825], 41: [30810, 850], 50: [38477, 1085], 60: [49254, 1350], 120: [216707, 3115], 212: [2101199, 6180] },
-  Saturn_VI_Gate_PEGASUS: { 12: [2648, 185], 60: [8662, 1310], 63: [9328, 1390], 80: [14193, 1850] },
+  // Das Wiki kennt Titan nur bis Stufe 50. Stufe 151 im Förderfenster
+  // abgelesen (P1 3980, die reine Potenzkurve schätzte 3990); die übrigen
+  // ab 50 aus dem Graldron-Arche-Rechner, der alle Spielwerte trifft.
+  // Stufe 189 und 201 lagen mit der reinen Potenzkurve 20 FP zu hoch —
+  // sie waren der Anlass für die Krümmung der Kurve (CURVATURE).
+  Saturn_VI_Gate_PEGASUS: {
+    12: [2648, 185], 50: [6767, 1050], 51: [6936, 1075], 60: [8662, 1310],
+    61: [8879, 1335], 63: [9328, 1390], 69: [10818, 1550], 78: [13510, 1795],
+    80: [14193, 1850], 85: [16058, 1990], 89: [17725, 2105], 97: [21597, 2335],
+    111: [30515, 2745], 144: [68929, 3760], 151: [81935, 3980],
+    189: [209398, 5210], 201: [281617, 5615]
+  },
+  // Im Förderfenster abgelesen, der Graldron-Rechner nennt dieselben
+  // Kosten. Sie lagen 1 FP über der Formel, die Kurve 5 FP über P1.
+  Saturn_VI_Gate_CENTAURUS: { 132: [66100, 3385] },
+  // Die folgenden im Förderfenster abgelesen, alle oberhalb des Wikis. Die
+  // reine Potenzkurve lag bei jeder außer Aachen und dem Katalysator 5 FP
+  // zu hoch, die gekrümmte trifft alle.
+  Arctic_Orangery: { 195: [106965, 4190], 202: [127147, 4370], 300: [1429697, 7035] },
+  // 161 im Förderfenster abgelesen, die übrigen aus dem Graldron-Rechner.
+  // Das Wiki kennt den Asteroidengürtel nur bis 100; die reine Potenzkurve
+  // lag bei 200 und 210 um 20 FP zu hoch.
+  Space_Carrier: {
+    110: [15358, 2455], 120: [19660, 2725], 130: [25166, 3000], 140: [32215, 3280],
+    150: [41237, 3565], 160: [52787, 3855], 161: [54107, 3885], 170: [67572, 4145],
+    180: [86497, 4440], 190: [110724, 4740], 200: [141736, 5040], 210: [181434, 5345]
+  },
+  The_Blue_Galaxy: { 159: [45954, 3415] },
+  Cathedral_of_Aachen: { 202: [68728, 2370] },
+  Cosmic_Catalyst: { 100: [106502, 2500] },
+  // Aus dem Graldron-Rechner. Das Wiki kennt die Eisenzeit nur bis Stufe
+  // 20; hochgerechnet lag die reine Potenzkurve bei 250 um 30 FP zu hoch,
+  // die gekrümmte um 15.
+  // Aus dem Graldron-Rechner. Das Wiki kennt das Hochmittelalter nur bis
+  // Stufe 60; hochgerechnet lag die gekrümmte Kurve bei 175 und 200 um
+  // 10 FP zu hoch, die reine Potenzkurve um 15.
+  "St._Mark's_Basilica": {
+    70: [2860, 715], 90: [4687, 965], 110: [7679, 1230], 130: [12583, 1500],
+    150: [20619, 1785], 175: [38226, 2145], 200: [70868, 2520]
+  },
+  Lighthouse_of_Alexandria: {
+    60: [1891, 510], 70: [2420, 610], 80: [3098, 720], 90: [3966, 825],
+    100: [5076, 940], 120: [8318, 1170], 150: [17447, 1530], 170: [28588, 1780],
+    180: [36595, 1905], 200: [59965, 2160], 220: [98260, 2425], 250: [206106, 2825]
+  },
   // Im Förderfenster abgelesen, Stufe 141 und 150. Beide liegen weit
   // oberhalb der Stufe 110, bis zu der das Wiki die Virtuelle Zukunft
   // kennt — und genau dort war die Hochrechnung bisher am unsichersten.
@@ -161,7 +205,13 @@ const CHECKS = {
   // Stufe 142 der Fliegenden Insel, 22 Stufen über dem höchsten
   // Wiki-Wert der Venus. Sie belegt nebenbei das Zeitalter: als Venus
   // liegt die Kurve 5 FP daneben, als Virtuelle Zukunft wären es 350.
-  Flying_Island: { 142: [35147, 3455] },
+  Flying_Island: {
+    142: [35147, 3455],
+    // Aus dem Graldron-Rechner; hochgerechnet lag die gekrümmte Kurve
+    // höchstens 5 FP daneben, die reine Potenzkurve 10.
+    160: [54817, 3990], 170: [70171, 4295], 180: [89824, 4600],
+    200: [147187, 5220], 201: [150867, 5250]
+  },
   // Im Förderfenster abgelesen. Stufe 202 liegt über allem, was das Wiki
   // für die Bronzezeit kennt, und zieht deren Kurve am oberen Ende gerade.
   Statue_of_Zeus: { 111: [6176, 975], 125: [8726, 1125], 202: [58419, 2005] },
@@ -174,7 +224,7 @@ const CHECKS = {
   Château_Frontenac: {
     99: [7474, 1390], 164: [37201, 2555], 165: [38131, 2570],
     169: [42090, 2645], 174: [47621, 2740], 175: [48811, 2760],
-    177: [51282, null], 197: [84032, 3180], 240: [242979, 4035]
+    177: [51282, null], 183: [59472, 2910], 197: [84032, 3180], 240: [242979, 4035]
   },
   // Im Spiel abgelesen; das Wiki kennt den Siphon gar nicht. Mit der fünften
   // Stufe ist die Schwelle erreicht, ab der finalize die Kostenbasis selbst
@@ -182,11 +232,26 @@ const CHECKS = {
   // in tools/build-data.js muss sie nicht mehr weitertragen. Die P1-Kurve des
   // Stellaren Zeitalters entsteht aus denselben fünf Stützpunkten und trifft
   // alle fünf auf den Punkt.
-  Shattered_Horizon_Siphon: { 11: [14894, 175], 19: [18146, 345], 25: [21044, 480], 33: [25640, 675], 41: [31240, 880] }
+  // 55-163 aus dem Graldron-Rechner. Mit nur den fünf Stufen bis 41 lag
+  // die reine Potenzkurve bei 160 um 65 FP zu hoch, die gekrümmte um 20 —
+  // und die Kostenbasis bis 5 FP zu niedrig.
+  Shattered_Horizon_Siphon: {
+    11: [14894, 175], 19: [18146, 345], 25: [21044, 480], 33: [25640, 675], 41: [31240, 880],
+    55: [44141, 1255], 60: [49942, 1390], 70: [63929, 1675], 80: [81835, 1970],
+    90: [104756, 2270], 100: [134096, 2580], 110: [171654, 2895], 120: [219731, 3210],
+    130: [281274, 3535], 140: [360055, 3865], 150: [460901, 4200], 160: [589992, 4540],
+    163: [635356, 4645]
+  }
 };
 
 const API = 'https://forgeofempires.fandom.com/api.php';
 const GROWTH = 1.025, MAXLVL = 200, DEF_EXP = 1.206;
+/* Feste Kruemmung der P1-Kurve fuer alle Zeitalter: C * l^e * exp(K * ln(l/100)^2).
+   Begruendung und Messung: CURVATURE in calc.js — beide muessen bitgleich
+   rechnen, sonst passen Datensatz und App nicht zusammen. */
+const CURVATURE = -0.002, PIVOT_LOG = Math.log(100);
+const bend = l => { const d = Math.log(l) - PIVOT_LOG; return CURVATURE * d * d; };
+const curveAt = (fit, l) => fit.C * Math.pow(l, fit.e) * Math.exp(bend(l));
 const $ = id => document.getElementById(id);
 const r5 = x => 5 * Math.floor(x / 5 + 0.5);
 const chain = p1 => { const p = [p1]; for (let n = 2; n <= 5; n++) p.push(r5(p[n - 2] / n)); return p; };
@@ -344,14 +409,15 @@ function fitCurve(pts) {
   let use = pts.filter(([l]) => l >= 30);
   if (use.length < 5) use = pts.filter(([l]) => l >= 11);
   if (!use.length) return null;
-  let best = { e: DEF_EXP, C: median(use.map(([l, v]) => v / l ** DEF_EXP)), miss: Infinity, d: 0 };
+  const factorFor = e => median(use.map(([l, v]) => v / (Math.pow(l, e) * Math.exp(bend(l)))));
+  let best = { e: DEF_EXP, C: factorFor(DEF_EXP), miss: Infinity, d: 0 };
   // Den Exponenten vor dem Rechnen runden, genau wie fitPoints in calc.js:
   // Bei Gleichstand entscheidet sonst Gleitkomma-Rauschen im Abstand zu
   // DEF_EXP, und Importer und Laufzeit waehlen verschiedene Kurven.
   if (use.length >= 3) for (let step = 1.18; step <= 1.2305; step += 0.0005) {
     const e = +step.toFixed(4);
-    const C = median(use.map(([l, v]) => v / l ** e));
-    const miss = use.filter(([l, v]) => r5(C * l ** e) !== v).length, d = Math.abs(e - DEF_EXP);
+    const C = factorFor(e);
+    const miss = use.filter(([l, v]) => r5(curveAt({ C, e }, l)) !== v).length, d = Math.abs(e - DEF_EXP);
     if (miss < best.miss || (miss === best.miss && d < best.d)) best = { e, C, miss, d };
   }
   if (use.length < 3 || best.miss === 0) return best;
@@ -366,7 +432,7 @@ function exactFit(use) {
   const room = e => {
     let low = -Infinity, high = Infinity;
     for (let i = 0; i < use.length; i++) {
-      const shift = e * Math.log(use[i][0]);
+      const shift = e * Math.log(use[i][0]) + bend(use[i][0]);
       low = Math.max(low, Math.log(use[i][1] - 2.5) - shift);
       high = Math.min(high, Math.log(use[i][1] + 2.5) - shift);
     }
@@ -381,7 +447,7 @@ function exactFit(use) {
   const e = (from + to) / 2, bounds = room(e);
   if (!(bounds.low < bounds.high)) return null;
   const C = Math.exp((bounds.low + bounds.high) / 2);
-  for (let i = 0; i < use.length; i++) if (r5(C * Math.pow(use[i][0], e)) !== use[i][1]) return null;
+  for (let i = 0; i < use.length; i++) if (r5(curveAt({ C, e }, use[i][0])) !== use[i][1]) return null;
   return { e, C, miss: 0, d: Math.abs(e - DEF_EXP) };
 }
 /* Das Wiki wird abgetippt, und Tippfehler sehen aus wie Wahrheit: dreimal
@@ -395,7 +461,7 @@ const FIT_TOL = 5;
 function markOutliers(merged, fit) {
   let n = 0;
   for (const [l, m] of Object.entries(merged)) {
-    m.off = !!fit && m.src === 'w' && !m.game && Math.abs(m.v - r5(fit.C * (+l) ** fit.e)) > FIT_TOL;
+    m.off = !!fit && m.src === 'w' && !m.game && Math.abs(m.v - r5(curveAt(fit, +l))) > FIT_TOL;
     if (m.off) n++;
   }
   return n;
@@ -462,7 +528,7 @@ function finalize(raws) {
     let fit = fitCurve(solid());
     let outliers = markOutliers(merged, fit);
     if (outliers) { fit = fitCurve(solid()) || fit; outliers = markOutliers(merged, fit); }
-    const est = l => fit ? r5(fit.C * l ** fit.e) : null;
+    const est = l => fit ? r5(curveAt(fit, l)) : null;
     for (const [l, m] of Object.entries(merged)) {
       // Ausreisser bekommen den Kurvenwert, nicht den Wiki-Wert, und das „x“
       if (m.off) { m.src = 'x'; m.v = est(+l); }
@@ -511,7 +577,7 @@ function finalize(raws) {
         id: r.title, en: r.title.replace(/_/g, ' '), de: r.de, age: r.age,
         costA: r.costA == null ? null : +r.costA.toFixed(9), costDerivedFrom: r.costDerived || null,
         cost1to10: r.cost1to10, maxLevel: r.maxLevel,
-        p1Curve: r.fit ? { C: +r.fit.C.toFixed(5), e: r.fit.e } : null,
+        p1Curve: r.fit ? { C: +r.fit.C.toFixed(5), e: r.fit.e, k: CURVATURE } : null,
         p1: r.p1, p1src: r.src,
         stats: { costLevels: Object.keys(r.costs).length, costBad: r.costBad.length, w: cnt('w'), e: cnt('e'), x: cnt('x'), off: r.p1off || 0 },
         issues: r.issues
