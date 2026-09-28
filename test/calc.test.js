@@ -239,7 +239,8 @@ const SPIELWERTE = [
   // niedrig und damit in der ungefaehrlichen Richtung. Im Datensatz steht
   // der abgelesene Wert.
   ["Space_Carrier", 210, 5345],
-  ["Saturn_VI_Gate_PEGASUS", 201, 5615], ["Shattered_Horizon_Siphon", 163, 4645]
+  ["Saturn_VI_Gate_PEGASUS", 201, 5615], ["Shattered_Horizon_Siphon", 163, 4645],
+  ["Lighthouse_of_Alexandria", 250, 2825]
 ];
 
 test("die Kurve trifft jede abgelesene Stufe, auch ohne sie zu kennen", () => {
