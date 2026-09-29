@@ -86,10 +86,11 @@ test.describe("Hochformat bleibt unberührt", () => {
 });
 
 test.describe("die Abfrage trifft nur Telefone quer", () => {
-  test("ein Desktop-Fenster bleibt beim bisherigen Aufbau", async ({ page }) => {
+  test("ein Desktop-Fenster bekommt nicht den Telefon-Aufbau", async ({ page }) => {
     const m = await open(page, 1280, 800);
-    expect(m.display).toBe("block");
-    expect(m.mainWidth).toBe(560);
+    // 10px setzt nur der Telefon-Block, der Desktop-Block hat sein eigenes.
+    expect(m.paddingTop).not.toBe("10px");
+    expect(await page.locator(".info").isVisible()).toBe(true);
   });
 
   test("ein Tablet quer bleibt beim bisherigen Aufbau", async ({ page }) => {
@@ -144,5 +145,37 @@ test.describe("Gemerktes im Querformat", () => {
 
     const m = await open(page, 844, 390);
     expect(m.pageHeight / m.viewportHeight).toBeLessThan(4);
+  });
+});
+
+test.describe("breiter Bildschirm", () => {
+  const DESKTOPS = [
+    [1100, 700, "kleinster Desktop"],
+    [1280, 800, "Laptop"],
+    [1920, 1080, "Full HD"]
+  ];
+
+  for (const [width, height, name] of DESKTOPS) {
+    test(`${name} (${width}×${height}) stellt Bauwerk und Förderplan nebeneinander`, async ({ page }) => {
+      const m = await open(page, width, height);
+
+      expect(m.display).toBe("grid");
+      expect(m.mainWidth).toBeGreaterThan(1000);
+      expect(m.mainWidth).toBeLessThanOrEqual(1120);
+      expect(m.sideBySide, "Bauwerk und Förderplan müssen nebeneinander stehen").toBe(true);
+      expect(m.overflowX, "kein waagerechtes Scrollen").toBeLessThanOrEqual(0);
+
+      // Der Förderchat steht rechts direkt unter dem Plan.
+      const [plan, chat] = await page.locator("main > .panel").evaluateAll((els) =>
+        els.slice(1).map((el) => el.getBoundingClientRect().toJSON()));
+      expect(Math.round(chat.left)).toBe(Math.round(plan.left));
+      expect(chat.top - plan.bottom).toBeLessThan(30);
+    });
+  }
+
+  test("knapp darunter bleibt es beim gewohnten Aufbau", async ({ page }) => {
+    const m = await open(page, 1099, 800);
+    expect(m.display).toBe("block");
+    expect(m.mainWidth).toBe(560);
   });
 });

@@ -1438,6 +1438,57 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 12px) } }
 @keyframes toast-out { to { opacity: 0; transform: translate(-50%, 12px) } }
 
+/* ------------------------------------------------------ Breiter Bildschirm */
+
+/*
+ * Am Rechner blieb main bei 560px stehen: ein schmaler Streifen in der
+ * Mitte, und fuer den Foerderplan musste man unter das Bauwerk scrollen.
+ * Ab 1100px Breite stehen die Rechnerteile nebeneinander — links
+ * einstellen, rechts ablesen und kopieren.
+ *
+ * 1100px, weil jede Spalte dann wieder die gut 530px bekommt, fuer die die
+ * Panels gebaut sind. Ein Tablet quer (1024px) bleibt beim gewohnten
+ * Aufbau; die Rechtsseiten (main.legal) auch.
+ *
+ * Die Mindesthoehe grenzt gegen den Telefon-Block unten ab: ein flaches,
+ * breites Fenster (unter 521px hoch) bekommt dessen sparsameren Aufbau,
+ * nicht beide halb.
+ */
+@media (min-width: 1100px) and (min-height: 521px) {
+
+  main:not(.legal) {
+    max-width: 1120px;
+    padding: 20px 24px 28px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 20px;
+    align-items: start;
+  }
+
+  main > header,
+  main > noscript,
+  main > .foot,
+  main > .info { grid-column: 1 / -1 }
+
+  /* Das Bauwerk spannt ueber beide Zeilen der rechten Spalte, damit der
+     Foerderchat direkt unter dem Plan steht statt unter dem hoeheren
+     Bauwerk. */
+  main > .panel:nth-of-type(1) { grid-column: 1; grid-row: 2 / span 2 } /* Bauwerk */
+  main > .panel:nth-of-type(2) { grid-column: 2; grid-row: 2 }          /* Foerderplan */
+  main > .panel:nth-of-type(3) { grid-column: 2; grid-row: 3 }          /* Foerderchat */
+
+  /* Erklaerung und Fragen ebenfalls nebeneinander statt untereinander. */
+  .info {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 20px;
+    align-items: start;
+  }
+  .info > .info-sep { grid-column: 1 / -1 }
+
+  .site-foot:not(.wide) { max-width: 1120px; padding-left: 24px; padding-right: 24px }
+}
+
 /* ------------------------------------------------- Telefon im Querformat */
 
 /*
