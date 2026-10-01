@@ -288,7 +288,7 @@
    * und Plaetzen — gilt ueberall gleich.
    */
   var WORLD_FIELDS = ["building", "level", "factor", "enabled", "taken",
-    "slotFactors", "slotPays", "ownPaid", "ownPaidFor", "chatMode"];
+    "slotFactors", "slotPays", "ownPaid", "ownPaidFor", "foreign", "chatMode"];
 
   /**
    * Die Welt, die zuerst gewaehlt wurde ("home"), behaelt die Schluessel, die
@@ -396,6 +396,12 @@
     // ownPaidFor — auf der naechsten Stufe faengt der Stand wieder bei null an.
     ownPaid: Number(stored.ownPaid) >= 0 && stored.ownPaid !== null && stored.ownPaid !== "" ? Math.floor(stored.ownPaid) : null,
     ownPaidFor: typeof stored.ownPaidFor === "string" ? stored.ownPaidFor : "",
+    // Einzahlungen anderer, die schon im Bauwerk liegen: Fremdeinzahler und
+    // Sniper. Je Eintrag ein Betrag, in der Reihenfolge, in der sie getippt
+    // wurden; null ist ein Feld, das gerade leer ist. Gehoert wie ownPaid
+    // zu der Stufe in ownPaidFor.
+    foreign: normaliseForeign(stored.foreign),
+    standOpen: stored.standOpen === true,
     // Ob Bauwerke mit ihrem Kuerzel aus abbr.js genannt werden ("AO") oder
     // mit vollem Namen ("Arktische Orangerie"). Aus ist die Vorgabe.
     useAbbr: stored.useAbbr === true,
@@ -438,6 +444,22 @@
       result.push(own > 0 && isFinite(own) ? own : null);
     }
     return result;
+  }
+
+  /**
+   * Fremdeinzahlungen aus dem Speicher: nur ganze Betraege ueber null.
+   * Leere Felder ueberleben das Neuladen nicht, sie sind nur waehrend des
+   * Tippens da.
+   */
+  function normaliseForeign(value) {
+    if (!Array.isArray(value)) return [];
+    return value.map(function (amount) { return Math.floor(Number(amount)); })
+      .filter(function (amount) { return amount > 0 && isFinite(amount); });
+  }
+
+  /** Die Fremdeinzahlungen, mit denen gerechnet wird — ohne leere Felder. */
+  function foreignAmounts() {
+    return state.foreign.filter(function (amount) { return amount > 0; });
   }
 
   /**
@@ -1582,16 +1604,20 @@
     var p1 = Calc.p1Reward(building, state.level, DATA.curves, ownP1);
     renderNote(building, total, p1);
 
+    // Ein eingetragener Stand gehoert zu genau einer Stufe.
+    if (state.ownPaidFor !== ownPaidKey()) {
+      state.ownPaid = null;
+      state.foreign = [];
+    }
+
     if (total.value == null || p1.value == null) {
       lastPlan = null;
       renderEmpty();
       renderSlots(null);
+      renderStand(null);
       persistState();
       return;
     }
-
-    // Ein eingetragener Stand gehoert zu genau einer Stufe.
-    if (state.ownPaidFor !== ownPaidKey()) state.ownPaid = null;
 
     var plan = Calc.buildPlan({
       total: total.value,
@@ -1604,11 +1630,12 @@
       payments: state.slotPays,
       enabled: state.enabled,
       taken: state.taken,
-      ownPaid: state.ownPaid
+      ownPaid: state.ownPaid,
+      foreign: foreignAmounts()
     });
 
     lastPlan = plan;
-    renderOwnPaid(plan);
+    renderStand(plan);
     renderSlots(plan);
     renderRows(plan);
     renderBar(plan);
@@ -1624,7 +1651,13 @@
       warnings.push("Auf dieser Stufe reichen die Gesamtkosten nicht für alle Plätze. Nicht passende Plätze sind ausgegraut.");
     }
     if (plan.anyOutOfOrder) {
-      warnings.push("Ein Platz kostet mehr als ein besser bezahlter über ihm. Prüf die eingetragenen Beträge — so vergibt das Spiel die Plätze nicht.");
+      var foreignAbove = plan.rows.some(function (row) { return row.foreign && row.outOfOrder; });
+      warnings.push(foreignAbove
+        ? "Eine Fremdeinzahlung ist höher als ein vergebener Platz über ihr — im Spiel steht sie davor. Prüf, welche Plätze wirklich vergeben sind."
+        : "Ein Platz kostet mehr als ein besser bezahlter über ihm. Prüf die eingetragenen Beträge — so vergibt das Spiel die Plätze nicht.");
+    }
+    if (alreadyInside(plan) > plan.total) {
+      warnings.push("Im Bauwerk steht mehr, als die Stufe kostet. Prüf die Beträge unter „Schon im Bauwerk“.");
     }
     var skipped = skippedAbove(plan);
     if (skipped.length) {
@@ -1644,16 +1677,107 @@
   }
 
   /**
-   * Das Feld "Deine FP schon im Bauwerk". Es zeigt sich nur, solange ein
-   * Platz vergeben ist — nur dann kann die Reihenfolge der Einzahlungen
-   * von der Annahme abweichen, mit der cipher sonst rechnet.
+   * Was laut Eintrag jetzt schon im Bauwerk liegt: deine FP, die vergebenen
+   * Plaetze und alle Fremdeinzahlungen. Ohne eigenen Stand weiss cipher das
+   * nicht und nimmt null an — dann gibt es auch nichts zu pruefen.
    */
-  function renderOwnPaid(plan) {
-    var anyTaken = plan.rows.some(function (row) { return row.taken; });
-    $("ownIn").hidden = !anyTaken && state.ownPaid == null;
+  function alreadyInside(plan) {
+    if (state.ownPaid == null && !foreignAmounts().length) return 0;
+    var inside = plan.ownPaid;
+    plan.rows.forEach(function (row) {
+      if (row.taken || row.foreign) inside += row.contribution;
+    });
+    return inside + plan.foreignLoose;
+  }
+
+  /**
+   * Der Block "Schon im Bauwerk": deine FP und die Einzahlungen anderer.
+   *
+   * Leer rechnet cipher wie immer: vor jedem vergebenen Platz der Reihe
+   * nach abgesichert. Sobald ein Stand eingetragen ist, rechnet es vom
+   * Bauwerk aus, wie es jetzt ist. Fremdeinzahlungen sind immer so ein
+   * Stand — mit ihnen heisst ein leeres Feld fuer deine FP darum 0.
+   */
+  function renderStand(plan) {
+    var amounts = foreignAmounts();
     if (document.activeElement !== $("ownPaid")) {
       $("ownPaid").value = state.ownPaid == null ? "" : formatNumber(state.ownPaid);
     }
+    $("ownPaid").placeholder = amounts.length ? "0" : "leer = der Reihe nach gesichert";
+    $("ownPaidHint").textContent = amounts.length
+      ? "Mit FP von anderen rechnet cipher vom jetzigen Stand aus. Trag ein, was du selbst schon drin hast — leer heißt 0."
+      : "Haben die vergebenen Plätze eingezahlt, bevor du gesichert hast? Trag ein, was du selbst schon drin hast (auch 0) — dann rechnet cipher vom jetzigen Stand aus.";
+    renderForeign(plan);
+
+    var parts = [];
+    if (state.ownPaid != null) parts.push(formatNumber(state.ownPaid) + " eigen");
+    if (amounts.length) parts.push(amounts.length + " fremd");
+    $("standBadge").hidden = parts.length === 0;
+    $("standBadge").textContent = parts.join(" · ");
+  }
+
+  /**
+   * Die Felder fuer Fremdeinzahlungen: eins je Betrag und immer ein leeres
+   * am Ende, in das der naechste kommt. Gebaut wird nur, wenn die Zahl der
+   * Felder nicht mehr stimmt, und nur am Ende der Liste — ein neu
+   * geschriebenes Feld verloere sonst mitten im Tippen den Cursor.
+   */
+  function renderForeign(plan) {
+    var list = $("foreignList");
+    var wanted = state.foreign.length + 1;
+    while (list.children.length > wanted) list.removeChild(list.lastElementChild);
+    while (list.children.length < wanted) list.appendChild(foreignRow(list.children.length));
+
+    // Welcher Platz zu welchem Feld gehoert: der Plan kennt nur die Betraege
+    // ohne leere Felder, in derselben Reihenfolge. Ohne Plan (es fehlen
+    // Gesamtkosten oder P1) laesst sich nichts zuordnen, die Felder bleiben.
+    var placeOf = [];
+    var counted = 0;
+    state.foreign.forEach(function (amount, index) {
+      placeOf[index] = amount > 0 && plan ? plan.foreignPlaces[counted++] : undefined;
+    });
+
+    Array.prototype.forEach.call(list.children, function (item, index) {
+      var input = item.querySelector("input");
+      var amount = state.foreign[index];
+      if (document.activeElement !== input) input.value = amount > 0 ? formatNumber(amount) : "";
+      item.querySelector(".foreign-del").hidden = index >= state.foreign.length;
+
+      var place = item.querySelector(".foreign-place");
+      var slot = placeOf[index];
+      if (!(amount > 0) || !plan) {
+        place.innerHTML = "";
+      } else if (slot) {
+        place.innerHTML = '<span class="sr-only">hält </span><span class="tag slot-' + slot + '">P' + slot + "</span>";
+      } else {
+        place.innerHTML = '<span class="none">kein Platz</span>';
+      }
+    });
+  }
+
+  function foreignRow(index) {
+    var item = document.createElement("li");
+    item.innerHTML =
+      '<input type="text" inputmode="numeric" autocomplete="off" placeholder="FP"' +
+        ' data-foreign="' + index + '" aria-label="Fremdeinzahlung ' + (index + 1) + '">' +
+      '<span class="foreign-place"></span>' +
+      '<button type="button" class="slot-reset foreign-del" data-foreign-del="' + index + '"' +
+        ' aria-label="Fremdeinzahlung ' + (index + 1) + ' entfernen">×</button>';
+    return item;
+  }
+
+  /**
+   * Leere Felder zwischen den Betraegen herausnehmen. Nicht beim Tippen —
+   * dort ist ein leeres Feld der Weg zu einer neuen Zahl —, sondern erst,
+   * wenn der Fokus die Liste verlaesst.
+   */
+  function compactForeign() {
+    var before = state.foreign.length;
+    state.foreign = foreignAmounts();
+    if (state.foreign.length === before) return;
+    // Die Felder tragen ihren Platz in der Liste im Attribut; nach dem
+    // Zusammenschieben stimmt das nicht mehr, also neu bauen.
+    $("foreignList").innerHTML = "";
   }
 
   /**
@@ -1668,7 +1792,7 @@
   function skippedAbove(plan) {
     var skipped = [];
     plan.rows.forEach(function (row, index) {
-      if (state.enabled[index] || row.reward <= 0) return;
+      if (state.enabled[index] || row.reward <= 0 || row.foreign) return;
       var lowerInPlay = plan.rows.slice(index + 1).some(function (below) {
         return below.offered || below.taken;
       });
@@ -1757,15 +1881,17 @@
       // die Summe soll der Stand sein, den das Spiel als eigene FP zeigt.
       if (row.offered || row.taken) running += row.secure;
 
-      tr.className = [row.offered ? "" : row.taken ? "taken" : "off",
+      tr.className = [row.offered ? "" : row.taken ? "taken" : row.foreign ? "taken foreign" : "off",
         own ? "own" : "", editing ? "editing" : ""].join(" ").trim();
 
       var checkbox = tr.querySelector('input[type="checkbox"]');
       checkbox.checked = state.enabled[index];
-      checkbox.disabled = !(row.reward > 0);
+      // Einen Platz, den eine Fremdeinzahlung haelt, gibt kein Haekchen frei:
+      // er haengt an ihrem Betrag, nicht an deiner Wahl.
+      checkbox.disabled = !(row.reward > 0) || row.foreign;
       // "Vergeben" zeigt die Checkbox als Strich. Das geht nur ueber die
       // Eigenschaft, ein Attribut dafuer gibt es nicht.
-      checkbox.indeterminate = Boolean(row.taken);
+      checkbox.indeterminate = Boolean(row.taken || row.foreign);
       checkbox.setAttribute("aria-label", slotLabel(row));
 
       tr.querySelector("td.rew").textContent = formatNumber(row.reward);
@@ -1774,8 +1900,10 @@
       var button = pay.querySelector(".pay-btn");
       button.textContent = formatNumber(row.contribution);
       button.disabled = !payEditable(row, index);
-      button.setAttribute("aria-label", "P" + row.slot + " zahlt " + formatNumber(row.contribution) +
-        " FP" + (own ? ", angepasst" : "") + " — ändern");
+      button.setAttribute("aria-label", row.foreign
+        ? "P" + row.slot + " hält eine Fremdeinzahlung von " + formatNumber(row.contribution) + " FP"
+        : "P" + row.slot + " zahlt " + formatNumber(row.contribution) +
+          " FP" + (own ? ", angepasst" : "") + " — ändern");
       button.hidden = editing;
       renderPayInput(pay, index, row, editing);
       if (previous.length && previous[index] !== row.contribution) flashCell(pay);
@@ -1798,6 +1926,7 @@
    * genau dann muss er sich noch korrigieren lassen, auch mitten im Tippen.
    */
   function payEditable(row, index) {
+    if (row.foreign) return false;
     return row.reward > 0 && (state.enabled[index] || row.taken);
   }
 
@@ -1933,6 +2062,7 @@
   /** Was ein Screenreader an der Checkbox eines Platzes vorliest. */
   function slotLabel(row) {
     var name = "Platz P" + row.slot;
+    if (row.foreign) return name + " hält eine Fremdeinzahlung";
     if (row.taken) return name + " vergeben — umschalten auf nicht anbieten";
     if (state.enabled[row.slot - 1] && !row.tooTight) return name + " anbieten — umschalten auf vergeben";
     return name + " anbieten";
@@ -1956,6 +2086,7 @@
    */
   function secureText(row, running) {
     if (row.taken) return '<span class="given">vergeben</span>';
+    if (row.foreign) return '<span class="given">fremd</span>';
     // Leise, damit das Gruen der Spalte nur an Betraegen steht, die du zahlst.
     if (!row.offered) return '<span class="none">' + (row.tooTight ? "passt nicht" : "–") + "</span>";
     if (row.secure === 0) return '<span class="safe">Sicher</span>';
@@ -1984,8 +2115,11 @@
     $("legend").hidden = false;
 
     var segments = [["own", plan.ownShare]].concat(plan.rows.map(function (row) {
-      return [String(row.slot), row.offered || row.taken ? row.contribution : 0];
+      return [String(row.slot), row.offered || row.taken || row.foreign ? row.contribution : 0];
     }));
+    // Fremdeinzahlungen ohne Platz liegen trotzdem im Bauwerk: ein eigenes,
+    // neutrales Stueck, nur wenn es sie gibt.
+    if (plan.foreignLoose > 0) segments.push(["loose", plan.foreignLoose]);
 
     if (bar.children.length !== segments.length) {
       bar.innerHTML = segments.map(function (segment) {
@@ -2005,7 +2139,12 @@
     countTo($("lumpValue"), plan.upfrontOpen);
 
     var labels = offered.map(function (row) { return "P" + row.slot; });
-    var range = labels.length > 1 ? labels[0] + " bis " + labels[labels.length - 1] : labels[0];
+    // "P1 bis P5" nur, wenn auch alle dazwischen angeboten sind — sonst
+    // klaenge es, als waeren vergebene oder fremd gehaltene Plaetze dabei.
+    var gapless = offered[offered.length - 1].slot - offered[0].slot === offered.length - 1;
+    var range = labels.length > 2 && gapless
+      ? labels[0] + " bis " + labels[labels.length - 1]
+      : joinSlots(labels);
 
     // Die Summe ist die Summe aller Vorleistungen, nicht eine Einzahlung:
     // wer sie auf einen Schlag einzahlt und wartet, hat die hinteren
@@ -2619,6 +2758,52 @@
     });
     $("ownPaid").addEventListener("blur", function () { render(); });
 
+    // Ein Feld je Fremdeinzahlung. Wer ins leere letzte tippt, legt einen
+    // neuen Betrag an; renderForeign haengt dann das naechste leere an.
+    $("foreignList").addEventListener("input", function (event) {
+      if (event.target.tagName !== "INPUT") return;
+      var index = Number(event.target.dataset.foreign);
+      var digits = event.target.value.replace(/[^0-9]/g, "");
+      var amount = digits === "" ? null : Number(digits);
+      if (index >= state.foreign.length) {
+        if (!(amount > 0)) return;
+        state.foreign.push(amount);
+      } else {
+        state.foreign[index] = amount > 0 ? amount : null;
+      }
+      state.ownPaidFor = ownPaidKey();
+      render();
+    });
+
+    $("foreignList").addEventListener("keydown", function (event) {
+      if (event.target.tagName === "INPUT" && event.key === "Enter") event.target.blur();
+    });
+
+    // Erst wenn der Fokus die Liste ganz verlaesst, fallen leere Felder weg.
+    $("foreignList").addEventListener("focusout", function (event) {
+      if (event.relatedTarget && $("foreignList").contains(event.relatedTarget)) return;
+      compactForeign();
+      render();
+    });
+
+    $("foreignList").addEventListener("click", function (event) {
+      var del = event.target.closest("[data-foreign-del]");
+      if (!del) return;
+      var index = Number(del.dataset.foreignDel);
+      state.foreign.splice(index, 1);
+      $("foreignList").innerHTML = "";
+      render();
+      // Der Fokus soll nicht ins Leere fallen: auf das Feld, das jetzt an
+      // dieser Stelle steht, sonst auf das leere am Ende.
+      var inputs = $("foreignList").querySelectorAll("input");
+      inputs[Math.min(index, inputs.length - 1)].focus();
+    });
+
+    $("stand").addEventListener("toggle", function (event) {
+      state.standOpen = event.target.open;
+      persistState();
+    });
+
     $("playerName").addEventListener("input", function (event) {
       state.name = event.target.value;
       render();
@@ -2745,6 +2930,9 @@
       var slot = event.target.dataset.slot;
       if (slot != null) {
         cycleSlot(Number(slot));
+        // Mit dem ersten vergebenen Platz wird "Schon im Bauwerk" wichtig:
+        // ob du vorher gesichert hast, entscheidet die Rechnung.
+        if (state.taken[Number(slot)] && state.enabled[Number(slot)]) $("stand").open = true;
         render();
       }
     });
@@ -3344,6 +3532,10 @@
   $("slots").open = state.slotsOpen || state.slotPays.some(function (own) {
     return own != null;
   }) || state.slotFactors.some(function (own) { return own != null; });
+  // Dasselbe fuer "Schon im Bauwerk": offen, wenn zuletzt offen oder wenn
+  // ein Stand oder ein vergebener Platz da ist.
+  $("stand").open = state.standOpen || state.ownPaid != null || state.foreign.length > 0 ||
+    state.taken.some(function (taken, index) { return taken && state.enabled[index]; });
   setTheme(state.theme);
   $("dataDate").textContent = formatDate(DATA.generated);
   bindEvents();

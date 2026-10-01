@@ -1003,3 +1003,104 @@ test("buildPlan: ohne Stand bleibt alles wie bisher", () => {
   const plan = Calc.buildPlan({ total: 10000, p1: 800, factor: 190, enabled: allOn });
   assert.equal(plan.ownPaid, 0);
 });
+
+// Fremdeinzahlungen: Betraege anderer, die schon im Bauwerk liegen. Alle
+// Faelle auf derselben kleinen Stufe — P1 800, bei 2,00 zahlt die Gilde
+// 1.600, 800, 270, 70 und 10.
+const small = { total: 10000, p1: 800, factor: 200, enabled: allOn };
+const art = (plan) => plan.rows.map((row) =>
+  row.foreign ? "fremd" : row.taken ? "vergeben" : row.offered ? "offen" : "aus");
+
+test("placeForeign: eine Fremdeinzahlung steht auf dem Platz, den sie behaelt", () => {
+  // 300 FP sind mehr als P3 (270), aber weniger als P2 (800): am Ende P3.
+  const plan = Calc.buildPlan({ ...small, foreign: [300] });
+  assert.deepEqual(art(plan), ["offen", "offen", "fremd", "offen", "offen"]);
+  assert.equal(plan.rows[2].contribution, 300);
+  assert.deepEqual(plan.foreignPlaces, [3]);
+  assert.equal(plan.foreignLoose, 0);
+});
+
+test("placeForeign: sortiert mehrere Betraege, egal in welcher Reihenfolge sie kommen", () => {
+  const plan = Calc.buildPlan({ ...small, foreign: [5, 300, 2000] });
+  assert.deepEqual(art(plan), ["fremd", "offen", "fremd", "offen", "offen"]);
+  assert.deepEqual(plan.rows.map((row) => row.contribution), [2000, 800, 300, 70, 10]);
+  // Platz je Eintrag, in der eingetragenen Reihenfolge. 5 FP sind weniger
+  // als jeder Platz, den die Gilde noch bekommt: kein Platz.
+  assert.deepEqual(plan.foreignPlaces, [null, 3, 1]);
+  assert.equal(plan.foreignLoose, 5);
+});
+
+test("placeForeign: bei gleichem Betrag behaelt die Fremdeinzahlung den Platz", () => {
+  // Sie war zuerst da — wer spaeter gleichzieht, ueberholt nicht.
+  const plan = Calc.buildPlan({ ...small, foreign: [800] });
+  assert.deepEqual(art(plan), ["offen", "fremd", "offen", "offen", "offen"]);
+  assert.equal(plan.anyOutOfOrder, false);
+});
+
+test("placeForeign: einen Platz, den du nicht anbietest, nimmt jede Fremdeinzahlung", () => {
+  // Aus der Gilde zahlt dort niemand, also reichen 40 FP fuer P4.
+  const plan = Calc.buildPlan({ ...small, enabled: [true, true, true, false, false], foreign: [40] });
+  assert.deepEqual(art(plan), ["offen", "offen", "offen", "fremd", "aus"]);
+  assert.deepEqual(plan.foreignPlaces, [4]);
+});
+
+test("placeForeign: vergebene Plaetze bleiben, wie sie sind", () => {
+  const taken = [true, false, false, false, false];
+  const plan = Calc.buildPlan({ ...small, taken, payments: [1600], foreign: [900] });
+  // P1 ist vergeben, 900 reichen fuer P2 (800).
+  assert.deepEqual(art(plan), ["vergeben", "fremd", "offen", "offen", "offen"]);
+  assert.equal(plan.anyOutOfOrder, false);
+
+  // Mehr als der vergebene Platz darueber: im Spiel stuende die
+  // Fremdeinzahlung vor ihm. Der Plan meldet es, statt still umzusortieren.
+  const wrong = Calc.buildPlan({ ...small, taken, payments: [1600], foreign: [2000] });
+  assert.deepEqual(art(wrong), ["vergeben", "fremd", "offen", "offen", "offen"]);
+  assert.equal(wrong.rows[1].outOfOrder, true);
+});
+
+test("buildPlan: Fremdeinzahlungen zaehlen als Fremdkapital und senken die Absicherung", () => {
+  const without = Calc.buildPlan({ ...small, ownPaid: 0 });
+  const plan = Calc.buildPlan({ ...small, foreign: [300] });
+  // Ohne eigene Angabe gilt: du hast noch nichts im Bauwerk.
+  assert.equal(plan.ownPaid, 0);
+  // Offen sind 9.700. P1 braucht danach hoechstens 3.200 offen, P2 ist
+  // sicher, P3 haelt die Fremdeinzahlung, P4 und P5 wie gewohnt.
+  assert.deepEqual(plan.rows.map((row) => row.secure), [6500, 0, null, 660, 50]);
+  assert.equal(plan.external, 1600 + 800 + 300 + 70 + 10);
+  assert.equal(plan.remainder, 10);
+  assert.equal(plan.ownShare, plan.upfront + plan.remainder);
+  assert.equal(plan.ownShare, plan.total - plan.external);
+  // Nichts davon wird ausgeschrieben.
+  assert.equal(Calc.chatLine(plan, "X", true), "X P5(10) P4(70) P2(800) P1(1600)");
+  assert.ok(plan.ownShare < without.ownShare);
+});
+
+test("buildPlan: eine Fremdeinzahlung ohne Platz liegt trotzdem im Bauwerk", () => {
+  const plan = Calc.buildPlan({ ...small, foreign: [5] });
+  assert.deepEqual(art(plan), ["offen", "offen", "offen", "offen", "offen"]);
+  assert.equal(plan.foreignLoose, 5);
+  assert.equal(plan.external, 1600 + 800 + 270 + 70 + 10 + 5);
+  assert.equal(plan.ownShare, plan.total - plan.external);
+});
+
+test("buildPlan: Fremdeinzahlungen rechnen mit dem eigenen Stand", () => {
+  const plan = Calc.buildPlan({ ...small, foreign: [300], ownPaid: 6000 });
+  assert.equal(plan.ownPaid, 6000);
+  assert.equal(plan.rows[0].secure, 500);
+  assert.equal(plan.upfront, 6000 + 500 + 660 + 50);
+});
+
+test("buildPlan: eine Fremdeinzahlung bekommt keine Absicherung", () => {
+  // Anders als ein vergebener Platz: P1 darf noch angeboten werden, obwohl
+  // danach mehr als 300 offen sind. Wer die 300 ueberbietet, schiebt nur
+  // sie nach unten — die Gilde zahlt erst, wenn ihr Platz sicher ist.
+  const plan = Calc.buildPlan({ ...small, foreign: [300] });
+  assert.equal(plan.rows[0].offered, true);
+  assert.equal(plan.anyTooTight, false);
+});
+
+test("buildPlan: ohne Fremdeinzahlungen bleibt der Plan, wie er war", () => {
+  const plan = Calc.buildPlan({ ...small, foreign: [] });
+  assert.deepEqual(plan, Calc.buildPlan(small));
+  assert.deepEqual(Calc.buildPlan({ ...small, foreign: [0, -5] }), Calc.buildPlan(small));
+});
