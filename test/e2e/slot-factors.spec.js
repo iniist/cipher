@@ -459,25 +459,34 @@ test.describe("Einen Betrag eintragen", () => {
     await value(page, 2).fill("1,85");
     await expect(state(page, 2)).toHaveText("angepasst");
 
-    // In FP-Einheit zeigt der Platz weiter seinen Faktor und nimmt auch
-    // weiter einen an: getippt wird in der Einheit, die im Feld steht.
-    // Andersherum wuerde ein Klick ins Feld einen Betrag zerschiessen, der
-    // dann als Faktor gelesen und auf 2,00 gestutzt wird.
+    // Ein Betrag in FP-Einheit ersetzt den Faktor — ein Platz traegt eine Zahl.
     await unit(page, "fp").click();
-    await expect(value(page, 2)).toHaveValue("1,85");
-    await expect(hint(page, 2)).toHaveText("Faktor 1,85 ≙ 990 FP");
-    await value(page, 2).fill("1,95");
-    await expect(value(page, 2)).toHaveValue("1,95");
-
-    // Das Kreuz gibt den Platz frei, danach nimmt er den Betrag — und der
-    // Faktor faellt dabei weg, ein Platz traegt eine Zahl.
-    await row(page, 2).locator(".slot-reset").click();
     await value(page, 2).fill("2000");
 
     const gespeichert = await page.evaluate(() =>
       JSON.parse(localStorage.getItem("cipher:state")));
     expect(gespeichert.slotPays[2]).toBe(2000);
     expect(gespeichert.slotFactors[2]).toBe(null);
+  });
+
+  test("ein eingestellter Faktor zeigt in FP seinen Betrag", async ({ page }) => {
+    // Jeder Faktor ergibt einen Betrag, darum folgt auch ein angepasster
+    // Faktor dem Umschalter. Gespeichert bleibt der Faktor.
+    await frontenac(page);
+    await value(page, 2).fill("1,85");
+    await expect(hint(page, 2)).toHaveText("≙ 990 FP");
+
+    await unit(page, "fp").click();
+    await expect(value(page, 2)).toHaveValue("990");
+    await expect(hint(page, 2)).toHaveText("≙ Faktor 1,85");
+    await expect(state(page, 2)).toHaveText("angepasst");
+
+    await unit(page, "factor").click();
+    await expect(value(page, 2)).toHaveValue("1,85");
+    const gespeichert = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("cipher:state")));
+    expect(gespeichert.slotFactors[2]).toBe(185);
+    expect(gespeichert.slotPays[2]).toBe(null);
   });
 
   test("der Stepper faellt weg, wo kein Faktor steht", async ({ page }) => {
