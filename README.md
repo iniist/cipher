@@ -24,6 +24,9 @@ Eine bebilderte Vorstellung aller Funktionen steht unter
 - **Plätze angeboten, vergeben oder selbst gezahlt** — ein Tipp aufs Häkchen
   schaltet weiter; für Förderung in Runden lässt sich eintragen, wie viele FP
   schon von dir im Bauwerk liegen.
+- **FP von anderen** — Fremdeinzahler und Sniper, ein Betrag je Person. cipher
+  setzt jeden auf den Platz, den er mit seinem Betrag behält, wenn die Gilde
+  wie geplant einzahlt, und schreibt diese Plätze nicht mehr aus.
 - **Arche-Faktor 1,80–2,00**, auf Wunsch je Platz eigens als Faktor oder als
   tatsächlich gezahlter Betrag, auch direkt in der Tabelle.
 - **Chat-Zeile** mit oder ohne FP-Beträge, Bauwerk als vollem Namen, Kürzel
@@ -48,6 +51,11 @@ selbst ein und levelst damit.
 - Belohnungen: P2 = P1/2, P3 = P2/3, P4 = P3/4, P5 = P4/5, jeweils
   kaufmännisch auf ein Vielfaches von 5 gerundet.
 - Einzahlung: `floor((Belohnung × Faktor + 50) / 100)`.
+- Fremdeinzahlungen: Von P1 abwärts bekommt die größte noch offene den
+  Platz, sobald sie mindestens so viel hat, wie die Gilde dort zahlen würde
+  (bei Gleichstand behält ihn, wer früher eingezahlt hat). Einen Platz, den
+  du nicht anbietest, nimmt jede. Abgesichert werden sie nicht: wer sie
+  überbietet, schiebt nur sie nach unten, nie einen bezahlten Gildenplatz.
 - Fehlen im Datensatz Gesamtkosten oder P1 (sehr hohe Stufen, neue Bauwerke),
   fragt cipher danach und rechnet ab Stufe 11 mit × 1,025 je Stufe hoch.
 

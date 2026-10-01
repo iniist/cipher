@@ -1148,10 +1148,22 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 
 /* ----------------------------------------------------------- Vorab-Block */
 
-.own-in { margin-top: 12px }
-.own-in[hidden] { display: none }
-.own-in input { width: 100%; margin-top: 4px }
+.stand { margin-top: 12px }
+.own-in, .foreign-in { margin-top: 10px }
+/* box-sizing ausdruecklich: im Inhalt von <details> erbt es nicht von
+   oben, und ohne ragte das Feld um sein Padding ueber den Rand. */
+.own-in input { width: 100%; margin-top: 4px; box-sizing: border-box }
 .own-in-hint { color: var(--dim); font-size: .82rem; margin: 6px 0 0 }
+/* Ein Feld je Fremdeinzahlung, daneben der Platz, den sie haelt. Feste
+   Breite fuer die Platzspalte, damit die Felder untereinander buendig
+   bleiben, ob dort "P3" steht oder "kein Platz". */
+.foreign-list { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px }
+.foreign-list li { display: flex; align-items: center; gap: 8px }
+.foreign-list input { flex: 1 1 auto; min-width: 0; box-sizing: border-box }
+.foreign-place { flex: 0 0 5.5em; font-size: .85rem }
+.foreign-place .none { color: var(--dim) }
+.foreign-list .slot-reset[hidden] { visibility: hidden; display: inline-block }
+.b-loose { background: var(--dim) }
 .lump {
   display: flex; gap: 14px; align-items: center;
   margin-top: 12px; padding: 12px;

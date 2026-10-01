@@ -517,6 +517,64 @@
   }
 
   /**
+   * Fremdeinzahlungen den Plaetzen zuordnen, die sie am Ende halten.
+   *
+   * Das Spiel vergibt die Plaetze nach dem Betrag. Eine Fremdeinzahlung
+   * steht darum nicht auf dem Platz, auf dem sie gerade steht, sondern auf
+   * dem, den sie behaelt, wenn die Gilde wie geplant einzahlt: 300 FP stehen
+   * jetzt vielleicht auf P2, aber zahlt P2 laut Plan 500, rutschen sie
+   * dahinter. Von P1 abwaerts bekommt deshalb die groesste noch offene
+   * Fremdeinzahlung den Platz, sobald sie mindestens so viel hat, wie die
+   * Gilde dort zahlen wuerde — bei gleichem Betrag behaelt ihn, wer frueher
+   * eingezahlt hat, und das ist sie.
+   *
+   * Ein vergebener Platz bleibt, wie er ist: dort hat die Gilde schon
+   * gezahlt, und der Betrag dort ist abgelesen. Ein Platz, den du nicht
+   * anbietest, zahlt aus der Gilde niemand — den nimmt jede Fremdeinzahlung,
+   * die bis dorthin kommt. Was unter allen Plaetzen landet, bekommt keinen,
+   * liegt aber trotzdem im Bauwerk.
+   *
+   * @param {number[]} amounts Fremdeinzahlungen, in beliebiger Reihenfolge
+   * @param {number[]} rewards Belohnung je Platz
+   * @param {number[]} payments Geplante Einzahlung der Gilde je Platz
+   * @param {boolean[]} enabled Welche Plaetze angeboten werden
+   * @param {boolean[]} taken Welche Plaetze schon vergeben sind
+   * @returns {{bySlot:Array<number|null>, places:Array<number|null>,
+   *            loose:number, total:number}}
+   *   `bySlot` je Platz der Betrag einer Fremdeinzahlung oder null,
+   *   `places` je Fremdeinzahlung (Reihenfolge wie `amounts`) der Platz 1-5
+   *   oder null, `loose` die Summe ohne Platz, `total` die Summe aller.
+   */
+  function placeForeign(amounts, rewards, payments, enabled, taken) {
+    var order = amounts.map(function (amount, index) { return index; });
+    // Groesste zuerst; bei gleichem Betrag in der eingetragenen Reihenfolge.
+    order.sort(function (a, b) { return amounts[b] - amounts[a] || a - b; });
+
+    var bySlot = [];
+    var places = amounts.map(function () { return null; });
+    var next = 0;
+    for (var index = 0; index < SLOTS; index++) {
+      bySlot.push(null);
+      if (!(rewards[index] > 0) || next >= order.length) continue;
+      if (enabled[index] && taken[index]) continue;
+      var amount = amounts[order[next]];
+      var guild = enabled[index] ? payments[index] : 0;
+      if (amount < guild) continue;
+      bySlot[index] = amount;
+      places[order[next]] = index + 1;
+      next++;
+    }
+
+    var loose = 0;
+    var total = 0;
+    amounts.forEach(function (amount, index) {
+      total += amount;
+      if (places[index] == null) loose += amount;
+    });
+    return { bySlot: bySlot, places: places, loose: loose, total: total };
+  }
+
+  /**
    * Den Foerderplan fuer eine Stufe berechnen.
    *
    * Idee: Die Plaetze werden von P1 abwaerts vergeben. Bevor ein Platz
@@ -569,14 +627,23 @@
    *   eingezahlt haben, bevor du selbst etwas eingezahlt hast. Die offenen
    *   Plaetze werden von dort aus abgesichert, und zwar so, dass auch die
    *   vergebenen nicht mehr ueberboten werden koennen.
+   * @param {number[]} [options.foreign] Einzahlungen anderer, die schon im
+   *   Bauwerk liegen: Fremdeinzahler und Sniper, die keiner aus der Gilde
+   *   ist und keinen ausgeschriebenen Platz genommen haben. Ihre Plaetze
+   *   ergeben sich aus dem Betrag, siehe placeForeign. Mit Fremdeinzahlungen
+   *   rechnet der Plan vom jetzigen Stand aus; fehlt options.ownPaid, gilt 0.
    * @returns {{
    *   rows: Array<{slot:number, reward:number, factor:number, contribution:number,
-   *                offered:boolean, taken:boolean, secure:number|null,
+   *                offered:boolean, taken:boolean, foreign:boolean, secure:number|null,
    *                tooTight:boolean, fixed:boolean, outOfOrder:boolean}>,
    *   total:number, external:number, ownShare:number, ownPaid:number,
    *   upfront:number, upfrontOpen:number, remainder:number,
+   *   foreignPlaces:Array<number|null>, foreignLoose:number,
    *   anyTooTight:boolean, anyOutOfOrder:boolean
    * }}
+   *   `foreignPlaces` nennt fuer jede Fremdeinzahlung in der Reihenfolge von
+   *   options.foreign den Platz (1-5), den sie haelt, oder null;
+   *   `foreignLoose` ist die Summe der Fremdeinzahlungen ohne Platz.
    *   `upfront` ist die ganze Vorleistung, auch die vor schon vergebenen
    *   Plaetzen; `upfrontOpen` nur die, die fuer noch offene Plaetze aussteht.
    */
@@ -587,6 +654,13 @@
     var enabled = options.enabled;
     var taken = options.taken || [];
     var ownPaid = options.ownPaid != null && options.ownPaid >= 0 ? Math.floor(options.ownPaid) : null;
+    var foreign = (options.foreign || []).map(Math.floor).filter(function (amount) {
+      return amount > 0;
+    });
+    // Fremdeinzahlungen sind ein Stand, keine Reihenfolge: wer sie eintraegt,
+    // beschreibt das Bauwerk, wie es jetzt ist. Ohne eigene Angabe hast du
+    // darin noch nichts.
+    if (foreign.length && ownPaid == null) ownPaid = 0;
 
     /** Der Faktor, der fuer diesen Platz tatsaechlich gilt. */
     function factorFor(index) {
@@ -610,6 +684,10 @@
     // Was die Foerderer tatsaechlich einzahlen — das steht so im Plan.
     var payments = paymentsFor(options.p1);
 
+    // Wo die Fremdeinzahlungen landen. Einmal, nicht je Absicherung: der
+    // Platz haengt an dem, was die Gilde tatsaechlich zahlt.
+    var placed = placeForeign(foreign, rewardChain(options.p1), payments, enabled, taken);
+
     /**
      * Einen Plan rechnen, dessen Absicherung von `securePay` ausgeht.
      * @param {number[]} securePay Einzahlung je Platz, mit der `needed` rechnet
@@ -631,6 +709,7 @@
           contribution: pay,
           offered: Boolean(enabled[index]) && reward > 0,
           taken: false,
+          foreign: false,
           secure: null,
           tooTight: false,
           fixed: isFixed(index),
@@ -681,6 +760,8 @@
         upfront: upfront,
         upfrontOpen: upfrontOpen,
         remainder: remaining,
+        foreignPlaces: [],
+        foreignLoose: 0,
         anyTooTight: anyTooTight,
         anyOutOfOrder: markOutOfOrder(rows)
       };
@@ -699,21 +780,29 @@
     function planFromNow(securePay) {
       var rows = rewardChain(options.p1).map(function (reward, index) {
         var inPlay = Boolean(enabled[index]) && reward > 0;
+        var other = placed.bySlot[index];
         return {
           slot: index + 1,
           reward: reward,
           factor: factorFor(index),
-          contribution: payments[index],
-          offered: inPlay && !taken[index],
+          contribution: other != null ? other : payments[index],
+          offered: inPlay && !taken[index] && other == null,
           taken: inPlay && Boolean(taken[index]),
+          foreign: other != null,
           secure: null,
           tooTight: false,
-          fixed: isFixed(index),
+          fixed: other != null || isFixed(index),
           outOfOrder: false
         };
       });
 
-      var external = 0;
+      // Fremdeinzahlungen liegen im Bauwerk, ob mit Platz oder ohne. Eine
+      // Absicherung bekommen sie nicht: wer sie ueberbietet, schiebt nur sie
+      // nach unten. Ein Gildenplatz darunter ist nach seiner Einzahlung so
+      // sicher wie sonst — mehr als seine Einzahlung ist dann nicht mehr
+      // offen, und wer eine Fremdeinzahlung darueber ueberbieten wollte,
+      // braeuchte mehr.
+      var external = placed.total;
       var cap = Infinity; // Hoechstens so viel darf offen sein, damit kein vergebener Platz faellt
       rows.forEach(function (row) {
         if (!row.taken) return;
@@ -754,6 +843,8 @@
         upfront: ownPaid + upfrontOpen,
         upfrontOpen: upfrontOpen,
         remainder: remaining,
+        foreignPlaces: placed.places,
+        foreignLoose: placed.loose,
         anyTooTight: anyTooTight,
         anyOutOfOrder: markOutOfOrder(rows)
       };
@@ -806,6 +897,7 @@
     CURVATURE: CURVATURE,
     curveReliability: curveReliability,
     buildPlan: buildPlan,
+    placeForeign: placeForeign,
     chatLine: chatLine
   };
 });

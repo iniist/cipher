@@ -332,15 +332,29 @@
       <tbody id="rows"></tbody>
     </table>
 
-    <!-- Nur sichtbar, solange ein Platz vergeben ist. Leer rechnet cipher
-         wie bisher: vor jedem vergebenen Platz der Reihe nach abgesichert.
-         Mit Zahl rechnet es vom Stand aus, der jetzt im Bauwerk ist — etwa
-         wenn P1 und P2 eingezahlt haben, bevor du selbst etwas gesichert hast. -->
-    <div class="own-in" id="ownIn" hidden>
-      <label class="l" for="ownPaid">Deine FP schon im Bauwerk</label>
-      <input id="ownPaid" type="text" inputmode="numeric" autocomplete="off" placeholder="leer = der Reihe nach gesichert" aria-describedby="ownPaidHint">
-      <p class="own-in-hint" id="ownPaidHint">Haben die vergebenen Plätze eingezahlt, bevor du gesichert hast? Trag ein, was du selbst schon drin hast (auch 0) — dann rechnet cipher vom jetzigen Stand aus.</p>
-    </div>
+    <!-- Was jetzt schon im Bauwerk liegt. Leer rechnet cipher wie immer:
+         vor jedem vergebenen Platz der Reihe nach abgesichert. Mit Stand
+         rechnet es vom Bauwerk aus, wie es jetzt ist — etwa wenn P1 und P2
+         eingezahlt haben, bevor du selbst etwas gesichert hast, oder wenn
+         Fremdeinzahler und Sniper schon drin sind. Zugeklappt kostet der
+         Block eine Zeile; er geht von selbst auf, sobald ein Platz vergeben
+         wird. -->
+    <details class="slots stand" id="stand">
+      <summary>
+        <span class="slots-title">Schon im Bauwerk</span>
+        <span class="slots-badge" id="standBadge" hidden></span>
+      </summary>
+      <div class="own-in" id="ownIn">
+        <label class="l" for="ownPaid">Deine FP schon im Bauwerk</label>
+        <input id="ownPaid" type="text" inputmode="numeric" autocomplete="off" placeholder="leer = der Reihe nach gesichert" aria-describedby="ownPaidHint">
+        <p class="own-in-hint" id="ownPaidHint">Haben die vergebenen Plätze eingezahlt, bevor du gesichert hast? Trag ein, was du selbst schon drin hast (auch 0) — dann rechnet cipher vom jetzigen Stand aus.</p>
+      </div>
+      <div class="foreign-in">
+        <span class="l" id="foreignLabel">FP von anderen</span>
+        <ul class="foreign-list" id="foreignList" aria-labelledby="foreignLabel" aria-describedby="foreignHint"></ul>
+        <p class="own-in-hint" id="foreignHint">Fremdeinzahler und Sniper, ein Betrag je Person. cipher setzt jeden auf den Platz, den er mit seinem Betrag behält, wenn die Gilde wie geplant einzahlt.</p>
+      </div>
+    </details>
 
     <div class="lump" id="lump" hidden>
       <div class="lump-n"><b id="lumpValue">0</b><span>zum Sichern</span></div>
