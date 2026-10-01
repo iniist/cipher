@@ -443,16 +443,18 @@
   /**
    * In welcher Einheit eine Zeile gelesen wird.
    *
-   * Ein eingestellter Platz behaelt die Einheit, in der er eingestellt
-   * wurde — sonst muesste ein Betrag beim Umschalten in einen Faktor
-   * uebersetzt werden, und 10.000 FP auf eine Belohnung von 3.200 ergeben
-   * 3,13: ausserhalb des zulaessigen Bereichs, also nicht darstellbar.
-   * Wer folgt, zeigt die Einheit des Blocks.
+   * Grundsaetzlich die des Blocks — auch fuer einen eingestellten Faktor,
+   * denn jeder Faktor ergibt einen Betrag, den man zeigen kann. Wer dort in
+   * FP tippt, stellt den Platz damit auf einen Betrag um.
+   *
+   * Nur ein getippter Betrag bleibt immer in FP: er muesste sonst in einen
+   * Faktor uebersetzt werden, und 10.000 FP auf eine Belohnung von 3.200
+   * ergeben 3,13 — ausserhalb des zulaessigen Bereichs, also nicht
+   * darstellbar.
    * @returns {"factor"|"fp"}
    */
   function slotUnitFor(index) {
     if (state.slotPays[index] != null) return "fp";
-    if (state.slotFactors[index] != null) return "factor";
     return state.slotUnit;
   }
 
@@ -1410,8 +1412,12 @@
 
   function slotHint(index, unit, row) {
     if (!row) return "";
+    // Ohne getippten Betrag ist der eingestellte Faktor die Wahrheit; aus
+    // der abgerundeten Einzahlung zurueckgerechnet koennte er um 0,01
+    // daneben liegen.
     var andere = unit === "fp"
-      ? (row.reward > 0 ? "Faktor " + formatFactor(impliedFactor(row)) : "")
+      ? (state.slotPays[index] == null ? "Faktor " + formatFactor(effectiveFactors()[index])
+        : row.reward > 0 ? "Faktor " + formatFactor(impliedFactor(row)) : "")
       : formatNumber(row.contribution) + " FP";
     if (!andere) return "";
     if (unit === state.slotUnit) return "≙ " + andere;
@@ -2581,8 +2587,8 @@
     });
 
     // Der Umschalter aendert keine einzige gespeicherte Zahl — nur, in
-    // welcher Einheit die folgenden Zeilen dastehen und was beim Tippen
-    // gemeint ist. Eingestellte Plaetze behalten ihre eigene Einheit.
+    // welcher Einheit die Zeilen dastehen und was beim Tippen gemeint ist.
+    // Ein getippter Betrag bleibt in FP, siehe slotUnitFor.
     $("slotUnit").addEventListener("click", function (event) {
       var button = event.target.closest("[data-slot-unit]");
       if (!button) return;
