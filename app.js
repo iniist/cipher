@@ -287,7 +287,7 @@
    * Theme, Spielername, Kuerzel-Schalter, die Lesarten von Stufe, Sichern
    * und Plaetzen — gilt ueberall gleich.
    */
-  var WORLD_FIELDS = ["building", "level", "factor", "enabled", "taken",
+  var WORLD_FIELDS = ["building", "level", "factor", "enabled", "taken", "slotsFor",
     "slotFactors", "slotPays", "ownPaid", "ownPaidFor", "foreign", "chatMode"];
 
   /**
@@ -377,6 +377,10 @@
     // Schon vergebene Plaetze: nicht mehr ausschreiben, aber weiter als
     // Fremdkapital rechnen. Zaehlt nur, wo der Platz auch angeboten ist.
     taken: normaliseTaken(stored.taken),
+    // Zu welchem Bauwerk und welcher Stufe die Haekchen gehoeren. Auf einem
+    // anderen Bauwerk oder einer anderen Stufe ist wieder alles angeboten.
+    // null heisst: alles angeboten, das gilt ueberall.
+    slotsFor: null,
     theme: THEMES.indexOf(stored.theme) >= 0 ? stored.theme : "dark",
     // Wie die Zahl im Stufenfeld zu lesen ist. "next" ist die Vorgabe und
     // das, was cipher vorher ohne Wahl getan hat.
@@ -410,6 +414,7 @@
     // wollen die Betraege sehen.
     chatMode: stored.chatMode === "plain" ? "plain" : "points"
   };
+  state.slotsFor = slotsForOf(stored);
 
   // Ein Platz traegt entweder einen Faktor oder einen Betrag, nie beides —
   // es ist eine Zahl in zwei Einheiten, und zwei Quellen fuer dieselbe Zahl
@@ -557,6 +562,19 @@
     var current = slotStateOf(index);
     state.enabled[index] = current !== "taken";
     state.taken[index] = current === "on";
+    state.slotsFor = ownPaidKey();
+  }
+
+  /**
+   * Zu welcher Stufe gespeicherte Haekchen gehoeren. Ein Stand von vor
+   * dieser Regel hat den Schluessel nicht; abweichende Haekchen gehoeren
+   * dann zu der Stufe, auf der er gespeichert wurde.
+   */
+  function slotsForOf(stored) {
+    if (typeof stored.slotsFor === "string") return stored.slotsFor;
+    var changed = normaliseEnabled(stored.enabled).indexOf(false) >= 0 ||
+      normaliseTaken(stored.taken).indexOf(true) >= 0;
+    return changed ? state.building + ":" + state.level : null;
   }
 
   var ownTotals = read(KEY.totals, {});
@@ -1603,6 +1621,14 @@
     var total = Calc.totalCost(building, state.level, ownTotals);
     var p1 = Calc.p1Reward(building, state.level, DATA.curves, ownP1);
     renderNote(building, total, p1);
+
+    // Die Haekchen gelten wie der Stand nur fuer eine Stufe: wer das Bauwerk
+    // oder die Stufe wechselt, faengt wieder mit allen Plaetzen angeboten an.
+    if (state.slotsFor != null && state.slotsFor !== ownPaidKey()) {
+      state.enabled = normaliseEnabled(null);
+      state.taken = normaliseTaken(null);
+      state.slotsFor = null;
+    }
 
     // Ein eingetragener Stand gehoert zu genau einer Stufe.
     if (state.ownPaidFor !== ownPaidKey()) {
