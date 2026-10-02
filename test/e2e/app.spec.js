@@ -136,6 +136,30 @@ test.describe("Vergebene Plaetze", () => {
     await expect(page.locator("#chatPlain")).toHaveText(/P2 P1$/);
   });
 
+  test("neue Stufe oder anderes Bauwerk bietet wieder alle Plaetze an", async ({ page }) => {
+    const alleAngeboten = async () => {
+      for (let slot = 0; slot < 5; slot++) {
+        await expect(haekchen(page, slot)).toBeChecked();
+        expect(await haekchen(page, slot).evaluate((box) => box.indeterminate)).toBe(false);
+      }
+    };
+
+    await vergeben(page, 0);
+    await abwaehlen(page, 3);
+    await page.click("#levelUp");
+    await alleAngeboten();
+
+    await vergeben(page, 1);
+    await abwaehlen(page, 4);
+    await page.locator("#building").selectOption("Tower_of_Babel", { force: true });
+    await alleAngeboten();
+
+    // Neu laden ist kein Wechsel: die Haekchen bleiben, wie sie waren.
+    await vergeben(page, 0);
+    await page.reload();
+    expect(await haekchen(page, 0).evaluate((box) => box.indeterminate)).toBe(true);
+  });
+
   test("ein oberer Platz auf aus bekommt einen Hinweis auf vergeben", async ({ page }) => {
     await abwaehlen(page, 0);
     await expect(page.locator("#warn")).toContainText("P1 zahlst du so selbst");

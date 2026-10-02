@@ -22,8 +22,9 @@ Eine bebilderte Vorstellung aller Funktionen steht unter
   vorher sichern musst — wahlweise als Schritt je Platz oder als laufender
   Stand deiner FP im Bauwerk.
 - **Plätze angeboten, vergeben oder selbst gezahlt** — ein Tipp aufs Häkchen
-  schaltet weiter; für Förderung in Runden lässt sich eintragen, wie viele FP
-  schon von dir im Bauwerk liegen.
+  schaltet weiter; ein anderes Bauwerk oder eine andere Stufe beginnt wieder
+  mit allen Plätzen angeboten. Für Förderung in Runden lässt sich eintragen,
+  wie viele FP schon von dir im Bauwerk liegen.
 - **FP von anderen** — Fremdeinzahler und Sniper, ein Betrag je Person. cipher
   setzt jeden auf den Platz, den er mit seinem Betrag behält, wenn die Gilde
   wie geplant einzahlt, und schreibt diese Plätze nicht mehr aus.
