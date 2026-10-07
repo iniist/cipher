@@ -53,6 +53,14 @@ jobs:
       - name: Datensatz erzeugen
         run: node tools/build-data.js lg-daten.json | tee build-bericht.txt
 
+      # Die Bauwerksseiten rechnen aus data.js; mit neuen Daten muessen sie
+      # neu entstehen, sonst schlaegt test/pages.test.js an. Die Sitemap
+      # zieht lastmod fuer alles nach, was sich dabei geaendert hat.
+      - name: Bauwerksseiten und Sitemap erzeugen
+        run: |
+          node tools/build-pages.js
+          node tools/sitemap.js
+
       # Hier laeuft die volle Suite, nicht nur die Datentests — und das aus
       # einem Grund, der erst der erste Lauf gezeigt hat: Einen Pull Request,
       # den der Arbeitsablauf selbst aufmacht, laesst GitHub nicht ohne
@@ -125,7 +133,8 @@ jobs:
           # build-data.js traegt den Stand auch in index.html ein; ohne sie
           # im Commit faellt der Test auf den Stand ohne JavaScript nach
           # dem Merge auf main.
-          git add data.js index.html
+          # Dazu die Bauwerksseiten und die Sitemap aus dem Schritt oben.
+          git add data.js sitemap.xml '*.html'
 
           {
             echo "Datensatz aus dem Wiki erneuert"

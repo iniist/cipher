@@ -1,0 +1,60 @@
+name: Suchmaschinen benachrichtigen
+
+# Nach jedem Push auf main, also nach jedem Merge:
+#
+#   1. lastmod in sitemap.xml nachziehen (tools/sitemap.js). Ein Pull Request
+#      kann das nicht zuverlaessig selbst: Beim Squash-Merge bekommen seine
+#      Dateien das Datum des Merges, nicht das des Pull Requests. Der Commit
+#      dieses Laufs loest keinen weiteren aus — GitHub startet keine
+#      Workflows fuer Pushes mit dem GITHUB_TOKEN.
+#   2. Die geaenderten Seiten per IndexNow melden (tools/indexnow.js), sobald
+#      Netlify sie ausliefert. Google nimmt an IndexNow nicht teil und liest
+#      die Sitemap; Bing, Yandex und Co. kommen so sofort.
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: suchmaschinen
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  melden:
+    name: Sitemap und IndexNow
+    runs-on: ubuntu-latest
+    steps:
+      # Volle Historie: lastmod kommt aus dem letzten Commit jeder Datei.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: lastmod nachziehen
+        run: node tools/sitemap.js
+
+      # Scheitert der Push (etwa durch Zweigschutz), bleibt die Sitemap, wie
+      # sie ist; der Lauf meldet dann mit dem Stand, der live geht.
+      - name: Sitemap committen
+        run: |
+          if git diff --quiet -- sitemap.xml; then
+            echo "Sitemap unveraendert."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Sitemap: lastmod nachziehen" -- sitemap.xml
+          if ! git push origin HEAD:main; then
+            echo "::warning::Sitemap liess sich nicht pushen; lastmod bleibt beim alten Stand."
+            git reset --hard "$GITHUB_SHA"
+          fi
+
+      - name: IndexNow
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: node tools/indexnow.js --since "$BEFORE" --wait

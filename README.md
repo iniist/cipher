@@ -99,6 +99,10 @@ data.js             Datensatz der Legendären Bauwerke (generiert)
 abbr.js             Kürzel je Bauwerk (von Hand gepflegt)
 styles.css          Darstellung, sechs Themes über data-theme
 rundgang.*          Vorstellungsseite; Bilder in bilder/ via tools/screenshots.js
+arche.html, …       Bauwerksseiten mit allen Stufen (erzeugt, tools/build-pages.js)
+lg.css              Darstellung der Bauwerksseiten
+sitemap.xml         Erzeugt von tools/sitemap.js, lastmod aus Git
+<32 Hex>.txt        IndexNow-Schlüssel (tools/indexnow.js)
 umzug.*             Übernimmt den Speicher von der alten Adresse cipher-calc.netlify.app
 impressum.html, datenschutz.html, legal.js, 404.html
 netlify.toml        Header (CSP, HSTS), Caching, Weiterleitungen
@@ -109,6 +113,19 @@ test/               Einheitentests und Browsertests (nicht ausgeliefert)
 `tools/` und `test/` liegen zwar im Deploy, `netlify.toml` beantwortet sie aber
 mit 404. Die Regeln brauchen `force = true`, sonst greift Netlify bei
 existierenden Dateien nicht ein.
+
+## Suchmaschinen
+
+- **Bauwerksseiten** (`/arche`, `/atomium`, `/saatgut-tresor`, die drei
+  Saturn-VI-Tore) zeigen Kosten und Mäzenplätze aller Stufen, gerechnet mit
+  `calc.js`. Jede Stufe verlinkt per `/#lg=<id>&stufe=<n>` in den Rechner.
+  Sie entstehen aus `data.js`: `npm run pages` erzeugt sie und die Sitemap
+  neu; `test/pages.test.js` schlägt an, wenn sie nicht mehr passen. Ein
+  weiteres Bauwerk braucht nur einen Eintrag in `PAGES` in
+  `tools/build-pages.js` und einen Link in `index.html`.
+- **Nach jedem Push auf main** (`.github/workflows/suchmaschinen.yml`) zieht
+  `tools/sitemap.js` lastmod nach, und `tools/indexnow.js` meldet die
+  geänderten Seiten per IndexNow, sobald Netlify sie ausliefert.
 
 ## Datensatz erneuern
 

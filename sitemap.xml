@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Nur die Seiten, die in den Index sollen. Impressum und Datenschutz
+<!-- Erzeugt von tools/sitemap.js — Adressen und lastmod dort, nicht hier.
+     Nur die Seiten, die in den Index sollen. Impressum und Datenschutz
      stehen auf noindex und fehlen darum hier. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
         xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
   <url>
     <loc>https://foe-foerderrechner.com/</loc>
-    <lastmod>2026-09-26</lastmod>
+    <lastmod>2026-10-07</lastmod>
     <image:image>
       <image:loc>https://foe-foerderrechner.com/bilder/og-cipher.png</image:loc>
     </image:image>
   </url>
   <url>
     <loc>https://foe-foerderrechner.com/rundgang</loc>
-    <lastmod>2026-09-26</lastmod>
+    <lastmod>2026-10-07</lastmod>
     <image:image>
       <image:loc>https://foe-foerderrechner.com/bilder/og-cipher.png</image:loc>
     </image:image>
@@ -25,5 +26,29 @@
       <video:duration>40</video:duration>
       <video:family_friendly>yes</video:family_friendly>
     </video:video>
+  </url>
+  <url>
+    <loc>https://foe-foerderrechner.com/arche</loc>
+    <lastmod>2026-10-07</lastmod>
+  </url>
+  <url>
+    <loc>https://foe-foerderrechner.com/atomium</loc>
+    <lastmod>2026-10-07</lastmod>
+  </url>
+  <url>
+    <loc>https://foe-foerderrechner.com/saatgut-tresor</loc>
+    <lastmod>2026-10-07</lastmod>
+  </url>
+  <url>
+    <loc>https://foe-foerderrechner.com/saturn-vi-tor-pegasus</loc>
+    <lastmod>2026-10-07</lastmod>
+  </url>
+  <url>
+    <loc>https://foe-foerderrechner.com/saturn-vi-tor-centaurus</loc>
+    <lastmod>2026-10-07</lastmod>
+  </url>
+  <url>
+    <loc>https://foe-foerderrechner.com/saturn-vi-tor-hydra</loc>
+    <lastmod>2026-10-07</lastmod>
   </url>
 </urlset>

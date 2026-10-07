@@ -50,12 +50,17 @@ test("die Seite ist zur Indexierung freigegeben und traegt ihre Adresse", async 
   await expect(page.locator('meta[name="keywords"]')).toHaveCount(0);
 });
 
-test("genau eine H1, die sagt, was die Seite ist — die Wortmarke bleibt", async ({ page }) => {
+test("genau eine H1, die sichtbar sagt, was die Seite ist — die Wortmarke bleibt", async ({ page }) => {
   const h1 = page.locator("h1");
   await expect(h1).toHaveCount(1);
-  expect(norm(await h1.textContent())).toMatch(/^cipher — Förderrechner für Legendäre Bauwerke in Forge of Empires$/);
+  // Der Untertitel ist die H1: sichtbar, mit den Suchbegriffen, ohne
+  // versteckten Zusatz.
+  expect(norm(await h1.textContent())).toBe("FoE-Förderrechner & Archerechner");
+  await expect(h1).toBeVisible();
+  await expect(h1.locator(".sr-only")).toHaveCount(0);
   // Der Knopf fuer das Easter Egg traegt weiter nur die Wortmarke.
   await expect(page.locator("#wordmark")).toHaveText("cipher");
+  await expect(page.locator("h1 #wordmark")).toHaveCount(0);
 });
 
 test("die Ueberschriften steigen nicht ueber eine Stufe hinweg", async ({ page }) => {

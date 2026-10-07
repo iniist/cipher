@@ -3547,8 +3547,29 @@
     });
   }
 
+  /**
+   * Bauwerk und Stufe aus einem Link uebernehmen: /#lg=The_Arc&stufe=80.
+   * So verlinken die Bauwerksseiten (arche.html, …) jede Stufe in den
+   * Rechner. Hinter dem "#", damit Suchmaschinen keine zweite Adresse des
+   * Rechners sehen; danach verschwindet der Anhang aus der Adresse, sonst
+   * stellte jedes Neuladen die Stufe wieder zurueck.
+   */
+  function applyLink() {
+    var match = /^#lg=([^&]+)&stufe=(\d{1,4})$/.exec(window.location.hash);
+    if (!match) return;
+    try {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    } catch (error) { /* Dann bleibt der Anhang stehen — schadet nicht. */ }
+    var id;
+    try { id = decodeURIComponent(match[1]); } catch (error) { return; }
+    if (!byId[id]) return;
+    state.building = id;
+    state.level = Math.min(Math.max(1, Number(match[2])), LEVEL_MAX);
+  }
+
   // ------------------------------------------------------------------- Start
 
+  applyLink();
   buildBuildingSelect();
   buildFactorChips();
   buildSlotRows();

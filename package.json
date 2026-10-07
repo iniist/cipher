@@ -11,7 +11,8 @@
     "test:unit": "node --test \"test/*.test.js\"",
     "test:e2e": "playwright test",
     "import": "node tools/import-run.js && node tools/build-data.js lg-daten.json",
-    "serve": "node tools/serve.js"
+    "serve": "node tools/serve.js",
+    "pages": "node tools/build-pages.js && node tools/sitemap.js"
   },
   "devDependencies": {
     "@playwright/test": "~1.56.1"
