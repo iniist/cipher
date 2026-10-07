@@ -6,9 +6,10 @@
 const { test, expect } = require("@playwright/test");
 
 const SITE = "https://foe-foerderrechner.com";
+const { PAGES } = require("../../tools/build-pages.js");
 
 test.describe("Sitemap und robots.txt", () => {
-  test("sitemap.xml ist gueltiges XML und nennt / und /rundgang", async ({ request, page }) => {
+  test("sitemap.xml ist gueltiges XML und nennt /, /rundgang und die Bauwerksseiten", async ({ request, page }) => {
     const response = await request.get("/sitemap.xml");
     expect(response.status()).toBe(200);
     expect(response.headers()["content-type"]).toContain("xml");
@@ -29,7 +30,7 @@ test.describe("Sitemap und robots.txt", () => {
 
     expect(result.error).toBeUndefined();
     expect(result.root).toBe("urlset");
-    expect(result.locs).toEqual([SITE + "/", SITE + "/rundgang"]);
+    expect(result.locs).toEqual([SITE + "/", SITE + "/rundgang"].concat(PAGES.map((p) => SITE + "/" + p.slug)));
     for (const date of result.lastmod) expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     // Rechtsseiten stehen auf noindex und gehoeren nicht hinein.
     expect(xml).not.toContain("impressum");

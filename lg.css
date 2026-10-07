@@ -1,0 +1,112 @@
+/*!
+ * cipher — Bauwerksseiten (arche.html, atomium.html, …)
+ *
+ * Dieselben Schmiede-Farben wie rundgang.css, aber ruhig: die Seiten sind
+ * zum Nachschlagen da, vor allem die Tabelle. Kein Skript, keine Bewegung.
+ */
+
+:root {
+  --bg: #183c30;
+  --wood: #3e2410;
+  --wood-dark: #2e1a08;
+  --wood-deep: #1e0f02;
+  --brass: #c27f2e;
+  --ink: #fff4e4;
+  --dim: #dcbf94;
+  --gold: #f5b95e;
+  --ok: #a8cc3c;
+  --btn: linear-gradient(#e0a24c, #bd782a);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box }
+
+html { background: var(--bg) }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 80% 0%, rgba(108, 114, 40, .5), transparent 60%),
+    radial-gradient(ellipse at 0% 45%, rgba(48, 84, 60, .7), transparent 55%);
+  background-attachment: fixed;
+  font-family: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+a { color: var(--gold) }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px }
+
+.top, main, .foot { max-width: 880px; margin: 0 auto; padding: 0 16px }
+.top { padding-top: 18px; color: var(--dim) }
+.top a { font-weight: 700; text-decoration: none }
+
+h1 {
+  margin: 18px 0 12px;
+  font-size: clamp(1.8rem, 6vw, 2.6rem);
+  line-height: 1.1;
+  color: var(--gold);
+  text-shadow: 0 2px 0 var(--wood-deep);
+}
+h2 { margin: 40px 0 10px; font-size: 1.5rem; line-height: 1.2; color: var(--gold) }
+
+.lead { color: var(--dim); font-size: 1.1rem; max-width: 62ch }
+.fine { color: var(--dim); font-size: .92rem }
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: var(--btn);
+  color: var(--wood-deep);
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 160, .5), 0 3px 0 var(--wood-deep);
+}
+
+.sums { padding-left: 1.2em }
+.sums b { color: var(--ink) }
+
+.links { display: flex; flex-wrap: wrap; gap: 8px 20px }
+
+/* ---------------------------------------------------------------- Tabellen */
+
+/* Am Telefon passen acht Spalten nicht: die Tabelle scrollt fuer sich,
+   die Seite nicht. */
+.scroll {
+  overflow-x: auto;
+  border: 2px solid var(--brass);
+  border-radius: 12px;
+  background: var(--wood-dark);
+}
+
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums }
+th, td { padding: 6px 10px; text-align: right; white-space: nowrap }
+thead th {
+  position: sticky; top: 0;
+  background: var(--wood);
+  color: var(--dim);
+  font-weight: 600;
+  border-bottom: 2px solid var(--brass);
+}
+tbody tr:nth-child(even) { background: rgba(255, 200, 120, .05) }
+tbody tr:target { background: rgba(245, 185, 94, .22) }
+tbody th { text-align: left; color: var(--gold) }
+tbody th a { text-decoration: none }
+td small { display: block; color: var(--dim); font-size: .8em; line-height: 1.2 }
+td.off { color: var(--dim) }
+td.own { color: var(--ok); font-weight: 600 }
+.example th:first-child { text-align: left }
+.levels { font-size: .95rem }
+.levels tbody td { vertical-align: top }
+.est { color: var(--dim); margin-left: 2px; cursor: help }
+
+/* -------------------------------------------------------------------- Fuss */
+
+.foot { margin-top: 48px; padding-bottom: 32px; color: var(--dim); font-size: .92rem }
+.foot p { margin: 0 0 12px }
+.foot a { color: var(--dim) }
+.foot-links { display: flex; flex-wrap: wrap; gap: 18px }
+.foot-links a { color: var(--gold) }

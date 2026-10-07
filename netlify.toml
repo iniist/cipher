@@ -87,6 +87,13 @@
   [headers.values]
     X-Robots-Tag = "noindex"
 
+# Der IndexNow-Schluessel (tools/indexnow.js): Suchmaschinen muessen ihn
+# abrufen koennen, im Index hat er nichts zu suchen.
+[[headers]]
+  for = "/2bfe17db8df639d6b92a18e5fb5bb7ce.txt"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
 # ------------------------------------------------------ Eigene Domain
 
 # Netlify leitet die *.netlify.app-Adresse nicht von selbst auf die eigene

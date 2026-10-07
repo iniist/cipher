@@ -173,11 +173,11 @@
 
   <header class="app-head">
     <div>
-      <!-- Die Wortmarke bleibt ein Knopf (Easter Egg). Der Zusatz sagt
-           Screenreadern und Suchmaschinen, was die Seite ist; zu sehen ist
-           er im Untertitel darunter und im Abschnitt unten. -->
-      <h1><button type="button" class="wordmark" id="wordmark">cipher</button><span class="sr-only"> — Förderrechner für Legendäre Bauwerke in Forge of Empires</span></h1>
-      <p class="sub">FoE-Förderrechner &amp; Archerechner</p>
+      <!-- Die Wortmarke bleibt ein Knopf (Easter Egg), ist aber keine
+           Ueberschrift: Die H1 ist der Untertitel darunter, sichtbar und mit
+           den Worten, nach denen gesucht wird. -->
+      <p class="brand"><button type="button" class="wordmark" id="wordmark">cipher</button></p>
+      <h1 class="sub">FoE-Förderrechner &amp; Archerechner</h1>
     </div>
     <div class="head-bar">
       <!-- Welche Spielwelt gerade offen ist. Jede Welt hat ihre eigenen
@@ -439,6 +439,9 @@
         <li><b>Plan ablesen.</b> Je Platz stehen die Kosten, die ein Förderer einzahlt, und was du vorher sichern musst; darunter die Aufteilung in Eigen und Förderer.</li>
         <li><b>Chat-Zeile kopieren.</b> Ein Tipp, und die Plätze stehen fertig für den Förderchat bereit.</li>
       </ol>
+      <!-- Die Bauwerksseiten erzeugt tools/build-pages.js; die Liste hier
+           prueft test/pages.test.js gegen dessen PAGES. -->
+      <p class="info-lg">Kosten und Mäzenplätze aller Stufen zum Nachschlagen: <a href="/arche">Arche</a>, <a href="/atomium">Atomium</a>, <a href="/saatgut-tresor">Saatgut-Tresor</a>, <a href="/saturn-vi-tor-pegasus">Saturn VI Tor PEGASUS</a>, <a href="/saturn-vi-tor-centaurus">CENTAURUS</a> und <a href="/saturn-vi-tor-hydra">HYDRA</a>.</p>
     </div>
 
     <div class="panel">
