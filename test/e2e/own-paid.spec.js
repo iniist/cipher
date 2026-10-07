@@ -24,6 +24,10 @@ async function open(page, extra) {
     }, extra || {})));
   }, extra);
   await page.reload();
+  // Ein vergebener Platz klappt den Block nicht mehr von selbst auf.
+  if (await page.locator("#stand").getAttribute("open") == null) {
+    await page.locator("#stand summary").click();
+  }
 }
 
 test("ohne vergebenen Platz bleibt das Feld weg", async ({ page }) => {
