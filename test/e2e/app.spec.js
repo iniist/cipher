@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("zeigt Wortmarke und Untertitel", async ({ page }) => {
-  await expect(page).toHaveTitle(/^cipher —/);
+  await expect(page).toHaveTitle(/^FoE-Rechner .* – cipher$/);
   await expect(page.locator("#wordmark")).toHaveText("cipher");
   await expect(page.locator(".sub")).toHaveText("FoE-Förderrechner & Archerechner");
 });
