@@ -85,6 +85,13 @@ async function fetchText(url) {
   }
 }
 
+/**
+ * HTML ohne Linkziele. Netlify schreibt beim Ausliefern die Links um
+ * ("./impressum.html" wird zu '/impressum'); ohne das hier stimmte keine
+ * Seite je mit dem Repo ueberein, und --wait liefe immer bis zur Grenze.
+ */
+const withoutLinks = (html) => html == null ? null : html.replace(/href=(["'])[^"']*\1/g, "href");
+
 /** Ob die Website schon den Stand im Repo ausliefert. */
 async function isLive(entries) {
   const local = fs.readFileSync(path.join(ROOT, "sitemap.xml"), "utf8");
@@ -92,7 +99,8 @@ async function isLive(entries) {
   for (const entry of entries) {
     const page = entry.sources[0];
     if (!page.endsWith(".html")) continue;
-    if (await fetchText(SITE + entry.loc) !== fs.readFileSync(path.join(ROOT, page), "utf8")) return false;
+    const live = withoutLinks(await fetchText(SITE + entry.loc));
+    if (live !== withoutLinks(fs.readFileSync(path.join(ROOT, page), "utf8"))) return false;
   }
   return true;
 }
