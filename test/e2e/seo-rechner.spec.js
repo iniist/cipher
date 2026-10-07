@@ -77,7 +77,9 @@ test("Erklaerung und Fragen stehen als Text im Dokument", async ({ page }) => {
   await expect(page.locator("#faqTitle")).toHaveText("Häufige Fragen");
   const questions = page.locator(".faq summary");
   expect(await questions.count()).toBeGreaterThanOrEqual(5);
-  expect(await questions.count()).toBeLessThanOrEqual(8);
+  // Obergrenze gegen eine ausufernde Liste; die neunte Frage (Handy)
+  // beantwortet die Suchanfrage „foe rechner handy“.
+  expect(await questions.count()).toBeLessThanOrEqual(10);
 
   // Zugeklappt, aber mit einem Tipp lesbar.
   const first = page.locator(".faq details").first();
