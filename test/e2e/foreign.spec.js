@@ -51,7 +51,10 @@ test("jede Fremdeinzahlung landet auf dem Platz, den sie behaelt", async ({ page
   await eintragen(page, 5, 300, 1500);
 
   await expect.poll(() => platz(page)).toEqual(["kein Platz", "hält P4", "hält P2", ""]);
-  await expect.poll(() => sichern(page)).toEqual(["Sicher", "fremd", "+143", "fremd", "+304"]);
+  // Kleinere Fremdeinzahlungen koennten nachlegen: die 1.500 bis P1, die
+  // 300 bis P3, die 5 bis P5. Jeder Gildenplatz sichert so weit vor, dass
+  // es danach hoechstens zum Gleichstand reicht.
+  await expect.poll(() => sichern(page)).toEqual(["+284", "fremd", "+159", "fremd", "+9"]);
   expect((await kosten(page)).map((text) => text.trim()))
     .toEqual(["2.043", "1.500", "342", "300", "19"]);
   await expect(page.locator("#standBadge")).toHaveText("3 fremd");
