@@ -142,10 +142,13 @@ test("mehr im Bauwerk als die Stufe kostet, gibt eine Warnung", async ({ page })
   await expect(page.locator("#warn")).toContainText("mehr, als die Stufe kostet");
 });
 
-test("ein vergebener Platz klappt den Block auf", async ({ page }) => {
+test("ein vergebener Platz laesst den Block zu, auch nach dem Neuladen", async ({ page }) => {
   await page.goto("/index.html");
   await expect(page.locator("#stand")).not.toHaveAttribute("open", "");
   await vergeben(page, 0);
-  await expect(page.locator("#stand")).toHaveAttribute("open", "");
+  await expect(page.locator("#stand")).not.toHaveAttribute("open", "");
+  await page.reload();
+  await expect(page.locator("#stand")).not.toHaveAttribute("open", "");
+  await page.locator("#stand summary").click();
   await expect(page.locator("#ownPaid")).toBeVisible();
 });

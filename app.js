@@ -2955,10 +2955,9 @@
     $("rows").addEventListener("change", function (event) {
       var slot = event.target.dataset.slot;
       if (slot != null) {
+        // "Schon im Bauwerk" bleibt dabei zu: fast immer stimmt die Rechnung
+        // ohne Stand, und direkt nach dem Abhaken wird meist kopiert.
         cycleSlot(Number(slot));
-        // Mit dem ersten vergebenen Platz wird "Schon im Bauwerk" wichtig:
-        // ob du vorher gesichert hast, entscheidet die Rechnung.
-        if (state.taken[Number(slot)] && state.enabled[Number(slot)]) $("stand").open = true;
         render();
       }
     });
@@ -3580,9 +3579,8 @@
     return own != null;
   }) || state.slotFactors.some(function (own) { return own != null; });
   // Dasselbe fuer "Schon im Bauwerk": offen, wenn zuletzt offen oder wenn
-  // ein Stand oder ein vergebener Platz da ist.
-  $("stand").open = state.standOpen || state.ownPaid != null || state.foreign.length > 0 ||
-    state.taken.some(function (taken, index) { return taken && state.enabled[index]; });
+  // ein Stand eingetragen ist. Ein vergebener Platz allein reicht nicht.
+  $("stand").open = state.standOpen || state.ownPaid != null || state.foreign.length > 0;
   setTheme(state.theme);
   $("dataDate").textContent = formatDate(DATA.generated);
   bindEvents();
