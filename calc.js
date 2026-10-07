@@ -778,6 +778,19 @@
      * @param {number[]} securePay Einzahlung je Platz, mit der `needed` rechnet
      */
     function planFromNow(securePay) {
+      /**
+       * Die groesste Fremdeinzahlung unter `pay`. Sie koennte nachlegen und
+       * an einem Platz mit dieser Einzahlung vorbeiziehen; eine groessere
+       * liegt ohnehin schon vor ihm.
+       */
+      function foreignBelow(pay) {
+        var most = 0;
+        foreign.forEach(function (amount) {
+          if (amount < pay) most = Math.max(most, amount);
+        });
+        return most;
+      }
+
       var rows = rewardChain(options.p1).map(function (reward, index) {
         var inPlay = Boolean(enabled[index]) && reward > 0;
         var other = placed.bySlot[index];
@@ -802,13 +815,20 @@
       // sicher wie sonst — mehr als seine Einzahlung ist dann nicht mehr
       // offen, und wer eine Fremdeinzahlung darueber ueberbieten wollte,
       // braeuchte mehr.
+      //
+      // Eine kleinere Fremdeinzahlung dagegen kann nachlegen: wer schon 100
+      // drin hat, braucht bis zu einem Platz mit 310 nur noch 210. Darum
+      // darf nach der Einzahlung eines Gildenplatzes hoechstens seine
+      // Einzahlung abzueglich der groessten kleineren Fremdeinzahlung offen
+      // sein — dann reicht es auch mit Nachlegen nur zum Gleichstand, und
+      // den behaelt, wer zuerst da war.
       var external = placed.total;
       var cap = Infinity; // Hoechstens so viel darf offen sein, damit kein vergebener Platz faellt
       rows.forEach(function (row) {
         if (!row.taken) return;
         external += row.contribution;
         row.secure = 0;
-        cap = Math.min(cap, row.contribution);
+        cap = Math.min(cap, row.contribution - foreignBelow(row.contribution));
       });
 
       var remaining = Math.max(0, total - ownPaid - external);
@@ -819,9 +839,10 @@
         if (!row.offered) return;
         var pay = row.contribution;
         // Wie im Plan ohne Stand: nach der Einzahlung bleibt hoechstens `pay`
-        // offen. Dazu darf nie mehr offen sein als der kleinste vergebene
-        // Platz eingezahlt hat.
-        var needed = Math.max(0, remaining - Math.min(2 * securePay[index], cap));
+        // offen, weniger die groesste kleinere Fremdeinzahlung. Dazu darf nie
+        // mehr offen sein, als ein vergebener Platz vertraegt.
+        var target = Math.max(0, 2 * securePay[index] - foreignBelow(row.contribution));
+        var needed = Math.max(0, remaining - Math.min(target, cap));
         if (remaining - needed < pay) {
           row.offered = false;
           row.tooTight = true;

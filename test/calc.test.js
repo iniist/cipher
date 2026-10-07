@@ -1063,9 +1063,10 @@ test("buildPlan: Fremdeinzahlungen zaehlen als Fremdkapital und senken die Absic
   const plan = Calc.buildPlan({ ...small, foreign: [300] });
   // Ohne eigene Angabe gilt: du hast noch nichts im Bauwerk.
   assert.equal(plan.ownPaid, 0);
-  // Offen sind 9.700. P1 braucht danach hoechstens 3.200 offen, P2 ist
-  // sicher, P3 haelt die Fremdeinzahlung, P4 und P5 wie gewohnt.
-  assert.deepEqual(plan.rows.map((row) => row.secure), [6500, 0, null, 660, 50]);
+  // Offen sind 9.700. P1 braucht danach hoechstens 3.200 offen, weniger
+  // die 300, die nachlegen koennten: 2.900. P2 ist damit sicher, P3 haelt
+  // die Fremdeinzahlung, P4 und P5 wie gewohnt.
+  assert.deepEqual(plan.rows.map((row) => row.secure), [6800, 0, null, 360, 50]);
   assert.equal(plan.external, 1600 + 800 + 300 + 70 + 10);
   assert.equal(plan.remainder, 10);
   assert.equal(plan.ownShare, plan.upfront + plan.remainder);
@@ -1086,8 +1087,37 @@ test("buildPlan: eine Fremdeinzahlung ohne Platz liegt trotzdem im Bauwerk", () 
 test("buildPlan: Fremdeinzahlungen rechnen mit dem eigenen Stand", () => {
   const plan = Calc.buildPlan({ ...small, foreign: [300], ownPaid: 6000 });
   assert.equal(plan.ownPaid, 6000);
-  assert.equal(plan.rows[0].secure, 500);
-  assert.equal(plan.upfront, 6000 + 500 + 660 + 50);
+  assert.equal(plan.rows[0].secure, 800);
+  assert.equal(plan.upfront, 6000 + 800 + 360 + 50);
+});
+
+test("buildPlan: eine kleinere Fremdeinzahlung kann nachlegen", () => {
+  // Der Fall aus der Rueckmeldung: Arche 182 bei 2,00, 100 FP von jemandem
+  // aus der Freundesliste auf P5. Wer schon 100 drin hat, braucht fuer P4
+  // (310) nur noch 210 — also duerfen nach P4 hoechstens 210 offen sein,
+  // nicht 310. Dasselbe gilt fuer jeden Platz darueber.
+  const plan = Calc.buildPlan({ total: 67808, p1: 3695, factor: 200, enabled: allOn, foreign: [100] });
+  assert.deepEqual(art(plan), ["offen", "offen", "offen", "offen", "fremd"]);
+  assert.equal(plan.remainder, 210);
+  assert.equal(plan.upfront, 54868);
+  assert.equal(plan.ownShare, plan.upfront + plan.remainder);
+
+  // Nach jeder Gildeneinzahlung kommt die Fremdeinzahlung mit Nachlegen
+  // hoechstens auf Gleichstand.
+  let open = plan.total - plan.ownPaid - 100;
+  plan.rows.forEach((row) => {
+    if (!row.offered) return;
+    open -= row.secure + row.contribution;
+    assert.ok(100 + open <= row.contribution, `P${row.slot}: ${100 + open} > ${row.contribution}`);
+  });
+});
+
+test("buildPlan: ein vergebener Platz vertraegt nur, was eine kleinere Fremdeinzahlung nicht einholt", () => {
+  const taken = [true, false, false, false, false];
+  // P1 hat 1.600 drin, 300 FP liegen auf P3. Offen bleiben duerfen danach
+  // hoechstens 1.300 — sonst legt die 300 nach und zieht an P1 vorbei.
+  const plan = Calc.buildPlan({ ...small, taken, payments: [1600], foreign: [300] });
+  assert.equal(plan.rows[1].secure, 10000 - 1600 - 300 - 1300);
 });
 
 test("buildPlan: eine Fremdeinzahlung bekommt keine Absicherung", () => {
