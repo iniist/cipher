@@ -406,6 +406,11 @@
     // zu der Stufe in ownPaidFor.
     foreign: normaliseForeign(stored.foreign),
     standOpen: stored.standOpen === true,
+    // Ueberzahlt: den Faktor fuer alle offenen Plaetze so weit senken, dass
+    // sie mit dem Stand im Bauwerk noch passen (Calc.fitPlan). fitLevel
+    // laesst den letzten Platz dazu die Stufe abschliessen.
+    fit: stored.fit === true,
+    fitLevel: stored.fitLevel === true,
     // Ob Bauwerke mit ihrem Kuerzel aus abbr.js genannt werden ("AO") oder
     // mit vollem Namen ("Arktische Orangerie"). Aus ist die Vorgabe.
     useAbbr: stored.useAbbr === true,
@@ -1588,6 +1593,9 @@
    */
   var lastPlan = null;
 
+  /** Was Calc.fitPlan zuletzt gefunden hat; null, solange der Schalter aus ist. */
+  var lastFit = null;
+
   function render() {
     var building = byId[state.building];
     state.level = Math.min(Math.max(1, Math.floor(state.level) || 1), LEVEL_MAX);
@@ -1638,6 +1646,7 @@
 
     if (total.value == null || p1.value == null) {
       lastPlan = null;
+      lastFit = null;
       renderEmpty();
       renderSlots(null);
       renderStand(null);
@@ -1645,7 +1654,7 @@
       return;
     }
 
-    var plan = Calc.buildPlan({
+    var options = {
       total: total.value,
       p1: p1.value,
       p1Secure: UNSURE_P1_SOURCES[p1.source]
@@ -1658,9 +1667,12 @@
       taken: state.taken,
       ownPaid: state.ownPaid,
       foreign: foreignAmounts()
-    });
+    };
+    var fit = state.fit ? Calc.fitPlan(options, state.fitLevel) : null;
+    var plan = fit ? fit.plan : Calc.buildPlan(options);
 
     lastPlan = plan;
+    lastFit = fit;
     renderStand(plan);
     renderSlots(plan);
     renderRows(plan);
@@ -1735,12 +1747,69 @@
       ? "Mit FP von anderen rechnet cipher vom jetzigen Stand aus. Trag ein, was du selbst schon drin hast — leer heißt 0."
       : "Haben die vergebenen Plätze eingezahlt, bevor du gesichert hast? Trag ein, was du selbst schon drin hast (auch 0) — dann rechnet cipher vom jetzigen Stand aus.";
     renderForeign(plan);
+    renderFit(plan);
 
     var parts = [];
     if (state.ownPaid != null) parts.push(formatNumber(state.ownPaid) + " eigen");
     if (amounts.length) parts.push(amounts.length + " fremd");
+    if (lastFit && lastFit.factor !== state.factor) parts.push("Faktor " + formatFactor(lastFit.factor));
     $("standBadge").hidden = parts.length === 0;
     $("standBadge").textContent = parts.join(" · ");
+  }
+
+  /**
+   * Die Schalter "Ueberzahlt? Faktor anpassen" und "P5 levelt mit" samt dem
+   * Satz, der sagt, was dabei herauskam.
+   */
+  function renderFit(plan) {
+    $("fitOn").checked = state.fit;
+    $("fitLevel").checked = state.fitLevel;
+    $("fitLevelRow").hidden = !state.fit;
+
+    // Der Platz, der die Stufe abschliessen wuerde: der letzte angebotene.
+    var last = 5;
+    if (plan) {
+      plan.rows.forEach(function (row) { if (row.offered) last = row.slot; });
+    }
+    $("fitLevelLabel").textContent = "P" + last + " levelt mit";
+
+    $("fitHint").textContent = fitText(lastFit, plan);
+  }
+
+  function fitText(fit, plan) {
+    if (!state.fit) {
+      return "Mehr drin als nötig? Dann senkt cipher den Faktor für alle offenen Plätze gleich, bis sie trotzdem sicher passen.";
+    }
+    if (!fit || !plan) return "";
+    var anyOffered = plan.rows.some(function (row) { return row.offered; });
+    if (!anyOffered) {
+      return fit.dropped.length
+        ? "Selbst mit Faktor 1,00 passt kein offener Platz mehr — den Rest zahlst du selbst."
+        : "Kein offener Platz, nichts anzupassen.";
+    }
+
+    var parts = [];
+    parts.push(fit.factor === state.factor
+      ? "Passt mit deinem Faktor " + formatFactor(fit.factor) + "."
+      : "Alle offenen Plätze mit Faktor " + formatFactor(fit.factor) + " statt " + formatFactor(state.factor) + ".");
+    if (fit.dropped.length) {
+      var names = fit.dropped.map(function (slot) { return "P" + slot; });
+      parts.push("Selbst mit 1,00 passen nicht alle: " + joinSlots(names) +
+        (names.length > 1 ? " fallen" : " fällt") + " weg.");
+    }
+    if (state.slotFactors.some(function (own, index) { return own != null && !state.taken[index]; })) {
+      parts.push("Eigene Faktoren je Platz ruhen so lange.");
+    }
+    if (fit.levelSlot) {
+      parts.push(fit.levelExtra > 0
+        ? "P" + fit.levelSlot + " zahlt " + formatNumber(fit.levelExtra) + " FP mehr und schließt die Stufe ab."
+        : "P" + fit.levelSlot + " schließt die Stufe ab.");
+    } else if (fit.levelTooBig) {
+      parts.push("Für den letzten Platz ist der Rest zu groß — mehr als das Doppelte zahlt keiner. Den Rest zahlst du selbst.");
+    } else if (plan.remainder > 0) {
+      parts.push(formatNumber(plan.remainder) + " FP bleiben für dich zum Leveln.");
+    }
+    return parts.join(" ");
   }
 
   /**
@@ -2183,8 +2252,12 @@
         "nicht die ganze Summe vorweg. Die letzten <b>" +
         formatNumber(plan.remainder) + " FP</b> zahlst du danach selbst ein und levelst damit." +
         alreadyIn(plan)
-      : "Achtung: Auf dieser Stufe schließt " + labels[labels.length - 1] +
-        " die Stufe ab, du kannst nicht selbst leveln.";
+      : lastFit && lastFit.levelSlot
+        ? "Damit sind " + range + " sicher, wenn sie der Reihe nach belegt werden. " +
+          labels[labels.length - 1] + " schließt die Stufe ab, wie unter „Schon im Bauwerk“ gewählt." +
+          alreadyIn(plan)
+        : "Achtung: Auf dieser Stufe schließt " + labels[labels.length - 1] +
+          " die Stufe ab, du kannst nicht selbst leveln.";
   }
 
   /**
@@ -2784,6 +2857,15 @@
       render();
     });
     $("ownPaid").addEventListener("blur", function () { render(); });
+
+    $("fitOn").addEventListener("change", function (event) {
+      state.fit = event.target.checked;
+      render();
+    });
+    $("fitLevel").addEventListener("change", function (event) {
+      state.fitLevel = event.target.checked;
+      render();
+    });
 
     // Ein Feld je Fremdeinzahlung. Wer ins leere letzte tippt, legt einen
     // neuen Betrag an; renderForeign haengt dann das naechste leere an.

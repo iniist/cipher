@@ -362,6 +362,15 @@
         <ul class="foreign-list" id="foreignList" aria-labelledby="foreignLabel" aria-describedby="foreignHint"></ul>
         <p class="own-in-hint" id="foreignHint">Fremdeinzahler und Sniper, ein Betrag je Person. cipher setzt jeden auf den Platz, den er mit seinem Betrag behält, wenn die Gilde wie geplant einzahlt.</p>
       </div>
+      <!-- Ueberzahlt: Wer mehr drin hat, als der Plan vorsieht, bekommt mit
+           dem gewohnten Faktor nicht mehr alle Plaetze unter. Der Schalter
+           senkt den Faktor fuer alle offenen Plaetze gleich, bis sie passen;
+           der zweite laesst den letzten Platz die Stufe abschliessen. -->
+      <div class="fit-in" id="fitIn">
+        <label class="abbr-toggle fit-toggle"><input type="checkbox" id="fitOn" aria-describedby="fitHint"> Überzahlt? Faktor anpassen</label>
+        <label class="abbr-toggle fit-toggle fit-sub" id="fitLevelRow" hidden><input type="checkbox" id="fitLevel" aria-describedby="fitHint"> <span id="fitLevelLabel">P5 levelt mit</span></label>
+        <p class="own-in-hint" id="fitHint" aria-live="polite"></p>
+      </div>
     </details>
 
     <div class="lump" id="lump" hidden>
