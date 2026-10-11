@@ -70,7 +70,7 @@ test("passt selbst 1,00 nicht, fallen die hinteren Plaetze weg", async ({ page }
 });
 
 test("ohne Ueberzahlung bleibt alles beim Alten", async ({ page }) => {
-  await open(page, { fit: true, ownPaid: null, ownPaidFor: "" });
+  await open(page, { fit: true, ownPaid: null });
   await expect(page.locator("#fitHint")).toContainText("Passt mit deinem Faktor 1,90");
   await expect.poll(() => kosten(page)).toEqual(["2.613", "1.311", "437", "114", "19"]);
 });
@@ -82,4 +82,29 @@ test("die Schalter ueberleben einen Neuladen", async ({ page }) => {
   await page.reload();
   await expect(page.locator("#fitOn")).toBeChecked();
   await expect(page.locator("#fitLevel")).toBeChecked();
+});
+
+test("die Schalter gelten nur fuer Bauwerk und Stufe", async ({ page }) => {
+  await open(page);
+  await page.locator("#fitOn").check();
+  await page.locator("#fitLevel").check();
+
+  // Eine andere Stufe faengt aus an, wie der Stand selbst.
+  await page.locator("#levelUp").click();
+  await expect(page.locator("#fitOn")).not.toBeChecked();
+  await expect(page.locator("#fitLevelRow")).toBeHidden();
+  await expect(page.locator("#ownPaid")).toHaveValue("");
+});
+
+test("ein anderer Favorit faengt ohne Anpassung an", async ({ page }) => {
+  await open(page, { fit: true });
+  await page.evaluate(() => {
+    localStorage.setItem("cipher:favorites", JSON.stringify([{ id: "Notre_Dame", level: 42 }]));
+  });
+  await page.reload();
+  await expect(page.locator("#fitOn")).toBeChecked();
+
+  await page.locator(".fav-go").filter({ hasText: "Notre Dame 42" }).click();
+  await expect(page.locator("#fitOn")).not.toBeChecked();
+  await expect(page.locator("#standBadge")).toBeHidden();
 });

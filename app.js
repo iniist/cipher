@@ -288,7 +288,7 @@
    * und Plaetzen — gilt ueberall gleich.
    */
   var WORLD_FIELDS = ["building", "level", "factor", "enabled", "taken", "slotsFor",
-    "slotFactors", "slotPays", "ownPaid", "ownPaidFor", "foreign", "chatMode"];
+    "slotFactors", "slotPays", "ownPaid", "ownPaidFor", "foreign", "fit", "fitLevel", "chatMode"];
 
   /**
    * Die Welt, die zuerst gewaehlt wurde ("home"), behaelt die Schluessel, die
@@ -408,7 +408,8 @@
     standOpen: stored.standOpen === true,
     // Ueberzahlt: den Faktor fuer alle offenen Plaetze so weit senken, dass
     // sie mit dem Stand im Bauwerk noch passen (Calc.fitPlan). fitLevel
-    // laesst den letzten Platz dazu die Stufe abschliessen.
+    // laesst den letzten Platz dazu die Stufe abschliessen. Beide gehoeren
+    // wie ownPaid zum Stand und damit zu Bauwerk und Stufe in ownPaidFor.
     fit: stored.fit === true,
     fitLevel: stored.fitLevel === true,
     // Ob Bauwerke mit ihrem Kuerzel aus abbr.js genannt werden ("AO") oder
@@ -1642,6 +1643,8 @@
     if (state.ownPaidFor !== ownPaidKey()) {
       state.ownPaid = null;
       state.foreign = [];
+      state.fit = false;
+      state.fitLevel = false;
     }
 
     if (total.value == null || p1.value == null) {
@@ -2860,12 +2863,16 @@
     });
     $("ownPaid").addEventListener("blur", function () { render(); });
 
+    // Wie der Stand gelten die Schalter nur fuer dieses Bauwerk auf dieser
+    // Stufe: ein anderes Bauwerk oder ein anderer Favorit faengt aus an.
     $("fitOn").addEventListener("change", function (event) {
       state.fit = event.target.checked;
+      state.ownPaidFor = ownPaidKey();
       render();
     });
     $("fitLevel").addEventListener("change", function (event) {
       state.fitLevel = event.target.checked;
+      state.ownPaidFor = ownPaidKey();
       render();
     });
 
