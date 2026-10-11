@@ -752,12 +752,14 @@ test("faellt kein Platz heraus, bleibt es beim Zuschlag", () => {
   assert.ok(mit.rows.every((row) => !row.tooTight));
 });
 
-test("im zulaessigen Faktorbereich ueberholt keine kleinere Belohnung", () => {
-  // Der Grund, warum der Faktor erst bei 1,80 anfaengt: Jeder Platz hat einen
-  // eigenen Faktor, und die auf 5 gerundeten Belohnungen halbieren sich nicht
-  // exakt. Spreizt man weit genug, kostet ein tieferer Platz mehr als der
-  // ueber ihm. Der schlechteste Fall ist der bessere Platz beim schwaechsten
-  // Faktor gegen den schlechteren beim staerksten.
+test("zwischen 1,30 und 2,00 ueberholt keine kleinere Belohnung", () => {
+  // Jeder Platz hat einen eigenen Faktor, und die auf 5 gerundeten
+  // Belohnungen halbieren sich nicht exakt. Spreizt man weit genug, kostet
+  // ein tieferer Platz mehr als der ueber ihm. Der schlechteste Fall ist der
+  // bessere Platz beim schwaechsten Faktor gegen den schlechteren beim
+  // staerksten. Erlaubt ist der Faktor ab 1,00 — wer so weit spreizt, bekommt
+  // die Warnung aus markOutOfOrder. Bis 1,30 hinunter kommt sie aus Faktoren
+  // nie, darunter vereinzelt (1,20–2,00: ein P1-Wert).
   // tools/order-scan.js misst dasselbe fuer beliebige Bereiche.
   //
   // Die Aussage gilt fuer Einzahlungen, die aus einem Faktor stammen. Ein
@@ -765,7 +767,7 @@ test("im zulaessigen Faktorbereich ueberholt keine kleinere Belohnung", () => {
   // meldet der Plan die Umkehr selbst, siehe "ein getippter Betrag kann die
   // Reihenfolge kippen".
   for (const p1 of Scan.p1Values()) {
-    assert.ok(!Scan.inverts(p1, 180, 200), `P1 ${p1}: ein tieferer Platz kostet mehr`);
+    assert.ok(!Scan.inverts(p1, 130, 200), `P1 ${p1}: ein tieferer Platz kostet mehr`);
   }
 });
 
@@ -1133,4 +1135,96 @@ test("buildPlan: ohne Fremdeinzahlungen bleibt der Plan, wie er war", () => {
   const plan = Calc.buildPlan({ ...small, foreign: [] });
   assert.deepEqual(plan, Calc.buildPlan(small));
   assert.deepEqual(Calc.buildPlan({ ...small, foreign: [0, -5] }), Calc.buildPlan(small));
+});
+
+// ------------------------------------------------------------------ fitPlan
+
+// Eine Stufe mit 13.542 FP und P1 1.375. Mit 1,90 sichert man der Reihe nach
+// 9.029 FP vor; wer mehr drin hat, bekommt nicht mehr alle Plaetze unter.
+const over = { total: 13542, p1: 1375, factor: 190, enabled: [true, true, true, true, true] };
+
+/** Was ein Plan je Platz anbietet, "-" fuer nicht angeboten. */
+const offeredPays = (plan) => plan.rows.map((row) => (row.offered ? row.contribution : "-"));
+
+test("fitPlan: ohne Ueberzahlung bleibt dein Faktor", () => {
+  const fit = Calc.fitPlan({ ...over, ownPaid: 9029 });
+  assert.equal(fit.factor, 190);
+  assert.deepEqual(fit.dropped, []);
+  assert.deepEqual(fit.plan, Calc.buildPlan({ ...over, ownPaid: 9029, factors: [null, null, null, null, null] }));
+});
+
+test("fitPlan: ueberzahlt sinkt der Faktor, bis alle Plaetze passen", () => {
+  // Mit 1,90 fielen bei 9.300 eigenen FP hintere Plaetze heraus.
+  assert.equal(Calc.buildPlan({ ...over, ownPaid: 9300 }).anyTooTight, true);
+
+  const fit = Calc.fitPlan({ ...over, ownPaid: 9300 });
+  assert.equal(fit.factor, 179);
+  assert.deepEqual(offeredPays(fit.plan), [2461, 1235, 412, 107, 18]);
+  assert.equal(fit.plan.anyTooTight, false);
+  assert.equal(fit.plan.upfrontOpen, 0);
+  assert.equal(fit.plan.remainder, 9, "der Rest bleibt dir zum Leveln");
+  // Ein Schritt hoeher passt nicht mehr.
+  const higher = Calc.buildPlan({ ...over, factor: 180, ownPaid: 9300 });
+  assert.ok(higher.anyTooTight || higher.remainder < 1);
+});
+
+test("fitPlan: es bleibt immer mindestens 1 FP fuer dich", () => {
+  for (let own = 9029; own <= 12500; own += 37) {
+    const fit = Calc.fitPlan({ ...over, ownPaid: own });
+    assert.ok(fit.plan.remainder >= 1, `eigen ${own}: Rest ${fit.plan.remainder}`);
+    assert.equal(fit.plan.anyTooTight, false, `eigen ${own}`);
+  }
+});
+
+test("fitPlan: P5 levelt mit und zahlt dafuer den Rest", () => {
+  const fit = Calc.fitPlan({ ...over, ownPaid: 9300 }, true);
+  assert.equal(fit.factor, 179);
+  assert.equal(fit.levelSlot, 5);
+  assert.equal(fit.levelExtra, 9);
+  assert.deepEqual(offeredPays(fit.plan), [2461, 1235, 412, 107, 27]);
+  assert.equal(fit.plan.remainder, 0);
+  assert.equal(fit.plan.anyTooTight, false);
+});
+
+test("fitPlan: mehr als das Doppelte zahlt P5 nicht", () => {
+  // Nicht ueberzahlt: vor P5 sind noch 57 FP offen, P5 zahlt 19.
+  const fit = Calc.fitPlan({ ...over }, true);
+  assert.equal(fit.factor, 190);
+  assert.equal(fit.levelSlot, null);
+  assert.equal(fit.levelTooBig, true);
+  assert.equal(fit.plan.remainder, 19);
+});
+
+test("fitPlan: passt selbst 1,00 nicht, faellt erst P5, dann P4 weg", () => {
+  const fit = Calc.fitPlan({ ...over, ownPaid: 12000 });
+  assert.deepEqual(fit.dropped, [2, 3, 4, 5]);
+  assert.deepEqual(offeredPays(fit.plan), [1540, "-", "-", "-", "-"]);
+  // Weggefallene Plaetze stehen im Plan als "passt nicht".
+  assert.deepEqual(fit.plan.rows.map((row) => row.tooTight), [false, true, true, true, true]);
+  assert.equal(fit.plan.anyTooTight, false);
+  assert.equal(fit.factor, 112);
+
+  // Passt nicht einmal P1, bleibt nichts anzubieten.
+  const none = Calc.fitPlan({ ...over, ownPaid: 13400 });
+  assert.deepEqual(none.dropped, [1, 2, 3, 4, 5]);
+  assert.equal(none.plan.rows.some((row) => row.offered), false);
+});
+
+test("fitPlan: vergebene Plaetze behalten ihren Faktor", () => {
+  const taken = [true, false, false, false, false];
+  const fit = Calc.fitPlan({ ...over, taken, ownPaid: 9600 });
+  assert.ok(fit.factor < 190);
+  assert.equal(fit.plan.rows[0].contribution, Calc.contribution(1375, 190));
+  assert.equal(fit.plan.rows[0].taken, true);
+  assert.equal(fit.plan.rows[1].factor, fit.factor);
+  assert.deepEqual(fit.dropped, []);
+});
+
+test("fitPlan: eigene Faktoren je Platz zaehlen nicht, getippte Betraege schon", () => {
+  const fit = Calc.fitPlan({ ...over, ownPaid: 9300, factors: [200, null, 185, null, null] });
+  assert.deepEqual(fit.plan.rows.map((row) => row.factor), [179, 179, 179, 179, 179]);
+
+  const fixed = Calc.fitPlan({ ...over, ownPaid: 9300, payments: [null, null, null, 120, null] });
+  assert.equal(fixed.plan.rows[3].contribution, 120);
+  assert.equal(fixed.plan.anyTooTight, false);
 });

@@ -491,11 +491,12 @@
    * Plaetze markieren, die einen Platz ueber sich ueberholen: kleinere
    * Belohnung, aber hoehere Einzahlung.
    *
-   * Aus Faktoren im zulaessigen Bereich kann das nicht entstehen — genau das
-   * haelt der Einheitentest ueber den ganzen Datensatz fest, und deshalb
-   * braucht der Faktorbereich keine Warnung. Ein getippter Betrag kennt die
-   * Schranke aber nicht: wer P4 mit 500 eintraegt, waehrend P3 bei 300 steht,
-   * hat eine Reihenfolge gebaut, die das Spiel so nicht vergibt. Gezaehlt
+   * Aus Faktoren zwischen 1,30 und 2,00 kann das nicht entstehen — genau das
+   * haelt der Einheitentest ueber den ganzen Datensatz fest. Erlaubt ist der
+   * Faktor ab 1,00; wer die Faktoren je Platz noch weiter spreizt, landet
+   * vereinzelt hier. Ein getippter Betrag kennt gar keine Schranke: wer P4
+   * mit 500 eintraegt, waehrend P3 bei 300 steht, hat eine Reihenfolge
+   * gebaut, die das Spiel so nicht vergibt. Gezaehlt
    * werden nur echt kleinere Belohnungen; zwei gleich hohe (P1 = P2 = 5 nach
    * dem Runden) trennt ohnehin nur der Faktor.
    *
@@ -888,6 +889,137 @@
     return lost ? plain : careful;
   }
 
+  /** Kleinster Faktor, den fitPlan versucht — derselbe wie im Eingabefeld. */
+  var FIT_MIN = 100;
+
+  /**
+   * Den Faktor so weit senken, dass alle angebotenen Plaetze passen.
+   *
+   * Gedacht fuer den Fall, dass du schon mehr im Bauwerk hast, als der Plan
+   * vorsieht: Dann bleibt fuer die Plaetze weniger uebrig, und mit dem
+   * gewohnten Faktor fallen hintere heraus. Gesucht wird der hoechste
+   * gemeinsame Faktor, hoechstens options.factor, bei dem kein offener Platz
+   * herausfaellt und danach noch mindestens 1 FP offen ist — den zahlst du
+   * selbst und levelst damit. Ohne diesen Rest schloesse der letzte Platz
+   * die Stufe ab.
+   *
+   * Sicher bleibt jeder Platz auf demselben Weg wie sonst: buildPlan rechnet
+   * mit dem gefundenen Faktor, und was davor noch zu sichern ist, steht wie
+   * immer unter "Sichern".
+   *
+   * Der Faktor gilt fuer alle offenen Plaetze gleich; eigene Faktoren je
+   * Platz zaehlen hier nicht. Vergebene Plaetze behalten ihren Faktor, denn
+   * die haben schon zu dem gezahlt. Ein getippter Betrag bleibt, wie er ist.
+   *
+   * Passt selbst bei 1,00 nicht alles, faellt der hinterste offene Platz weg
+   * (erst P5, dann P4 ...) und die Suche beginnt von vorn. Immer von unten:
+   * Eine Luecke in der Mitte waere schlimmer als ein Platz weniger, denn wer
+   * unter ihr einzahlt, rueckt im Spiel auf und bekommt die hoehere
+   * Belohnung (siehe die Warnung "zahlst du so selbst" in app.js).
+   *
+   * Mit `levelUp` zahlt der letzte angebotene Platz alles, was bei ihm noch
+   * offen ist, und schliesst die Stufe ab. Damit faellt auch weg, was du vor
+   * ihm noch sichern muesstest. Das geschieht nur, wenn er dafuer hoechstens
+   * das Doppelte seiner Einzahlung zahlt — mehr zahlt niemand fuer einen
+   * Platz. Sonst bleibt es beim Rest fuer dich, und `levelTooBig` sagt das.
+   *
+   * @param {object} options Wie bei buildPlan; options.factor ist die Obergrenze
+   * @param {boolean} [levelUp] Ob der letzte Platz die Stufe abschliessen soll
+   * @returns {{plan:object, factor:number, dropped:number[], levelSlot:number|null,
+   *            levelExtra:number, levelTooBig:boolean}}
+   *   `factor` der gefundene Faktor, `dropped` die weggefallenen Plaetze (1-5),
+   *   `levelSlot` der Platz, der die Stufe abschliesst, und `levelExtra`, was
+   *   er dafuer mehr zahlt.
+   */
+  function fitPlan(options, levelUp) {
+    var cap = options.factor;
+    var factors = options.factors || [];
+    var taken = options.taken || [];
+    var enabled = options.enabled.slice();
+    var dropped = [];
+    var minRest = levelUp ? 0 : 1;
+
+    function planAt(factor, payments) {
+      return buildPlan(Object.assign({}, options, {
+        factor: factor,
+        factors: enabled.map(function (on, index) {
+          if (!(on && taken[index])) return null;
+          return factors[index] != null ? factors[index] : cap;
+        }),
+        payments: payments || options.payments,
+        enabled: enabled.slice()
+      }));
+    }
+
+    /** Der hinterste Platz, den der Plan anbieten will oder nicht unterbringt. */
+    function lastOpen(plan) {
+      for (var index = SLOTS - 1; index >= 0; index--) {
+        var row = plan.rows[index];
+        if (row.offered || row.tooTight) return index;
+      }
+      return -1;
+    }
+
+    for (;;) {
+      for (var factor = cap; factor >= FIT_MIN; factor--) {
+        var plan = planAt(factor);
+        if (plan.anyTooTight || plan.remainder < minRest) continue;
+        var result = {
+          plan: plan, factor: factor, dropped: dropped,
+          levelSlot: null, levelExtra: 0, levelTooBig: false
+        };
+        if (levelUp) addRest(result);
+        return markDropped(result);
+      }
+      var drop = lastOpen(planAt(FIT_MIN));
+      if (drop < 0) break;
+      enabled[drop] = false;
+      dropped.unshift(drop + 1);
+    }
+    // Nichts mehr anzubieten: der Plan mit deinem Faktor, so wie er ist.
+    return markDropped({
+      plan: planAt(cap), factor: cap, dropped: dropped,
+      levelSlot: null, levelExtra: 0, levelTooBig: false
+    });
+
+    /**
+     * Weggefallene Plaetze stehen im Plan wie solche, die nicht passen —
+     * angeboten waren sie ja. anyTooTight bleibt, wie es ist: das meldet,
+     * dass der gefundene Plan selbst etwas nicht unterbringt.
+     */
+    function markDropped(result) {
+      dropped.forEach(function (slot) { result.plan.rows[slot - 1].tooTight = true; });
+      return result;
+    }
+
+    /** Den Rest dem letzten angebotenen Platz zuschlagen, wenn er passt. */
+    function addRest(result) {
+      var last = -1;
+      result.plan.rows.forEach(function (row, index) { if (row.offered) last = index; });
+      if (last < 0) return;
+      var row = result.plan.rows[last];
+      // Ohne Rest schliesst er die Stufe ohnehin ab.
+      if (result.plan.remainder === 0) {
+        result.levelSlot = last + 1;
+        return;
+      }
+      // Offen ist bei ihm, was du davor noch sichern wuerdest, seine
+      // Einzahlung und der Rest danach.
+      var extra = row.secure + result.plan.remainder;
+      if (extra > row.contribution) {
+        result.levelTooBig = true;
+        return;
+      }
+      var payments = (options.payments || []).slice();
+      payments[last] = row.contribution + extra;
+      var leveled = planAt(result.factor, payments);
+      if (leveled.anyTooTight || leveled.remainder !== 0) return;
+      result.plan = leveled;
+      result.levelSlot = last + 1;
+      result.levelExtra = extra;
+    }
+  }
+
   /**
    * Die Zeile fuer den Foerderchat bauen.
    * @param {object} plan Ergebnis von buildPlan
@@ -918,6 +1050,7 @@
     CURVATURE: CURVATURE,
     curveReliability: curveReliability,
     buildPlan: buildPlan,
+    fitPlan: fitPlan,
     placeForeign: placeForeign,
     chatLine: chatLine
   };

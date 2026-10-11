@@ -1151,7 +1151,12 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 /* ----------------------------------------------------------- Vorab-Block */
 
 .stand { margin-top: 12px }
-.own-in, .foreign-in { margin-top: 10px }
+.own-in, .foreign-in, .fit-in { margin-top: 10px }
+/* Die Schalter brechen um, wo die Zeile nicht reicht; nur der zweite
+   ist eingerueckt, weil er zum ersten gehoert. */
+.fit-toggle { display: flex; white-space: normal; margin: 0 0 6px }
+.fit-sub { margin-left: 22px }
+.fit-sub[hidden] { display: none }
 /* box-sizing ausdruecklich: im Inhalt von <details> erbt es nicht von
    oben, und ohne ragte das Feld um sein Padding ueber den Rand. */
 .own-in input { width: 100%; margin-top: 4px; box-sizing: border-box }

@@ -16,7 +16,7 @@
  * 5 FP beide auf 5 — bleiben aussen vor: dort dreht schon jeder Unterschied
  * im Faktor die Reihenfolge, und eine kleinere Belohnung ueberholt nichts.
  *
- * Die Aussage selbst (1,80–2,00: kein Fall) haelt ein Einheitentest fest;
+ * Die Aussage selbst (1,30–2,00: kein Fall) haelt ein Einheitentest fest;
  * dieses Skript ist zum Nachmessen anderer Bereiche da.
  */
 "use strict";
@@ -24,7 +24,7 @@
 const Calc = require("../calc.js");
 const DATA = require("../data.js");
 
-const DEFAULT_RANGES = [[180, 200], [150, 200], [100, 200]];
+const DEFAULT_RANGES = [[180, 200], [130, 200], [120, 200], [100, 200]];
 
 /** Jeden P1-Wert des Datensatzes einmal, aufsteigend. */
 function p1Values() {

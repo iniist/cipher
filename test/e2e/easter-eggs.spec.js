@@ -77,11 +77,12 @@ test("am Anschlag des Faktors weiterdruecken gibt eine Antwort", async ({ page }
   await expect(page.locator(".toast")).toHaveText(/Großzügiger wird’s nicht/);
   await expect(page.locator("#factor")).toHaveValue("2,00");
 
-  await page.locator('#factorChips button[data-factor="180"]').click();
+  await page.fill("#factor", "1,00");
+  await page.locator("#factor").blur();
   await page.locator("#factor").focus();
   await page.keyboard.press("ArrowDown");
   await expect(page.locator(".toast")).toHaveText(/Noch knapper/);
-  await expect(page.locator("#factor")).toHaveValue("1,80");
+  await expect(page.locator("#factor")).toHaveValue("1,00");
 });
 
 test("mitten im Bereich und bei der Stufe bleibt es still", async ({ page }) => {
