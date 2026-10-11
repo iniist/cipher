@@ -31,7 +31,8 @@ Eine bebilderte Vorstellung aller Funktionen steht unter
 - **Überzahlt? Faktor anpassen** — wer mehr drin hat als nötig, bekommt den
   höchsten gemeinsamen Faktor (bis zum eingestellten), bei dem alle offenen
   Plätze noch sicher passen. Es bleibt mindestens 1 FP zum Leveln, oder auf
-  Wunsch zahlt P5 den Rest und schließt die Stufe ab. Passt selbst 1,00 nicht,
+  Wunsch schließt P5 die Stufe ab; den Rest teilen sich dann alle Plätze nach
+  ihrer Belohnung, keiner über den eingestellten Faktor. Passt selbst 1,00 nicht,
   fallen P5, dann P4 usw. weg.
 - **Arche-Faktor 1,00–2,00**, auf Wunsch je Platz eigens als Faktor oder als
   tatsächlich gezahlter Betrag, auch direkt in der Tabelle.

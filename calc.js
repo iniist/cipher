@@ -917,11 +917,12 @@
    * unter ihr einzahlt, rueckt im Spiel auf und bekommt die hoehere
    * Belohnung (siehe die Warnung "zahlst du so selbst" in app.js).
    *
-   * Mit `levelUp` zahlt der letzte angebotene Platz alles, was bei ihm noch
-   * offen ist, und schliesst die Stufe ab. Damit faellt auch weg, was du vor
-   * ihm noch sichern muesstest. Das geschieht nur, wenn er dafuer hoechstens
-   * das Doppelte seiner Einzahlung zahlt — mehr zahlt niemand fuer einen
-   * Platz. Sonst bleibt es beim Rest fuer dich, und `levelTooBig` sagt das.
+   * Mit `levelUp` schliesst der letzte angebotene Platz die Stufe ab. Den
+   * Rest, der sonst dir bliebe, teilen sich dafuer alle offenen Plaetze nach
+   * ihrer Belohnung — nicht der letzte allein: der zahlte sonst drauf, etwa
+   * 65 FP fuer 20 FP Belohnung. Kein Platz kommt dabei ueber
+   * options.factor. Reicht das nicht, bleibt es beim Rest fuer dich, und
+   * `levelTooBig` sagt das.
    *
    * @param {object} options Wie bei buildPlan; options.factor ist die Obergrenze
    * @param {boolean} [levelUp] Ob der letzte Platz die Stufe abschliessen soll
@@ -992,31 +993,67 @@
       return result;
     }
 
-    /** Den Rest dem letzten angebotenen Platz zuschlagen, wenn er passt. */
+    /**
+     * Den Rest auf die offenen Plaetze verteilen, bis der letzte die Stufe
+     * abschliesst. Was du vor dem letzten Platz noch sichern muesstest,
+     * zaehlt mit: das braucht es nicht mehr, wenn die Plaetze es zahlen.
+     * Weil sich mit hoeheren Einzahlungen auch die Absicherung verschiebt,
+     * wird nachgerechnet, bis nichts mehr offen ist.
+     */
     function addRest(result) {
+      var plan = result.plan;
       var last = -1;
-      result.plan.rows.forEach(function (row, index) { if (row.offered) last = index; });
+      plan.rows.forEach(function (row, index) { if (row.offered) last = index; });
       if (last < 0) return;
-      var row = result.plan.rows[last];
-      // Ohne Rest schliesst er die Stufe ohnehin ab.
-      if (result.plan.remainder === 0) {
-        result.levelSlot = last + 1;
-        return;
+      var fixed = options.payments || [];
+      var payments = fixed.slice();
+      var spread = 0;
+
+      for (var round = 0; round < 10; round++) {
+        var extra = plan.rows[last].secure + plan.remainder;
+        if (extra === 0) break;
+
+        // Wer mitzahlen kann: offene Plaetze ohne getippten Betrag, jeder
+        // hoechstens bis zu deinem Faktor.
+        var open = [];
+        plan.rows.forEach(function (row, index) {
+          if (row.offered && !(fixed[index] > 0)) open.push(index);
+        });
+        var room = open.map(function (index) {
+          var row = plan.rows[index];
+          return Math.max(0, contribution(row.reward, cap) - row.contribution);
+        });
+        var roomTotal = room.reduce(function (sum, value) { return sum + value; }, 0);
+        if (roomTotal < extra) {
+          result.levelTooBig = true;
+          return;
+        }
+
+        // Nach Belohnung aufteilen, abgerundet; was beim Runden uebrig
+        // bleibt, geht von oben nach unten je 1 FP dazu.
+        var rewardTotal = open.reduce(function (sum, index) { return sum + plan.rows[index].reward; }, 0);
+        var share = open.map(function (index, k) {
+          return Math.min(room[k], Math.floor(extra * plan.rows[index].reward / rewardTotal));
+        });
+        var left = extra - share.reduce(function (sum, value) { return sum + value; }, 0);
+        while (left > 0) {
+          for (var k = 0; k < open.length && left > 0; k++) {
+            if (share[k] < room[k]) { share[k]++; left--; }
+          }
+        }
+        open.forEach(function (index, k) {
+          payments[index] = plan.rows[index].contribution + share[k];
+        });
+        spread += extra;
+
+        plan = planAt(result.factor, payments);
+        if (plan.anyTooTight) return;
       }
-      // Offen ist bei ihm, was du davor noch sichern wuerdest, seine
-      // Einzahlung und der Rest danach.
-      var extra = row.secure + result.plan.remainder;
-      if (extra > row.contribution) {
-        result.levelTooBig = true;
-        return;
-      }
-      var payments = (options.payments || []).slice();
-      payments[last] = row.contribution + extra;
-      var leveled = planAt(result.factor, payments);
-      if (leveled.anyTooTight || leveled.remainder !== 0) return;
-      result.plan = leveled;
+      if (plan.remainder !== 0 || plan.rows[last].secure !== 0 || !plan.rows[last].offered) return;
+
+      result.plan = plan;
       result.levelSlot = last + 1;
-      result.levelExtra = extra;
+      result.levelExtra = spread;
     }
   }
 
