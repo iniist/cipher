@@ -491,11 +491,12 @@
    * Plaetze markieren, die einen Platz ueber sich ueberholen: kleinere
    * Belohnung, aber hoehere Einzahlung.
    *
-   * Aus Faktoren im zulaessigen Bereich kann das nicht entstehen — genau das
-   * haelt der Einheitentest ueber den ganzen Datensatz fest, und deshalb
-   * braucht der Faktorbereich keine Warnung. Ein getippter Betrag kennt die
-   * Schranke aber nicht: wer P4 mit 500 eintraegt, waehrend P3 bei 300 steht,
-   * hat eine Reihenfolge gebaut, die das Spiel so nicht vergibt. Gezaehlt
+   * Aus Faktoren zwischen 1,30 und 2,00 kann das nicht entstehen — genau das
+   * haelt der Einheitentest ueber den ganzen Datensatz fest. Erlaubt ist der
+   * Faktor ab 1,00; wer die Faktoren je Platz noch weiter spreizt, landet
+   * vereinzelt hier. Ein getippter Betrag kennt gar keine Schranke: wer P4
+   * mit 500 eintraegt, waehrend P3 bei 300 steht, hat eine Reihenfolge
+   * gebaut, die das Spiel so nicht vergibt. Gezaehlt
    * werden nur echt kleinere Belohnungen; zwei gleich hohe (P1 = P2 = 5 nach
    * dem Runden) trennt ohnehin nur der Faktor.
    *

@@ -28,7 +28,7 @@ Eine bebilderte Vorstellung aller Funktionen steht unter
 - **FP von anderen** — Fremdeinzahler und Sniper, ein Betrag je Person. cipher
   setzt jeden auf den Platz, den er mit seinem Betrag behält, wenn die Gilde
   wie geplant einzahlt, und schreibt diese Plätze nicht mehr aus.
-- **Arche-Faktor 1,80–2,00**, auf Wunsch je Platz eigens als Faktor oder als
+- **Arche-Faktor 1,00–2,00**, auf Wunsch je Platz eigens als Faktor oder als
   tatsächlich gezahlter Betrag, auch direkt in der Tabelle.
 - **Chat-Zeile** mit oder ohne FP-Beträge, Bauwerk als vollem Namen, Kürzel
   oder eigenem Kürzel; eine **Sammlung** fasst Zeilen mehrerer Bauwerke zu

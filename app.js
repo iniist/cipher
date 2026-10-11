@@ -35,7 +35,7 @@
   var FACTOR_PRESETS = [180, 185, 190, 192, 195, 200];
 
   /** Grenzen des Arche-Faktors, als Ganzzahl in Prozent. */
-  var FACTOR_MIN = 180;
+  var FACTOR_MIN = 100;
   var FACTOR_MAX = 200;
 
   /**
@@ -1669,9 +1669,10 @@
     renderTotals(plan);
     renderChat(plan, building);
 
-    // Die zweite Warnung kann nur aus getippten Betraegen entstehen: im
-    // Faktorbereich 1,80-2,00 ueberholt kein Platz den ueber sich, das haelt
-    // ein Einheitentest ueber den ganzen Datensatz fest.
+    // Die zweite Warnung entsteht aus getippten Betraegen oder aus weit
+    // gespreizten Faktoren je Platz: zwischen 1,30 und 2,00 ueberholt kein
+    // Platz den ueber sich, das haelt ein Einheitentest ueber den ganzen
+    // Datensatz fest. Darunter darf es, die Warnung meldet es dann.
     var warnings = [];
     if (plan.anyTooTight) {
       warnings.push("Auf dieser Stufe reichen die Gesamtkosten nicht für alle Plätze. Nicht passende Plätze sind ausgegraut.");

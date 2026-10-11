@@ -32,6 +32,10 @@ test.describe("Bedienung", () => {
     await expect(page.locator("#factorDown")).toBeEnabled();
 
     await page.locator('#factorChips button[data-factor="180"]').click();
+    await expect(page.locator("#factorDown")).toBeEnabled();
+
+    await factor(page).fill("1,00");
+    await factor(page).blur();
     await expect(page.locator("#factorDown")).toBeDisabled();
     await expect(page.locator("#factorUp")).toBeEnabled();
   });
@@ -82,14 +86,26 @@ test.describe("Eingabe von Hand", () => {
     });
   }
 
+  test("unter 1,80 geht es weiter, bis 1,00", async ({ page }) => {
+    await factor(page).fill("1,50");
+    await factor(page).blur();
+    await expect(factor(page)).toHaveValue("1,50");
+    await expect(page.locator("#factorDown")).toHaveAttribute("aria-disabled", "false");
+
+    await factor(page).fill("1,00");
+    await factor(page).blur();
+    await expect(factor(page)).toHaveValue("1,00");
+    await expect(page.locator("#factorDown")).toHaveAttribute("aria-disabled", "true");
+  });
+
   test("Werte außerhalb des Bereichs werden begrenzt", async ({ page }) => {
     await factor(page).fill("3,50");
     await factor(page).blur();
     await expect(factor(page)).toHaveValue("2,00");
 
-    await factor(page).fill("1,00");
+    await factor(page).fill("0,50");
     await factor(page).blur();
-    await expect(factor(page)).toHaveValue("1,80");
+    await expect(factor(page)).toHaveValue("1,00");
   });
 
   test("Unsinn lässt den letzten gültigen Wert stehen", async ({ page }) => {
@@ -117,14 +133,16 @@ test.describe("Anzeigebalken", () => {
     Math.round(el.getBoundingClientRect().width / el.parentElement.getBoundingClientRect().width * 100)));
 
   test("zeigt die Lage im Bereich", async ({ page }) => {
-    await page.locator('#factorChips button[data-factor="180"]').click();
+    await factor(page).fill("1,00");
+    await factor(page).blur();
     await gaugeWidth(page).toBe(0);
 
     await page.locator('#factorChips button[data-factor="200"]').click();
     await gaugeWidth(page).toBeGreaterThan(98);
 
-    // 1,90 liegt genau in der Mitte zwischen 1,80 und 2,00.
-    await page.locator('#factorChips button[data-factor="190"]').click();
+    // 1,50 liegt genau in der Mitte zwischen 1,00 und 2,00.
+    await factor(page).fill("1,50");
+    await factor(page).blur();
     await gaugeWidth(page).toBeGreaterThan(47);
     await gaugeWidth(page).toBeLessThan(53);
   });

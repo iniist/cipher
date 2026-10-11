@@ -7,14 +7,14 @@
         xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
   <url>
     <loc>https://foe-foerderrechner.com/</loc>
-    <lastmod>2026-10-07</lastmod>
+    <lastmod>2026-10-11</lastmod>
     <image:image>
       <image:loc>https://foe-foerderrechner.com/bilder/og-cipher.png</image:loc>
     </image:image>
   </url>
   <url>
     <loc>https://foe-foerderrechner.com/rundgang</loc>
-    <lastmod>2026-10-07</lastmod>
+    <lastmod>2026-10-11</lastmod>
     <image:image>
       <image:loc>https://foe-foerderrechner.com/bilder/og-cipher.png</image:loc>
     </image:image>
@@ -29,26 +29,26 @@
   </url>
   <url>
     <loc>https://foe-foerderrechner.com/arche</loc>
-    <lastmod>2026-10-07</lastmod>
+    <lastmod>2026-10-11</lastmod>
   </url>
   <url>
     <loc>https://foe-foerderrechner.com/atomium</loc>
-    <lastmod>2026-10-07</lastmod>
+    <lastmod>2026-10-11</lastmod>
   </url>
   <url>
     <loc>https://foe-foerderrechner.com/saatgut-tresor</loc>
-    <lastmod>2026-10-07</lastmod>
+    <lastmod>2026-10-11</lastmod>
   </url>
   <url>
     <loc>https://foe-foerderrechner.com/saturn-vi-tor-pegasus</loc>
-    <lastmod>2026-10-07</lastmod>
+    <lastmod>2026-10-11</lastmod>
   </url>
   <url>
     <loc>https://foe-foerderrechner.com/saturn-vi-tor-centaurus</loc>
-    <lastmod>2026-10-07</lastmod>
+    <lastmod>2026-10-11</lastmod>
   </url>
   <url>
     <loc>https://foe-foerderrechner.com/saturn-vi-tor-hydra</loc>
-    <lastmod>2026-10-07</lastmod>
+    <lastmod>2026-10-11</lastmod>
   </url>
 </urlset>

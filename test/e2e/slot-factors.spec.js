@@ -188,9 +188,9 @@ test.describe("Eingabe", () => {
     await expect(step(page, 1, 1)).toBeDisabled();
     await expect(step(page, 1, -1)).toBeEnabled();
 
-    await value(page, 1).fill("1,00");
+    await value(page, 1).fill("0,50");
     await value(page, 1).blur();
-    await expect(value(page, 1)).toHaveValue("1,80");
+    await expect(value(page, 1)).toHaveValue("1,00");
     await expect(step(page, 1, -1)).toBeDisabled();
   });
 
@@ -544,7 +544,7 @@ test.describe("Wenn der Betrag nicht passt", () => {
     await expect(page.locator("#warn .warnline")).toHaveCount(0);
 
     // P4 schuettet weniger aus als P3, kostet hier aber mehr. Aus Faktoren
-    // zwischen 1,80 und 2,00 kann das nicht entstehen, aus einer getippten
+    // zwischen 1,30 und 2,00 kann das nicht entstehen, aus einer getippten
     // Zahl schon.
     await unit(page, "fp").click();
     await value(page, 3).fill("2000");

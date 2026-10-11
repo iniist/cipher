@@ -752,12 +752,14 @@ test("faellt kein Platz heraus, bleibt es beim Zuschlag", () => {
   assert.ok(mit.rows.every((row) => !row.tooTight));
 });
 
-test("im zulaessigen Faktorbereich ueberholt keine kleinere Belohnung", () => {
-  // Der Grund, warum der Faktor erst bei 1,80 anfaengt: Jeder Platz hat einen
-  // eigenen Faktor, und die auf 5 gerundeten Belohnungen halbieren sich nicht
-  // exakt. Spreizt man weit genug, kostet ein tieferer Platz mehr als der
-  // ueber ihm. Der schlechteste Fall ist der bessere Platz beim schwaechsten
-  // Faktor gegen den schlechteren beim staerksten.
+test("zwischen 1,30 und 2,00 ueberholt keine kleinere Belohnung", () => {
+  // Jeder Platz hat einen eigenen Faktor, und die auf 5 gerundeten
+  // Belohnungen halbieren sich nicht exakt. Spreizt man weit genug, kostet
+  // ein tieferer Platz mehr als der ueber ihm. Der schlechteste Fall ist der
+  // bessere Platz beim schwaechsten Faktor gegen den schlechteren beim
+  // staerksten. Erlaubt ist der Faktor ab 1,00 — wer so weit spreizt, bekommt
+  // die Warnung aus markOutOfOrder. Bis 1,30 hinunter kommt sie aus Faktoren
+  // nie, darunter vereinzelt (1,20–2,00: ein P1-Wert).
   // tools/order-scan.js misst dasselbe fuer beliebige Bereiche.
   //
   // Die Aussage gilt fuer Einzahlungen, die aus einem Faktor stammen. Ein
@@ -765,7 +767,7 @@ test("im zulaessigen Faktorbereich ueberholt keine kleinere Belohnung", () => {
   // meldet der Plan die Umkehr selbst, siehe "ein getippter Betrag kann die
   // Reihenfolge kippen".
   for (const p1 of Scan.p1Values()) {
-    assert.ok(!Scan.inverts(p1, 180, 200), `P1 ${p1}: ein tieferer Platz kostet mehr`);
+    assert.ok(!Scan.inverts(p1, 130, 200), `P1 ${p1}: ein tieferer Platz kostet mehr`);
   }
 });
 

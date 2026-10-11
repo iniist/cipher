@@ -87,7 +87,7 @@ li {
     <h2>Arche &amp; Legendäre Bauwerke</h2>
     <ul>
       <li>Mäzenplätze P1–P5 sichern</li>
-      <li>Arche-Faktor 1,80–2,00</li>
+      <li>Arche-Faktor 1,00–2,00</li>
       <li>FP-Einsatz planen</li>
       <li>Chat-Zeile fertig</li>
     </ul>
