@@ -145,6 +145,38 @@ test("mehr im Bauwerk als die Stufe kostet, gibt eine Warnung", async ({ page })
   await expect(page.locator("#warn")).toContainText("mehr, als die Stufe kostet");
 });
 
+test("auf einem anderen Bauwerk oder einer anderen Stufe ist der Block zu", async ({ page }) => {
+  await chateau(page);
+  await expect(page.locator("#stand")).toHaveAttribute("open", "");
+
+  // Von Hand offen, aber nichts eingetragen: eine andere Stufe klappt zu.
+  await page.locator("#levelUp").click();
+  await expect(page.locator("#stand")).not.toHaveAttribute("open", "");
+
+  // Hier wieder aufgemacht, bleibt er offen — auch nach dem Neuladen.
+  await page.locator("#stand summary").click();
+  await page.locator("#ownPaid").fill("100");
+  await expect(page.locator("#stand")).toHaveAttribute("open", "");
+  await page.reload();
+  await expect(page.locator("#stand")).toHaveAttribute("open", "");
+
+  // Mit Stand genauso: die naechste Stufe faengt zu an.
+  await page.locator("#levelUp").click();
+  await expect(page.locator("#stand")).not.toHaveAttribute("open", "");
+  await page.reload();
+  await expect(page.locator("#stand")).not.toHaveAttribute("open", "");
+});
+
+test("von Hand geoeffnet bleibt der Block auf derselben Stufe offen", async ({ page }) => {
+  await page.goto("/index.html");
+  await page.locator("#stand summary").click();
+  await expect(page.locator("#stand")).toHaveAttribute("open", "");
+  await page.locator("#factorUp").click();
+  await expect(page.locator("#stand")).toHaveAttribute("open", "");
+  await page.reload();
+  await expect(page.locator("#stand")).toHaveAttribute("open", "");
+});
+
 test("ein vergebener Platz laesst den Block zu, auch nach dem Neuladen", async ({ page }) => {
   await page.goto("/index.html");
   await expect(page.locator("#stand")).not.toHaveAttribute("open", "");

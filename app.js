@@ -1597,6 +1597,9 @@
   /** Was Calc.fitPlan zuletzt gefunden hat; null, solange der Schalter aus ist. */
   var lastFit = null;
 
+  /** Bauwerk und Stufe beim letzten render, um einen Wechsel zu erkennen. */
+  var standKey = null;
+
   function render() {
     var building = byId[state.building];
     state.level = Math.min(Math.max(1, Math.floor(state.level) || 1), LEVEL_MAX);
@@ -1646,6 +1649,14 @@
       state.fit = false;
       state.fitLevel = false;
     }
+    // Auf einem anderen Bauwerk oder einer anderen Stufe klappt der Block zu:
+    // offen stand er fuer die alte. Nur bei einem echten Wechsel, nicht beim
+    // ersten render — da gilt, was beim Laden eingestellt wurde.
+    if (standKey != null && standKey !== ownPaidKey()) {
+      state.standOpen = false;
+      $("stand").open = false;
+    }
+    standKey = ownPaidKey();
 
     if (total.value == null || p1.value == null) {
       lastPlan = null;
