@@ -49,16 +49,17 @@ test("ueberzahlt passen mit gesenktem Faktor wieder alle Plaetze", async ({ page
   await expect(page.locator("#chatPoints")).toHaveText("Dani Die Arche P5(18) P4(108) P3(414) P2(1242) P1(2475)");
 });
 
-test("P5 levelt mit und zahlt den Rest", async ({ page }) => {
+test("P5 levelt mit, den Rest teilen sich die Plaetze", async ({ page }) => {
   await open(page, { fit: true });
   await expect(page.locator("#fitLevelRow")).toBeVisible();
   await expect(page.locator("#fitLevelLabel")).toHaveText("P5 levelt mit");
   await page.locator("#fitLevel").check();
 
-  await expect.poll(() => kosten(page)).toEqual(["2.475", "1.242", "414", "108", "25"]);
-  await expect(page.locator("#fitHint")).toContainText("P5 zahlt 7 FP mehr und schließt die Stufe ab");
+  // P5 zahlt nicht drauf: die 7 FP gehen nach Belohnung auf P1 und P2.
+  await expect.poll(() => kosten(page)).toEqual(["2.480", "1.244", "414", "108", "18"]);
+  await expect(page.locator("#fitHint")).toContainText("Die übrigen 7 FP teilen sich die Plätze, keiner über Faktor 1,90. P5 schließt die Stufe ab.");
   await expect(page.locator("#lumpText")).toContainText("P5 schließt die Stufe ab, wie unter „Schon im Bauwerk“ gewählt");
-  await expect(page.locator("#chatPoints")).toContainText("P5(25)");
+  await expect(page.locator("#chatPoints")).toContainText("P5(18) P4(108) P3(414) P2(1244) P1(2480)");
 });
 
 test("passt selbst 1,00 nicht, fallen die hinteren Plaetze weg", async ({ page }) => {

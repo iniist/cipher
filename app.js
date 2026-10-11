@@ -1802,10 +1802,12 @@
     }
     if (fit.levelSlot) {
       parts.push(fit.levelExtra > 0
-        ? "P" + fit.levelSlot + " zahlt " + formatNumber(fit.levelExtra) + " FP mehr und schließt die Stufe ab."
+        ? "Die übrigen " + formatNumber(fit.levelExtra) + " FP teilen sich die Plätze, keiner über Faktor " +
+          formatFactor(state.factor) + ". P" + fit.levelSlot + " schließt die Stufe ab."
         : "P" + fit.levelSlot + " schließt die Stufe ab.");
     } else if (fit.levelTooBig) {
-      parts.push("Für den letzten Platz ist der Rest zu groß — mehr als das Doppelte zahlt keiner. Den Rest zahlst du selbst.");
+      parts.push("Leveln lassen geht hier nicht: Der Rest ist zu groß, um ihn auf die Plätze zu verteilen, ohne über Faktor " +
+        formatFactor(state.factor) + " zu kommen. " + formatNumber(plan.remainder) + " FP zahlst du selbst.");
     } else if (plan.remainder > 0) {
       parts.push(formatNumber(plan.remainder) + " FP bleiben für dich zum Leveln.");
     }

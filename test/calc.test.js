@@ -1176,18 +1176,36 @@ test("fitPlan: es bleibt immer mindestens 1 FP fuer dich", () => {
   }
 });
 
-test("fitPlan: P5 levelt mit und zahlt dafuer den Rest", () => {
+test("fitPlan: P5 levelt mit, den Rest teilen sich alle Plaetze", () => {
   const fit = Calc.fitPlan({ ...over, ownPaid: 9300 }, true);
   assert.equal(fit.factor, 179);
   assert.equal(fit.levelSlot, 5);
   assert.equal(fit.levelExtra, 9);
-  assert.deepEqual(offeredPays(fit.plan), [2461, 1235, 412, 107, 27]);
+  // Ohne Leveln: 2461 / 1235 / 412 / 107 / 18 und 9 FP Rest. Die 9 gehen
+  // nach Belohnung auf die Plaetze, P5 zahlt nicht drauf.
+  assert.deepEqual(offeredPays(fit.plan), [2467, 1238, 412, 107, 18]);
   assert.equal(fit.plan.remainder, 0);
   assert.equal(fit.plan.anyTooTight, false);
+  assert.ok(fit.plan.rows.every((row) => row.secure === 0));
 });
 
-test("fitPlan: mehr als das Doppelte zahlt P5 nicht", () => {
-  // Nicht ueberzahlt: vor P5 sind noch 57 FP offen, P5 zahlt 19.
+test("fitPlan: P5 zahlt beim Leveln nicht drauf (Rueckmeldung Frontenac 154)", () => {
+  // Chateau Frontenac 154, 22.000 FP eigen, Faktor 2,00. Mit 1,73 bleiben
+  // 30 FP Rest. Frueher zahlte P5 die allein: 65 FP fuer 20 FP Belohnung.
+  const frontenac = { total: 29062, p1: 2365, factor: 200, enabled: [true, true, true, true, true], ownPaid: 22000 };
+  const fit = Calc.fitPlan(frontenac, true);
+  assert.equal(fit.factor, 173);
+  assert.equal(fit.levelSlot, 5);
+  assert.equal(fit.plan.rows[4].contribution, 35);
+  assert.equal(fit.plan.remainder, 0);
+  for (const row of fit.plan.rows) {
+    assert.ok(row.contribution <= Calc.contribution(row.reward, 200), `P${row.slot} ueber Faktor 2,00`);
+  }
+  assert.equal(fit.plan.anyOutOfOrder, false);
+});
+
+test("fitPlan: ueber deinen Faktor hinaus wird nichts verteilt", () => {
+  // Nicht ueberzahlt: alle zahlen schon 1,90, fuer den Rest ist kein Platz.
   const fit = Calc.fitPlan({ ...over }, true);
   assert.equal(fit.factor, 190);
   assert.equal(fit.levelSlot, null);
