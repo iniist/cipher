@@ -4,7 +4,7 @@
  * Name, Darstellung und Kuerzel-Schalter stehen nicht mehr auf der Seite,
  * sondern im Menue oben rechts. Die Welt bleibt draussen sichtbar.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 const { nameEintragen, themaWaehlen } = require("./menue");
 
 test.beforeEach(async ({ page }) => {

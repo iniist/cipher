@@ -5,7 +5,7 @@
  * Content-Security-Policy, der die Seite zerlegt, faellt damit hier auf
  * und nicht erst nach dem Deploy.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 const { nameEintragen, themaWaehlen } = require("./menue");
 const { abwaehlen } = require("./plaetze");
 const path = require("node:path");

@@ -7,7 +7,7 @@
  * fest: dass der Stepper das kann, was der Regler konnte, und dass die
  * Scrollfalle weg ist.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 
 const factor = (page) => page.locator("#factor");
 

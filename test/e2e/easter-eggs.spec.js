@@ -3,7 +3,7 @@
  * Sie duerfen Spass machen, aber niemanden stoeren: bei
  * prefers-reduced-motion bleibt alles ruhig.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 
 test("Konami-Code laesst einen Scan ueber die Blaupause laufen", async ({ page }) => {
   await page.goto("/index.html");

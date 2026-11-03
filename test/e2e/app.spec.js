@@ -2,7 +2,7 @@
  * Browsertests fuer die Anwendung.
  * Ausfuehren mit: npm run test:e2e
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 const { nameEintragen, themaWaehlen } = require("./menue");
 const { haekchen, vergeben, abwaehlen } = require("./plaetze");
 const DATA = require("../../data.js");

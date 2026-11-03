@@ -7,7 +7,7 @@
  * der neuen Adresse. Hier laeuft beides auf localhost; der Sprung zur neuen
  * Domain wird abgefangen und nur seine Adresse gelesen.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 
 const NEU = "https://foe-foerderrechner.com";
 

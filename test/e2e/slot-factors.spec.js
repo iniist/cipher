@@ -6,7 +6,7 @@
  * Wert oben sich bewegt. "Alle wieder angleichen" nimmt alle fuenf zurueck.
  * Der obere Wert zeigt dadurch immer etwas Wahres und wird nie ausgegraut.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 const { nameEintragen, themaWaehlen } = require("./menue");
 const { haekchen, abwaehlen } = require("./plaetze");
 

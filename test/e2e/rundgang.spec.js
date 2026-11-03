@@ -4,7 +4,7 @@
  * Die Seite wird geteilt; der Rechner verlinkt sie nur im Footer — das halten
  * die Tests fest, ebenso dass sie ohne Bewegung und ohne Skript vollstaendig ist.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 
 test("der Rechner verlinkt den Rundgang nur einmal, ganz unten im Footer", async ({ page }) => {
   await page.goto("/index.html");

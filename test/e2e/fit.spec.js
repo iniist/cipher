@@ -5,7 +5,7 @@
  * nach 951 FP vor. Wer schon 1.200 drin hat, bekommt P3 nicht mehr unter;
  * mit 1,80 fuer alle passen wieder alle fuenf, und 7 FP bleiben zum Leveln.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 
 const sichern = (page) => page.locator("#rows .pre").allTextContents();
 const kosten = (page) => page.locator("#rows td.pay .pay-btn").allTextContents();

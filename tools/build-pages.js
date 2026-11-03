@@ -219,6 +219,7 @@ ${JSON.stringify(jsonLd, null, 2)}
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="./fonts.css">
 <link rel="stylesheet" href="./lg.css">
+<script src="./pause.js"></script>
 </head>
 <body>
 
@@ -228,6 +229,7 @@ ${JSON.stringify(jsonLd, null, 2)}
 
 <main>
   <h1>${esc(name)} fördern: Kosten und Mäzenplätze je Stufe</h1>
+  <p class="pause-note" role="note">Die Zahlen auf dieser Seite gelten bis zum Prestige-Update vom 5. November 2026. Seitdem berechnet das Spiel Kosten und Mäzen-Belohnungen neu; cipher wird gerade daran angepasst.</p>
   <p class="lead">${esc(page.about)} Hier stehen für jede Stufe bis ${building.maxLevel} die Gesamtkosten in Forge-Punkten, die Belohnungen der Mäzenplätze P1 bis P5 und was ein Förderer mit Arche-Faktor 1,9 einzahlt.</p>
   <p><a class="btn" href="${calcLink(building.id, example.level)}">${esc(page.short)} im Förderrechner öffnen</a></p>
 

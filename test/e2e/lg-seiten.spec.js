@@ -3,7 +3,7 @@
  * erreichbar wie auf Netlify, ohne Skript vollstaendig, und jede Stufe
  * fuehrt mit Bauwerk und Stufe in den Rechner.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 const DATA = require("../../data.js");
 const Calc = require("../../calc.js");
 const { PAGES } = require("../../tools/build-pages.js");
