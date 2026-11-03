@@ -7,7 +7,7 @@
  * Feld steht. Diese Tests halten genau das fest: die Anzeige wandert, der
  * Plan nicht.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 const { nameEintragen } = require("./menue");
 
 const modeButton = (page, mode) => page.locator(`#levelMode button[data-level-mode="${mode}"]`);

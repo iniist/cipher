@@ -50,6 +50,8 @@
   } catch (e) { /* Speicher gesperrt — das Standard-Theme bleibt stehen. */ }
 })();
 </script>
+<!-- Ab dem Prestige-Update (5.11.2026) blendet pause.js den Rechner aus. -->
+<script src="./pause.js"></script>
 
 <link rel="stylesheet" href="./fonts.css">
 <link rel="stylesheet" href="./styles.css">
@@ -212,7 +214,7 @@
     </section>
   </noscript>
 
-  <section class="panel">
+  <section class="panel calc-only">
     <h2>Bauwerk</h2>
 
     <!-- Solange kein Spielername eingetragen ist: hier oben, wo man anfängt.
@@ -323,7 +325,7 @@
     </div>
   </section>
 
-  <section class="panel">
+  <section class="panel calc-only">
     <h2>Förderplan</h2>
 
     <div class="bar" id="bar" role="img" aria-label="Verteilung der Gesamtkosten auf deine FP und die Mäzen-Plätze"></div>
@@ -388,7 +390,7 @@
     </div>
   </section>
 
-  <section class="panel">
+  <section class="panel calc-only">
     <!-- Derselbe Schalter wie im Menü, ein zweites Mal: hier sieht man, was
          er bewirkt, und hier wird kopiert. Beide zeigen denselben Stand. -->
     <div class="chat-head">
@@ -430,7 +432,7 @@
     </div>
   </section>
 
-  <div class="foot">
+  <div class="foot calc-only">
     <!-- Zwei Zeilen, nicht drei: quer auf einem iPhone SE kostet jede weitere
      Zeile hier ein Zwanzigstel Bildschirm, und der Test daneben haelt die
      Seite unter 4,5 Bildschirmen. Wann genau eingezahlt wird, erklaert der
@@ -445,7 +447,7 @@
        lesen: nur behaupten, was cipher wirklich tut. Die Fragen und Antworten
        stehen wortgleich im JSON-LD im <head> — test/e2e/seo-rechner.spec.js
        vergleicht beides. -->
-  <section class="info" aria-labelledby="howTitle">
+  <section class="info calc-only" aria-labelledby="howTitle">
     <p class="info-sep">Wissenswertes zum Fördern</p>
     <div class="panel">
       <h2 id="howTitle">So funktioniert der Förderrechner</h2>
@@ -503,6 +505,18 @@
       </div>
     </div>
   </section>
+
+  <!-- Sichtbar erst ab dem Prestige-Update, siehe pause.js. Er steht am Ende
+       von <main> und ist ein <div> ohne .panel: Das Raster in styles.css
+       ordnet die Panels per :nth-of-type an, und im Pausenzustand ist alles
+       davor ausgeblendet, er steht dann trotzdem oben. -->
+  <div class="pause-note" id="pause">
+  <section class="panel" aria-labelledby="pauseTitle">
+    <h2 id="pauseTitle">cipher macht eine kurze Pause</h2>
+    <p>Mit dem Prestige-Update vom 5. November 2026 hat InnoGames die Kosten der Legendären Bauwerke und die Mäzen-Belohnungen neu berechnet. Die Zahlen in cipher stimmen damit nicht mehr, und falsche Zahlen kosten beim Fördern FP oder Plätze.</p>
+    <p>Darum rechnet cipher erst wieder, wenn die neuen Werte drin sind. Deine Favoriten und Einstellungen bleiben gespeichert.</p>
+  </section>
+  </div>
 
 </main>
 

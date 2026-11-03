@@ -6,7 +6,7 @@
  * JSON-LD im <head>. Google verlangt, dass beides uebereinstimmt; der Test
  * haelt es fest, damit eine Textaenderung nicht nur an einer Stelle landet.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 
 const SITE = "https://foe-foerderrechner.com/";
 const OG_IMAGE = SITE + "bilder/og-cipher.png";

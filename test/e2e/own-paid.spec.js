@@ -6,7 +6,7 @@
  * haettest du vor P1 schon gesichert, und P3 bis P5 passen nicht mehr.
  * Mit Stand 0 rechnet es vom jetzigen Bauwerk aus.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 
 const summe = (page, id) => page.locator(`#${id}`).getAttribute("data-value");
 const sichern = (page) => page.locator("#rows .pre").allTextContents();

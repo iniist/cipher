@@ -6,7 +6,7 @@
  * ("74.393"). Wie bei der Stufenzahl entscheidet ein Umschalter, welche
  * dasteht — und die Beschriftung nennt sie, damit niemand die falsche liest.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 const { abwaehlen } = require("./plaetze");
 
 const kopf = (page) => page.locator("#secureModeLabel");

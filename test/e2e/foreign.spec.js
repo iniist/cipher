@@ -9,7 +9,7 @@
  * Château Frontenac 80 bei 1,90 (Vorgabe): die Gilde zahlt 2.043, 1.026,
  * 342, 86 und 19.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 const { haekchen, vergeben } = require("./plaetze");
 
 const sichern = (page) => page.locator("#rows .pre").allTextContents();

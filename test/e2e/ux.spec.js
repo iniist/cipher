@@ -3,7 +3,7 @@
  * ersten Bauen ungeprueft geblieben waren: schmale Geraete, volle
  * Favoritenliste, der Leerzustand ohne Daten.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 const { nameEintragen, themaWaehlen } = require("./menue");
 const { mitTestdaten, OHNE_DATEN } = require("./testdaten");
 

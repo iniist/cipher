@@ -1,7 +1,7 @@
 /**
  * Browsertests fuer die Tastaturbedienung und den Betrieb ohne JavaScript.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 
 /** Was gerade den Fokus hat, kurz beschrieben. */
 const activeDescriptor = (page) => page.evaluate(() => ({

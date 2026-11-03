@@ -6,7 +6,7 @@
  * "Fertig". Es ist derselbe Wert wie im Block "Faktor oder FP je Platz" —
  * nur dort, wo man ihn sieht.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 
 const zahl = (page, slot) => page.locator(`[data-pay-open="${slot}"]`);
 const feld = (page) => page.locator("#rows .pay-in");

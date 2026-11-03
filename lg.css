@@ -110,3 +110,15 @@ td.own { color: var(--ok); font-weight: 600 }
 .foot a { color: var(--dim) }
 .foot-links { display: flex; flex-wrap: wrap; gap: 18px }
 .foot-links a { color: var(--gold) }
+
+/* Pause zum Prestige-Update: pause.js setzt .paused auf <html>. */
+.pause-note { display: none }
+.paused .pause-note {
+  display: block;
+  max-width: 62ch;
+  padding: 12px 16px;
+  border-left: 4px solid var(--gold);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, .18);
+  color: var(--ink);
+}

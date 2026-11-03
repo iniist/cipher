@@ -1,7 +1,7 @@
 /**
  * Browsertests fuer die Favoriten.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 
 const favEntries = (page) => page.locator("#favList li");
 

@@ -3,7 +3,7 @@
  * Der wichtigste Test hier ist der erste: cipher darf keine einzige
  * Anfrage an einen fremden Host stellen.
  */
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./vor-dem-update");
 const { nameEintragen, themaWaehlen } = require("./menue");
 
 const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html", "/rundgang.html"];
