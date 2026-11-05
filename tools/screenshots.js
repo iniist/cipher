@@ -20,14 +20,31 @@ const OUT = path.join(ROOT, "bilder");
 const PORT = 4179;
 const BASE = `http://localhost:${PORT}`;
 
-/** Ein ruhiger, gut lesbarer Ausgangszustand. */
+/**
+ * Ein ruhiger, gut lesbarer Ausgangszustand: Saturn VI Tor HYDRA auf Stufe
+ * 89, eine Kupfer-Stufe mit fuenf Plaetzen.
+ */
 const STATE = {
-  building: "The_Arc",
-  level: 80,
+  building: "Saturn_VI_Gate_HYDRA",
+  level: 89,
   factor: 190,
   name: "Maren",
   theme: "forge",
-  enabled: [true, true, true, true, true]
+  enabled: [true, true, true, true, true, true, true]
+};
+
+/**
+ * Gesamt-FP, wie sie seit dem Prestige-Update eingetragen werden. Nur echte
+ * Ablesungen aus dem Spiel (5.11.2026, siehe test/prestige.test.js), damit
+ * kein Bild eine erfundene Zahl zeigt.
+ */
+const COSTS = {
+  "Saturn_VI_Gate_HYDRA:89": 28556,
+  "The_Arc:189": 136088,
+  "Castel_del_Monte:112": 22732,
+  "Arctic_Orangery:155": 87593,
+  "Observatory:102": 7604,
+  "The_Kraken:112": 26574
 };
 
 /**
@@ -64,7 +81,7 @@ async function open(context, storage, theme) {
     localStorage.clear();
     for (const key of Object.keys(items)) localStorage.setItem(key, JSON.stringify(items[key]));
     sessionStorage.setItem("seeded", "1");
-  }, [Object.assign({ "cipher:state": Object.assign({}, STATE, theme ? { theme } : {}) }, storage || {})]);
+  }, [Object.assign({ "cipher:state": Object.assign({}, STATE, theme ? { theme } : {}), "cipher:costs": COSTS }, storage || {})]);
   await page.goto(BASE + "/index.html", { waitUntil: "networkidle" });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.waitForTimeout(150);
@@ -103,11 +120,11 @@ async function main() {
 
   try {
     const favorites = [
-      { id: "The_Arc", level: 80 },
-      { id: "Arctic_Orangery", level: 64 },
-      { id: "Observatory", level: 112 },
-      { id: "Innovation_Tower", level: 35 },
-      { id: "Atomium", level: 90 }
+      { id: "Saturn_VI_Gate_HYDRA", level: 89 },
+      { id: "The_Arc", level: 189 },
+      { id: "Castel_del_Monte", level: 112 },
+      { id: "Arctic_Orangery", level: 155 },
+      { id: "Observatory", level: 102 }
     ];
 
     // ---- Der erste Blick: Bauwerk, Stufe, Faktor
@@ -145,7 +162,7 @@ async function main() {
     // ---- Foerderchat mit Sammlung
     context = await browser.newContext({ ...phone, permissions: ["clipboard-read", "clipboard-write"] });
     page = await open(context, { "cipher:state": Object.assign({}, STATE, { useAbbr: true }) });
-    for (const [id, level] of [["Arctic_Orangery", 64], ["Observatory", 112], ["The_Arc", 80]]) {
+    for (const [id, level] of [["Arctic_Orangery", 155], ["Castel_del_Monte", 112], ["Saturn_VI_Gate_HYDRA", 89]]) {
       await page.locator("#building").selectOption(id, { force: true });
       await page.fill("#level", String(level));
       await page.locator("#level").blur();
