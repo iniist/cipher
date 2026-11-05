@@ -1722,6 +1722,7 @@
     // sind; die Belohnungen folgen daraus exakt (Calc.rewardsFromCost).
     var total = costOf(state.building, state.level);
     renderNote(building, total);
+    renderPlanInfo();
 
     // Die Haekchen gelten wie der Stand nur fuer eine Stufe: wer das Bauwerk
     // oder die Stufe wechselt, faengt wieder mit allen Plaetzen angeboten an.
@@ -2533,6 +2534,32 @@
           escapeHtml(what) + ' aus der Sammlung entfernen">×</button>' +
       "</li>";
     }).join("");
+  }
+
+  /**
+   * Die Zeile ueber dem Foerderplan: Kategorie, Plaetze und Maezen-Anteil.
+   *
+   * Der Anteil springt an festen Stufen (Artikel 7011): 40 % bis 69, ab 70
+   * nur noch 25 % — die Plaetze bringen dann gut ein Drittel weniger,
+   * obwohl die Stufe teurer ist. Damit das niemand fuer einen Fehler haelt,
+   * nennt die Zeile auf der ersten Stufe nach einer Grenze, was davor galt,
+   * und auf der letzten davor, was ab der naechsten gilt.
+   */
+  function renderPlanInfo() {
+    var info = Calc.levelInfo(state.building, state.level);
+    var offset = levelOffset();
+    var text = (info.gold ? "Gold-Stufe" : "Kupfer-Stufe") + " · " + info.slots +
+      " Plätze · Mäzen-Anteil " + info.share + " % der Stufenkosten";
+    if (info.before) {
+      text += " (bis Stufe " + (info.before.level - offset) + ": " + info.before.share + " %)";
+    }
+    if (info.after) {
+      var next = info.after.share !== info.share ? info.after.share + " %" : "";
+      var gold = info.after.gold && !info.gold ? "Gold, 7 Plätze" : "";
+      text += " · ab Stufe " + (info.after.level - offset) + ": " +
+        [gold, next].filter(Boolean).join(", ");
+    }
+    $("planInfo").textContent = text;
   }
 
   /**

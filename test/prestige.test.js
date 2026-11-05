@@ -108,3 +108,16 @@ test("die Chat-Zeile haengt auf Wunsch den Faktor an, wie Gilden ihn schreiben",
   assert.equal(Calc.chatLine(plan([190], [true]), "X", true, true), "X P1(100)");
   assert.equal(Calc.chatLine(plan([190]), "X", true, false), "X P1(100)");
 });
+
+test("levelInfo nennt Kategorie und Anteil und schaut an den Grenzen voraus und zurueck", () => {
+  assert.deepEqual(Calc.levelInfo("Saturn_VI_Gate_HYDRA", 89),
+    { gold: false, slots: 5, share: 25, before: null, after: null });
+  assert.deepEqual(Calc.levelInfo("Shattered_Horizon_Siphon", 69).after, { level: 70, share: 25, gold: false });
+  assert.deepEqual(Calc.levelInfo("Shattered_Horizon_Siphon", 70).before, { level: 69, share: 40 });
+  // Gold-Bauwerk: auf 100 kündigt sich Gold mit an, auf 101 ist es da.
+  assert.deepEqual(Calc.levelInfo("The_Arc", 100).after, { level: 101, share: 15, gold: true });
+  assert.equal(Calc.levelInfo("The_Arc", 101).slots, 7);
+  // Am Ende eines Kupfer-Bauwerks gibt es kein Danach.
+  assert.equal(Calc.levelInfo("Tower_of_Babel", 200).after, null);
+  assert.equal(Calc.levelInfo("The_Arc", 1).before, null);
+});

@@ -373,6 +373,8 @@ h1, .brand {
 }
 :root[data-theme="contrast"] .panel { border-width: 2px }
 .panel h2 { font-size: 1.15rem; margin: 0 0 10px; font-weight: 600 }
+/* Kategorie, Plaetze und Maezen-Anteil ueber dem Foerderplan: leise, eine Zeile. */
+.plan-info { margin: -4px 0 10px; color: var(--dim); font-size: .85rem }
 
 /* ------------------------------------------------------ Formularelemente */
 

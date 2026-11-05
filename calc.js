@@ -161,6 +161,35 @@
   }
 
   /**
+   * Was eine Stufe ausmacht und was sich an ihren Grenzen aendert: Gold
+   * oder Kupfer, Zahl der Plaetze, Maezen-Anteil — dazu, falls die Stufe
+   * davor oder danach anders zahlt, deren Anteil. Grundlage fuer die Zeile
+   * ueber dem Foerderplan.
+   * @param {string} buildingId
+   * @param {number} level Die Stufe, die gefoerdert wird
+   * @returns {{gold:boolean, slots:number, share:number,
+   *   before:{level:number, share:number}|null,
+   *   after:{level:number, share:number, gold:boolean}|null}}
+   */
+  function levelInfo(buildingId, level) {
+    var gold = isGold(buildingId, level);
+    var share = rewardShare(level);
+    var before = null;
+    var after = null;
+    if (level > 1 && rewardShare(level - 1) !== share) {
+      before = { level: level - 1, share: rewardShare(level - 1) };
+    }
+    var max = maxLevelOf(buildingId);
+    if (!(max && level >= max)) {
+      var nextGold = isGold(buildingId, level + 1);
+      if (rewardShare(level + 1) !== share || nextGold !== gold) {
+        after = { level: level + 1, share: rewardShare(level + 1), gold: nextGold };
+      }
+    }
+    return { gold: gold, slots: gold ? 7 : 5, share: share, before: before, after: after };
+  }
+
+  /**
    * Wie sich der Topf auf die Plaetze verteilt: die alte Kette
    * P(k) = P(k-1) / k, ungerundet und auf 1 normiert. Bei 5 Plaetzen
    * 58,25 / 29,13 / 9,71 / 2,43 / 0,49 %, bei 7 dazu 0,08 und 0,01 %.
@@ -1219,6 +1248,7 @@
     hasGold: hasGold,
     maxLevelOf: maxLevelOf,
     rewardShare: rewardShare,
+    levelInfo: levelInfo,
     placeWeights: placeWeights,
     roundReward: roundReward,
     rewardsFromCost: rewardsFromCost,
