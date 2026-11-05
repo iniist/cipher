@@ -92,13 +92,12 @@ test.describe("Rundgang fuer Suchmaschinen", () => {
     }
   });
 
-  test("jedes Bild hat einen Alternativtext, das Video eine Beschriftung", async ({ page }) => {
+  test("jedes Bild hat einen Alternativtext", async ({ page }) => {
     await page.goto("/rundgang.html");
     const missing = await page.locator("img").evaluateAll((images) => images
       .filter((image) => !(image.getAttribute("alt") || "").trim())
       .map((image) => image.getAttribute("src")));
     expect(missing).toEqual([]);
-    expect(await page.locator("#heroVideo").getAttribute("aria-label")).toMatch(/Arche/);
   });
 
   test("die strukturierten Daten sind gueltiges JSON mit den erwarteten Typen", async ({ page, request }) => {
@@ -112,47 +111,18 @@ test.describe("Rundgang fuer Suchmaschinen", () => {
       return data["@graph"] || [data];
     });
     const byType = Object.fromEntries(nodes.map((node) => [node["@type"], node]));
-    for (const type of ["WebPage", "VideoObject", "SoftwareApplication", "BreadcrumbList"]) {
+    for (const type of ["WebPage", "SoftwareApplication", "BreadcrumbList"]) {
       expect(byType[type], type).toBeTruthy();
     }
 
     expect(byType.WebPage.url).toBe(SITE + "/rundgang");
-    const video = byType.VideoObject;
-    expect(video.name).toBeTruthy();
-    expect(video.description).toBeTruthy();
-    expect(video.uploadDate).toMatch(/^\d{4}-\d{2}-\d{2}/);
-    expect(video.duration).toMatch(/^PT\d+S$/);
     expect(byType.SoftwareApplication.offers.price).toBe("0");
 
     // Die Adressen im Datenblock muessen auf echte Dateien zeigen.
-    for (const url of [video.thumbnailUrl, video.contentUrl]) {
-      expect(url.startsWith(SITE + "/"), url).toBe(true);
-      const response = await request.get(new URL(url).pathname);
-      expect(response.status(), url).toBe(200);
-    }
-  });
-
-  test("die Videolaenge im Datenblock stimmt mit der Datei ueberein", async ({ page }) => {
-    await page.goto("/rundgang.html");
-    const declared = await page.locator('script[type="application/ld+json"]').evaluate((element) => {
-      const graph = JSON.parse(element.textContent)["@graph"];
-      return Number(graph.find((node) => node["@type"] === "VideoObject").duration.match(/\d+/)[0]);
-    });
-    const actual = await page.evaluate(() => new Promise((resolve, reject) => {
-      const video = document.createElement("video");
-      video.preload = "metadata";
-      video.muted = true;
-      video.onloadedmetadata = () => resolve(video.duration);
-      video.onerror = () => reject(new Error("Video nicht lesbar"));
-      video.src = "./bilder/rundgang.mp4";
-    })).catch(async () => page.evaluate(() => new Promise((resolve) => {
-      // Chromium ohne H.264: dieselbe Laenge aus der WebM-Fassung.
-      const video = document.createElement("video");
-      video.preload = "metadata";
-      video.onloadedmetadata = () => resolve(video.duration);
-      video.src = "./bilder/rundgang.webm";
-    })));
-    expect(Math.abs(actual - declared)).toBeLessThan(1.5);
+    const image = byType.WebPage.primaryImageOfPage.url;
+    expect(image.startsWith(SITE + "/"), image).toBe(true);
+    const response = await request.get(new URL(image).pathname);
+    expect(response.status(), image).toBe(200);
   });
 
   test("auch unter /rundgang erreichbar, wie auf Netlify", async ({ request }) => {

@@ -1792,7 +1792,6 @@
       return '<div class="warnline">' + escapeHtml(text) + "</div>";
     }).join("");
 
-    maybeStamp(plan);
     persistState();
   }
 
@@ -3231,32 +3230,6 @@
     element.textContent = message;
     document.body.appendChild(element);
     window.setTimeout(function () { element.remove(); }, prefersReducedMotion ? 2000 : 2600);
-  }
-
-  /*
-   * Egg 1 — Freigabe-Stempel.
-   * Wenn ein Plan aufgeht, ohne dass du auch nur einen FP vorstrecken musst,
-   * und trotzdem etwas zum Selberleveln uebrig bleibt, ist das ein perfekter
-   * Zuschnitt. Den quittiert cipher einmal je Besuch mit einem Stempel.
-   */
-  var stampShown = false;
-  function maybeStamp(plan) {
-    if (stampShown || prefersReducedMotion) return;
-
-    var offered = plan.rows.filter(function (row) { return row.offered; });
-    var perfect = offered.length === plan.rows.filter(function (row) { return row.reward > 0; }).length &&
-      plan.upfront === 0 &&
-      plan.remainder > 0 &&
-      !plan.anyTooTight;
-    if (!perfect) return;
-
-    stampShown = true;
-    var stamp = document.createElement("div");
-    stamp.className = "stamp";
-    stamp.setAttribute("aria-hidden", "true");
-    stamp.innerHTML = "Freigegeben<span>ohne Vorleistung</span>";
-    document.body.appendChild(stamp);
-    window.setTimeout(function () { stamp.remove(); }, 3000);
   }
 
   /*
