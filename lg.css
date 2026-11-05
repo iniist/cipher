@@ -101,7 +101,6 @@ td.own { color: var(--ok); font-weight: 600 }
 .example th:first-child { text-align: left }
 .levels { font-size: .95rem }
 .levels tbody td { vertical-align: top }
-.est { color: var(--dim); margin-left: 2px; cursor: help }
 
 /* -------------------------------------------------------------------- Fuss */
 
@@ -111,12 +110,6 @@ td.own { color: var(--ok); font-weight: 600 }
 .foot-links { display: flex; flex-wrap: wrap; gap: 18px }
 .foot-links a { color: var(--gold) }
 
-/* Hinweis: die Tabellen sind vom Stand vor dem Prestige-Update. */
-.prestige-note {
-  max-width: 62ch;
-  padding: 12px 16px;
-  border-left: 4px solid var(--gold);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, .18);
-  color: var(--ink);
-}
+/* Gold-Stufen: ein schmaler Rand in Gold an der Stufe, damit man sieht, ab
+   wo sieben Plaetze und der Gold-Faktor gelten. */
+tr.gold th { box-shadow: inset 3px 0 0 var(--gold) }

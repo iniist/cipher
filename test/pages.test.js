@@ -11,6 +11,7 @@ const path = require("node:path");
 
 const ROOT = path.join(__dirname, "..");
 const DATA = require("../data.js");
+const COSTS = require("../kosten.js");
 const { PAGES, renderPage, SITE } = require("../tools/build-pages.js");
 const { ENTRIES } = require("../tools/sitemap.js");
 
@@ -43,10 +44,10 @@ test("jede Bauwerksseite gehoert zu einem Bauwerk und hat Titel und Beschreibung
 
 test("die Bauwerksseiten zeigen jede Stufe bis zur hoechsten", () => {
   for (const page of PAGES) {
-    const building = DATA.buildings.find((entry) => entry.id === page.id);
+    const top = COSTS.costs[page.id].length;
     const html = read(page.slug + ".html");
-    for (const level of [1, 80, building.maxLevel]) {
-      assert.match(html, new RegExp(`<tr id="stufe-${level}">`), `${page.slug}: Stufe ${level}`);
+    for (const level of [1, 80, top]) {
+      assert.match(html, new RegExp(`<tr id="stufe-${level}"[ >]`), `${page.slug}: Stufe ${level}`);
     }
     assert.ok(!html.includes("NaN") && !html.includes("undefined") && !html.includes("null"), page.slug);
   }

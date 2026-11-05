@@ -1,0 +1,109 @@
+name: Kosten importieren
+
+# Von Hand gestartet, nie automatisch — wie "Datensatz importieren".
+#
+# Holt die Stufenkosten seit dem Prestige-Update aus dem Wiki von InnoGames
+# (tools/import-inno.js), erzeugt die Bauwerksseiten neu und legt das
+# Ergebnis als Pull Request ab. tools/import-inno.js prueft jede Tabelle
+# gegen die Gesamtsummen aus Artikel 7009 und gegen Ablesungen aus dem
+# Spiel und schreibt bei der kleinsten Abweichung gar nichts.
+on:
+  workflow_dispatch:
+    inputs:
+      notiz:
+        description: "Notiz für den Pull Request (optional)"
+        required: false
+        default: ""
+
+concurrency:
+  group: kosten
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  kosten:
+    name: Kosten holen und pruefen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Chromium bereitstellen
+        run: npx playwright install --with-deps chromium
+
+      - name: Kosten importieren
+        run: node tools/import-inno.js | tee kosten-bericht.txt
+
+      - name: Bauwerksseiten und Sitemap erzeugen
+        run: |
+          node tools/build-pages.js
+          node tools/sitemap.js
+
+      # Wie beim Datensatz: einen Pull Request, den ein Arbeitsablauf
+      # aufmacht, prueft die CI nicht von selbst. Also hier.
+      - name: Pruefen
+        run: npm test
+
+      - name: Hat sich etwas geaendert?
+        id: diff
+        run: |
+          # Nur das Datum im Kopf von kosten.js zaehlt nicht als Aenderung.
+          if git diff --quiet -I '^    generated:' -- kosten.js; then
+            echo "geaendert=nein" >> "$GITHUB_OUTPUT"
+          else
+            echo "geaendert=ja" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Nichts zu tun
+        if: steps.diff.outputs.geaendert == 'nein'
+        run: |
+          {
+            echo "### Kosten unveraendert"
+            echo
+            echo "Das Wiki liefert dieselben Kosten wie bisher. Kein Pull Request noetig."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Pull Request aufmachen
+        if: steps.diff.outputs.geaendert == 'ja'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTIZ: ${{ inputs.notiz }}
+          STARTER: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          ZWEIG="kosten/$(date -u +%Y-%m-%d-%H%M)"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$ZWEIG"
+          git add kosten.js sitemap.xml '*.html'
+          git commit -m "Stufenkosten aus dem Wiki von InnoGames erneuert"
+          git push -u origin "$ZWEIG"
+
+          {
+            echo "Erzeugt vom Arbeitsablauf **Kosten importieren**, gestartet von @$STARTER."
+            echo
+            if [ -n "$NOTIZ" ]; then printf '> %s\n\n' "$NOTIZ"; fi
+            echo "## Lauf"
+            echo
+            echo '```'
+            tail -n 5 kosten-bericht.txt
+            echo '```'
+            echo
+            echo "Einheiten- und Browsertests sind in diesem Lauf bereits gruen gelaufen."
+          } > pr-text.md
+
+          gh pr create \
+            --title "Stufenkosten aus dem Wiki von InnoGames erneuert" \
+            --body-file pr-text.md \
+            --base main \
+            --head "$ZWEIG"

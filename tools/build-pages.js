@@ -6,7 +6,9 @@
  *
  * Jede Seite zeigt fuer ein Legendaeres Bauwerk die Kosten und die
  * Maezenplaetze aller Stufen, gerechnet mit demselben Rechenkern wie der
- * Rechner (calc.js) und Arche-Faktor 1,9. Gedacht fuer die Suche: wer
+ * Rechner (calc.js): Kosten aus kosten.js, Belohnungen nach den Regeln seit
+ * dem Prestige-Update, Faktor 1,9 auf Kupfer- und 1,0 auf Gold-Stufen —
+ * dieselben Vorgaben wie im Rechner. Gedacht fuer die Suche: wer
  * „Arche Stufe 80 Kosten“ eingibt, soll eine Seite finden, die genau das
  * beantwortet — und von dort mit einem Tipp im Rechner landen.
  *
@@ -25,15 +27,15 @@ const SITE = "https://foe-foerderrechner.com";
 const DATA = require(path.join(ROOT, "data.js"));
 const Calc = require(path.join(ROOT, "calc.js"));
 const ABBR = require(path.join(ROOT, "abbr.js"));
+const COSTS = require(path.join(ROOT, "kosten.js"));
 
-/** Arche-Faktor der Tabellen, wie im Rechner voreingestellt. */
+/** Faktoren der Tabellen, wie im Rechner voreingestellt: Kupfer und Gold. */
 const FACTOR = 190;
+const GOLD_FACTOR = 100;
 
 /** Die Stufe, an der jede Seite den Foerderplan ausfuehrlich vorrechnet. */
 const EXAMPLE_LEVEL = 80;
 
-/** Gleiche Regel wie in app.js: hergeleitete P1 rechnen vorsichtiger. */
-const UNSURE_P1_SOURCES = { derived: true, conflict: true };
 
 /**
  * Die Bauwerke mit eigener Seite. `about` ist der einzige Text, der von
@@ -57,7 +59,7 @@ const PAGES = [
     id: "Seed_Vault",
     slug: "saatgut-tresor",
     short: "Saatgut-Tresor",
-    about: "Der Saatgut-Tresor stammt aus der Arktischen Zukunft und lässt sich besonders weit ausbauen — der Datensatz reicht bis Stufe 341."
+    about: "Der Saatgut-Tresor stammt aus der Arktischen Zukunft und gehört zu den Bauwerken mit Gold-Kategorie: Ab Stufe 101 kommen neue Boni dazu, und er lässt sich über Stufe 200 hinaus ausbauen."
   },
   {
     id: "Saturn_VI_Gate_PEGASUS",
@@ -98,20 +100,22 @@ const calcLink = (id, level) => `/#lg=${encodeURIComponent(id)}&amp;stufe=${leve
 
 /** Eine Stufe so rechnen, wie der Rechner sie mit allen Plaetzen zeigt. */
 function levelPlan(building, level) {
-  const total = Calc.totalCost(building, level, {});
-  const p1 = Calc.p1Reward(building, level, DATA.curves, {});
-  if (total.value == null || p1.value == null) return null;
+  const total = COSTS.costs[building.id] && COSTS.costs[building.id][level - 1];
+  if (!(total > 0)) return null;
+  const gold = Calc.isGold(building.id, level);
+  const rewards = Calc.rewardsFromCost(total, level, gold);
   const plan = Calc.buildPlan({
-    total: total.value,
-    p1: p1.value,
-    p1Secure: UNSURE_P1_SOURCES[p1.source]
-      ? p1.value - Calc.p1Slack(DATA.curves[building.curve], level)
-      : null,
-    factor: FACTOR,
-    enabled: [true, true, true, true, true]
+    total,
+    rewards,
+    p1: rewards[0],
+    factor: gold ? GOLD_FACTOR : FACTOR,
+    enabled: rewards.map(() => true)
   });
-  return { level, total: total.value, unsure: Boolean(UNSURE_P1_SOURCES[p1.source]), plan };
+  return { level, total, gold, plan };
 }
+
+/** Faktor als Text, wie im Rechner: 190 -> "1,9", 100 -> "1,0". */
+const factorText = (value) => (value / 100).toFixed(2).replace(/0$/, "").replace(".", ",");
 
 // ------------------------------------------------------------------- Seite
 
@@ -121,7 +125,8 @@ function renderPage(page) {
 
   const url = `${SITE}/${page.slug}`;
   const levels = [];
-  for (let level = 1; level <= building.maxLevel; level++) {
+  const top = COSTS.costs[building.id].length;
+  for (let level = 1; level <= top; level++) {
     const row = levelPlan(building, level);
     if (row) levels.push(row);
   }
@@ -129,7 +134,9 @@ function renderPage(page) {
   const example = levels.find((row) => row.level === EXAMPLE_LEVEL) || last;
   const sumTo = (level) => levels.filter((row) => row.level <= level)
     .reduce((sum, row) => sum + row.total, 0);
-  const unsureFrom = levels.find((row) => row.unsure);
+  const hasGold = Calc.hasGold(building.id);
+  const slotCount = hasGold ? 7 : 5;
+  const places = hasGold ? "P1–P7" : "P1–P5";
 
   const name = building.name;
   // Hoechstens 60 Zeichen, sonst kuerzt Google; die Tore tragen ihren
@@ -137,12 +144,12 @@ function renderPage(page) {
   const title = name.length > 15
     ? `${name} fördern: Kosten je Stufe – cipher`
     : `${name.replace(/^Die /, "")} fördern: Kosten und Plätze je Stufe – cipher`;
-  const description = `${name} in Forge of Empires fördern: Gesamt-FP, Mäzenplätze P1–P5 und Einzahlung mit Arche 1,9 für alle ${building.maxLevel} Stufen.`;
+  const description = `${name} in Forge of Empires fördern: Gesamt-FP, Mäzenplätze ${places} und Einzahlung je Platz für alle ${top} Stufen.`;
 
   const ex = example.plan;
   const exRows = ex.rows;
 
-  const milestones = [10, 50, 80, 100, 150, 200, 250, 300]
+  const milestones = [10, 50, 80, 100, 150, 200, 300, 400, 500]
     .filter((level) => level <= last.level)
     .concat(last.level % 50 && last.level > 10 ? [last.level] : []);
 
@@ -152,13 +159,18 @@ function renderPage(page) {
   }).join("\n      ");
 
   const tableRows = levels.map((row) => {
-    const cells = row.plan.rows.map((slot) => slot.offered
-      ? `<td>${num(slot.reward)}<small>${num(slot.contribution)}</small></td>`
-      : `<td class="off">–</td>`).join("");
-    const mark = row.unsure ? `<span class="est" title="P1 aus der Kurve hergeleitet">≈</span>` : "";
-    return `<tr id="stufe-${row.level}"><th scope="row"><a href="${calcLink(building.id, row.level)}">${row.level}</a>${mark}</th>` +
-      `<td>${num(row.total)}</td>${cells}<td class="own">${num(row.plan.ownShare)}</td></tr>`;
+    const cells = [];
+    for (let index = 0; index < slotCount; index++) {
+      const slot = row.plan.rows[index];
+      cells.push(slot && slot.offered
+        ? `<td>${num(slot.reward)}<small>${num(slot.contribution)}</small></td>`
+        : `<td class="off">–</td>`);
+    }
+    const mark = row.gold ? ` class="gold"` : "";
+    return `<tr id="stufe-${row.level}"${mark}><th scope="row"><a href="${calcLink(building.id, row.level)}">${row.level}</a></th>` +
+      `<td>${num(row.total)}</td>${cells.join("")}<td class="own">${num(row.plan.ownShare)}</td></tr>`;
   }).join("\n");
+  const slotHeads = Array.from({ length: slotCount }, (_, index) => `<th scope="col">P${index + 1}</th>`).join("");
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -170,7 +182,7 @@ function renderPage(page) {
         name: title,
         description,
         inLanguage: "de",
-        dateModified: DATA.generated,
+        dateModified: COSTS.generated,
         isPartOf: { "@id": `${SITE}/#website` },
         about: { "@id": `${SITE}/#app` },
         breadcrumb: { "@id": `${url}#breadcrumb` }
@@ -187,7 +199,7 @@ function renderPage(page) {
   };
 
   return `<!DOCTYPE html>
-<!-- Erzeugt von tools/build-pages.js aus data.js — Aenderungen dort, nicht hier. -->
+<!-- Erzeugt von tools/build-pages.js aus data.js und kosten.js — Aenderungen dort, nicht hier. -->
 <html lang="de">
 <head>
 <meta charset="utf-8">
@@ -209,7 +221,7 @@ function renderPage(page) {
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="cipher, der Förderrechner für Legendäre Bauwerke: Förderplan mit den Mäzen-Plätzen P1 bis P5">
+<meta property="og:image:alt" content="cipher, der Förderrechner für Legendäre Bauwerke: Förderplan mit den Mäzen-Plätzen">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
 ${JSON.stringify(jsonLd, null, 2)}
@@ -228,16 +240,15 @@ ${JSON.stringify(jsonLd, null, 2)}
 
 <main>
   <h1>${esc(name)} fördern: Kosten und Mäzenplätze je Stufe</h1>
-  <p class="prestige-note" role="note">Die Tabellen auf dieser Seite stammen von vor dem Prestige-Update vom 5. November 2026 und werden gerade erneuert. Der Förderrechner rechnet schon mit den neuen Kosten und Mäzen-Belohnungen.</p>
-  <p class="lead">${esc(page.about)} Hier stehen für jede Stufe bis ${building.maxLevel} die Gesamtkosten in Forge-Punkten, die Belohnungen der Mäzenplätze P1 bis P5 und was ein Förderer mit Arche-Faktor 1,9 einzahlt.</p>
+  <p class="lead">${esc(page.about)} Hier stehen für jede Stufe bis ${top} die Gesamtkosten in Forge-Punkten, die Belohnungen der Mäzenplätze ${places} und was ein Förderer einzahlt — mit dem Stand nach dem Prestige-Update vom 5. November 2026.</p>
   <p><a class="btn" href="${calcLink(building.id, example.level)}">${esc(page.short)} im Förderrechner öffnen</a></p>
 
   <section aria-labelledby="beispiel">
     <h2 id="beispiel">Beispiel: ${esc(name)} auf Stufe ${example.level}</h2>
-    <p>Stufe ${example.level} kostet ${num(example.total)} FP. Bietest du alle fünf Plätze mit Faktor 1,9 an, zahlen die Förderer zusammen ${num(ex.external)} FP ein; dein Eigenanteil liegt bei ${num(ex.ownShare)} FP. Davon zahlst du ${num(ex.upfront)} FP vorab, damit dir niemand einen Platz wegschnappen kann.</p>
+    <p>Stufe ${example.level} kostet ${num(example.total)} FP. Bietest du alle Plätze mit Faktor ${factorText(example.gold ? GOLD_FACTOR : FACTOR)} an, zahlen die Förderer zusammen ${num(ex.external)} FP ein; dein Eigenanteil liegt bei ${num(ex.ownShare)} FP. Davon zahlst du ${num(ex.upfront)} FP vorab, damit dir niemand einen Platz wegschnappen kann.</p>
     <div class="scroll">
       <table class="example">
-        <thead><tr><th scope="col">Platz</th><th scope="col">Belohnung</th><th scope="col">Einzahlung (1,9)</th><th scope="col">Vorher sichern</th></tr></thead>
+        <thead><tr><th scope="col">Platz</th><th scope="col">Belohnung</th><th scope="col">Einzahlung (${factorText(example.gold ? GOLD_FACTOR : FACTOR)})</th><th scope="col">Vorher sichern</th></tr></thead>
         <tbody>
 ${exRows.map((slot) => `          <tr><th scope="row">P${slot.slot}</th><td>${num(slot.reward)} FP</td><td>${slot.offered ? num(slot.contribution) + " FP" : "–"}</td><td>${slot.offered && slot.secure != null ? num(slot.secure) + " FP" : "–"}</td></tr>`).join("\n")}
         </tbody>
@@ -256,17 +267,16 @@ ${milestones.map((level) => `      <li>Bis Stufe ${level}: <b>${num(sumTo(level)
 
   <section aria-labelledby="tabelle">
     <h2 id="tabelle">Alle Stufen von ${esc(name)}</h2>
-    <p>Die Stufe ist die, die gefördert wird: „${example.level}“ heißt von ${example.level - 1} auf ${example.level}. Je Platz steht oben die Belohnung, darunter die Einzahlung mit Faktor 1,9. Ein Tipp auf die Stufe öffnet sie im Rechner, dort lässt sich jeder Faktor von 1,00 bis 2,00 einstellen.</p>
+    <p>Die Stufe ist die, die gefördert wird: „${example.level}“ heißt von ${example.level - 1} auf ${example.level}. Je Platz steht oben die Belohnung, darunter die Einzahlung mit Faktor 1,9${hasGold ? " — auf Gold-Stufen ab 101 mit 1,0, weil dort nur der Gold-Mäzen-Bonus zählt" : ""}. Ein Tipp auf die Stufe öffnet sie im Rechner, dort lässt sich jeder Faktor von 1,00 bis 2,00 einstellen.</p>
     <div class="scroll">
       <table class="levels">
-        <thead><tr><th scope="col">Stufe</th><th scope="col">Kosten</th><th scope="col">P1</th><th scope="col">P2</th><th scope="col">P3</th><th scope="col">P4</th><th scope="col">P5</th><th scope="col">Eigen</th></tr></thead>
+        <thead><tr><th scope="col">Stufe</th><th scope="col">Kosten</th>${slotHeads}<th scope="col">Eigen</th></tr></thead>
         <tbody>
 ${tableRows}
         </tbody>
       </table>
     </div>
-    ${unsureFrom ? `<p class="fine"><span class="est">≈</span> Für diese Stufen steht die P1-Belohnung nicht im Wiki; cipher leitet sie aus der Kurve des Zeitalters her und sichert vorsichtiger ab. Im Zweifel gilt die Zahl im Förderfenster — im Rechner kannst du sie eintragen.</p>` : ""}
-    <p class="fine">„Eigen“ ist dein Eigenanteil, wenn alle fünf Plätze mit 1,9 vergeben werden. „–“ heißt: Auf dieser Stufe reichen die Gesamtkosten nicht für den Platz.</p>
+    <p class="fine">„Eigen“ ist dein Eigenanteil, wenn alle Plätze vergeben werden. „–“ heißt: Diesen Platz gibt es auf der Stufe nicht${hasGold ? " (P6 und P7 nur auf Gold-Stufen)" : ""}, er bringt keine FP, oder die Gesamtkosten reichen nicht für ihn.</p>
   </section>
 
   <section aria-labelledby="weitere">
@@ -279,7 +289,7 @@ ${tableRows}
 </main>
 
 <footer class="foot">
-  <p>Daten: <a href="https://forgeofempires.fandom.com/de/wiki/" rel="noopener noreferrer">Forge of Empires Wiki</a> (Fandom, <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.de" rel="noopener noreferrer">CC BY-SA 3.0</a>), Stand ${date(DATA.generated)}. Kosten ab Stufe 11 per Formel, P2–P5 aus P1 berechnet. Alle Angaben ohne Gewähr — im Zweifel gilt das Spiel.</p>
+  <p>Kosten: <a href="https://de.wiki.forgeofempires.com/" rel="noopener noreferrer">Forge of Empires Wiki</a> (© InnoGames GmbH), Stand ${date(COSTS.generated)}. Belohnungen nach den Regeln seit dem Prestige-Update aus den Kosten berechnet. Alle Angaben ohne Gewähr — im Zweifel gilt das Spiel.</p>
   <p>cipher ist ein inoffizielles Fan-Projekt und steht in keiner Verbindung zur InnoGames GmbH. „Forge of Empires“ ist eine Marke der InnoGames GmbH.</p>
   <nav class="foot-links" aria-label="Weiteres">
     <a href="/">Förderrechner</a>
