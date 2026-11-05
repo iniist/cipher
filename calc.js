@@ -102,6 +102,116 @@
     return rewards;
   }
 
+  // ------------------------------------------------- Prestige (ab 5.11.2026)
+
+  /**
+   * Die 21 Bauwerke mit Gold-Kategorie (InnoGames-Support, Artikel 7009).
+   * Alle anderen bleiben Kupfer und enden bei Stufe 200.
+   */
+  var GOLD_BUILDINGS = {
+    "Statue_of_Zeus": true, "Colosseum": true, "Cathedral_of_Aachen": true,
+    "St._Mark's_Basilica": true, "Castel_del_Monte": true, "Deal_Castle": true,
+    "Royal_Albert_Hall": true, "Alcatraz": true, "Château_Frontenac": true,
+    "Lotus_Temple": true, "The_Arc": true, "Arctic_Orangery": true,
+    "Seed_Vault": true, "The_Kraken": true, "The_Blue_Galaxy": true,
+    "Terracotta_Army": true, "Himeji_Castle": true, "The_Virgo_Project": true,
+    "Space_Carrier": true, "Observatory": true, "Shattered_Horizon_Siphon": true
+  };
+
+  /** Hoechste Stufe eines Bauwerks ohne Gold-Kategorie. */
+  var COPPER_MAX_LEVEL = 200;
+
+  /** Ab dieser geförderten Stufe ist ein Gold-Bauwerk in der Gold-Kategorie. */
+  var GOLD_FROM_LEVEL = 101;
+
+  /**
+   * Anteil der Stufenkosten, der an die Maezen geht (Artikel 7011), nach der
+   * Stufe, die gefoerdert wird. Oberhalb von 500 nennt der Artikel keinen
+   * Wert; es gilt der letzte.
+   */
+  var REWARD_SHARES = [[9, 25], [39, 30], [69, 40], [100, 25], [200, 15],
+    [300, 10], [400, 7], [Infinity, 5]];
+
+  /**
+   * Ob eine Stufe zur Gold-Kategorie gehoert.
+   * @param {string} buildingId
+   * @param {number} level Die Stufe, die gefoerdert wird
+   * @returns {boolean}
+   */
+  function isGold(buildingId, level) {
+    return GOLD_BUILDINGS[buildingId] === true && level >= GOLD_FROM_LEVEL;
+  }
+
+  /** Ob ein Bauwerk ueberhaupt eine Gold-Kategorie hat. */
+  function hasGold(buildingId) {
+    return GOLD_BUILDINGS[buildingId] === true;
+  }
+
+  /** Hoechste Stufe, die sich foerdern laesst; null heisst ohne Grenze. */
+  function maxLevelOf(buildingId) {
+    return hasGold(buildingId) ? null : COPPER_MAX_LEVEL;
+  }
+
+  /** Maezen-Anteil an den Stufenkosten in Prozent. */
+  function rewardShare(level) {
+    for (var i = 0; i < REWARD_SHARES.length; i++) {
+      if (level <= REWARD_SHARES[i][0]) return REWARD_SHARES[i][1];
+    }
+    return REWARD_SHARES[REWARD_SHARES.length - 1][1];
+  }
+
+  /**
+   * Wie sich der Topf auf die Plaetze verteilt: die alte Kette
+   * P(k) = P(k-1) / k, ungerundet und auf 1 normiert. Bei 5 Plaetzen
+   * 58,25 / 29,13 / 9,71 / 2,43 / 0,49 %, bei 7 dazu 0,08 und 0,01 %.
+   * @param {number} slots 5 (Kupfer) oder 7 (Gold)
+   * @returns {number[]}
+   */
+  function placeWeights(slots) {
+    var raw = [];
+    var term = 1;
+    var sum = 0;
+    for (var k = 1; k <= slots; k++) {
+      term = k === 1 ? 1 : term / k;
+      raw.push(term);
+      sum += term;
+    }
+    return raw.map(function (value) { return value / sum; });
+  }
+
+  /**
+   * Eine Belohnung so runden, wie das Spiel sie anzeigt.
+   *
+   * Kaufmaennisch auf ganze FP — gemessen an 24 abgelesenen Plaetzen auf
+   * Kupfer- und Gold-Stufen, alle exakt. Einzige Ausnahme: 3 FP lassen sich
+   * nicht in Paketen auszahlen (Artikel 7011), das Spiel zeigt dann 4
+   * (Castel del Monte Stufe 112, P6: gerechnet 2,76). Was aus einer 1 wird,
+   * ist noch nicht abgelesen; sie bleibt 1.
+   */
+  function roundReward(value) {
+    var rounded = Math.floor(value + 0.5 + EPSILON);
+    return rounded === 3 ? 4 : rounded;
+  }
+
+  /**
+   * Die Belohnungen aller Plaetze aus den Gesamtkosten einer Stufe.
+   *
+   * Jeder Platz wird einzeln aus dem Topf gerechnet, nicht aus P1 hergeleitet:
+   * Platz k = rund(Kosten x Anteil x Gewicht k). Ueber P1 gerechnet laege zum
+   * Beispiel HYDRA Stufe 89 P2 bei 2080 statt 2079.
+   *
+   * @param {number} cost Gesamtkosten der Stufe
+   * @param {number} level Die Stufe, die gefoerdert wird
+   * @param {boolean} gold Ob die Stufe zur Gold-Kategorie gehoert (7 Plaetze)
+   * @returns {number[]} 5 oder 7 Belohnungen
+   */
+  function rewardsFromCost(cost, level, gold) {
+    var pot = cost * rewardShare(level) / 100;
+    return placeWeights(gold ? 7 : 5).map(function (weight) {
+      return roundReward(pot * weight);
+    });
+  }
+
   /**
    * Was ein Foerderer fuer einen Platz einzahlen muss.
    * Das Spiel rundet den mit dem Arche-Faktor multiplizierten Wert ab,
@@ -554,7 +664,7 @@
     var bySlot = [];
     var places = amounts.map(function () { return null; });
     var next = 0;
-    for (var index = 0; index < SLOTS; index++) {
+    for (var index = 0; index < rewards.length; index++) {
       bySlot.push(null);
       if (!(rewards[index] > 0) || next >= order.length) continue;
       if (enabled[index] && taken[index]) continue;
@@ -668,6 +778,11 @@
       return factors[index] != null ? factors[index] : options.factor;
     }
 
+    // Seit dem Prestige-Update kommen die Belohnungen aller Plaetze aus den
+    // Kosten (rewardsFromCost) und werden fertig uebergeben; ohne sie gilt
+    // die alte Kette aus P1.
+    var rewards = options.rewards || rewardChain(options.p1);
+
     /** Ob dieser Platz einen getippten Betrag hat statt eines gerechneten. */
     function isFixed(index) { return fixed[index] > 0; }
 
@@ -676,18 +791,18 @@
      * Ein fester Betrag gilt unveraendert — auch fuer die Absicherung, denn
      * er ist abgelesen und nicht aus der Belohnung hergeleitet.
      */
-    function paymentsFor(p1) {
-      return rewardChain(p1).map(function (reward, index) {
+    function paymentsFor(list) {
+      return list.map(function (reward, index) {
         return isFixed(index) ? Math.floor(fixed[index]) : contribution(reward, factorFor(index));
       });
     }
 
     // Was die Foerderer tatsaechlich einzahlen — das steht so im Plan.
-    var payments = paymentsFor(options.p1);
+    var payments = paymentsFor(rewards);
 
     // Wo die Fremdeinzahlungen landen. Einmal, nicht je Absicherung: der
     // Platz haengt an dem, was die Gilde tatsaechlich zahlt.
-    var placed = placeForeign(foreign, rewardChain(options.p1), payments, enabled, taken);
+    var placed = placeForeign(foreign, rewards, payments, enabled, taken);
 
     /**
      * Einen Plan rechnen, dessen Absicherung von `securePay` ausgeht.
@@ -701,7 +816,7 @@
       var external = 0; // Was die Foerderer zusammen einzahlen
       var anyTooTight = false;
 
-      var rows = rewardChain(options.p1).map(function (reward, index) {
+      var rows = rewards.map(function (reward, index) {
         var pay = payments[index];
         var row = {
           slot: index + 1,
@@ -792,7 +907,7 @@
         return most;
       }
 
-      var rows = rewardChain(options.p1).map(function (reward, index) {
+      var rows = rewards.map(function (reward, index) {
         var inPlay = Boolean(enabled[index]) && reward > 0;
         var other = placed.bySlot[index];
         return {
@@ -872,10 +987,10 @@
       };
     }
 
-    var p1Secure = options.p1Secure != null ? options.p1Secure : options.p1;
-    if (p1Secure === options.p1) return planWith(payments);
+    var p1Secure = options.p1Secure != null && !options.rewards ? options.p1Secure : null;
+    if (p1Secure == null || p1Secure === options.p1) return planWith(payments);
 
-    var careful = planWith(paymentsFor(p1Secure));
+    var careful = planWith(paymentsFor(rewardChain(p1Secure)));
     if (!careful.anyTooTight) return careful;
 
     // Lieber ein Platz ohne Zuschlag als gar kein Platz: kostet die
@@ -954,7 +1069,7 @@
 
     /** Der hinterste Platz, den der Plan anbieten will oder nicht unterbringt. */
     function lastOpen(plan) {
-      for (var index = SLOTS - 1; index >= 0; index--) {
+      for (var index = plan.rows.length - 1; index >= 0; index--) {
         var row = plan.rows[index];
         if (row.offered || row.tooTight) return index;
       }
@@ -1075,6 +1190,16 @@
 
   return {
     SLOTS: SLOTS,
+    MAX_SLOTS: 7,
+    GOLD_FROM_LEVEL: GOLD_FROM_LEVEL,
+    COPPER_MAX_LEVEL: COPPER_MAX_LEVEL,
+    isGold: isGold,
+    hasGold: hasGold,
+    maxLevelOf: maxLevelOf,
+    rewardShare: rewardShare,
+    placeWeights: placeWeights,
+    roundReward: roundReward,
+    rewardsFromCost: rewardsFromCost,
     GROWTH: GROWTH,
     roundTo5: roundTo5,
     rewardChain: rewardChain,

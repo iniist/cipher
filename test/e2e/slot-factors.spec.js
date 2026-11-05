@@ -6,7 +6,7 @@
  * Wert oben sich bewegt. "Alle wieder angleichen" nimmt alle fuenf zurueck.
  * Der obere Wert zeigt dadurch immer etwas Wahres und wird nie ausgegraut.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 const { nameEintragen, themaWaehlen } = require("./menue");
 const { haekchen, abwaehlen } = require("./plaetze");
 
@@ -356,10 +356,14 @@ test("alle Bedienelemente im Block tragen eine Beschriftung", async ({ page }) =
 // wegschnappt — seine Einzahlung passt dann zu keinem Faktor im zulaessigen
 // Bereich, und die Plaetze darunter verschieben sich dadurch.
 
-/** Chateau Frontenac auf Stufe 198 mit Faktor 2,00 — die Lage aus dem Beispiel. */
+/**
+ * Atomium auf Stufe 198 mit Faktor 2,00 — eine Kupfer-Stufe mit fuenf
+ * Plaetzen. Bis zum Prestige-Update stand hier Château Frontenac 198; das
+ * ist jetzt eine Gold-Stufe mit sieben.
+ */
 async function frontenac(page) {
   await page.goto("/index.html");
-  await page.locator("#building").selectOption("Château_Frontenac", { force: true });
+  await page.locator("#building").selectOption("Atomium", { force: true });
   await page.fill("#level", "198");
   await page.fill("#factor", "2,00");
   await page.locator("#slots summary").click();
@@ -372,15 +376,15 @@ test.describe("Einheit umschalten", () => {
     expect(await shown(page)).toEqual(["2,00", "2,00", "2,00", "2,00", "2,00"]);
 
     await unit(page, "fp").click();
-    expect(await shown(page)).toEqual(["6.400", "3.200", "1.070", "270", "50"]);
+    expect(await shown(page)).toEqual(["15.960", "7.980", "2.660", "664", "132"]);
     // Dieselben Zahlen wie in der Spalte "Einzahlen" — es ist dieselbe Zahl.
     expect(await page.locator("#rows .pay").allTextContents())
-      .toEqual(["6.400", "3.200", "1.070", "270", "50"]);
+      .toEqual(["15.960", "7.980", "2.660", "664", "132"]);
   });
 
   test("der Nachsatz nennt immer die andere Einheit", async ({ page }) => {
     await frontenac(page);
-    await expect(hint(page, 0)).toHaveText("≙ 6.400 FP");
+    await expect(hint(page, 0)).toHaveText("≙ 15.960 FP");
 
     await unit(page, "fp").click();
     await expect(hint(page, 0)).toHaveText("≙ Faktor 2,00");
@@ -403,30 +407,30 @@ test.describe("Einheit umschalten", () => {
 
     await page.reload();
     await expect(unit(page, "fp")).toHaveAttribute("aria-pressed", "true");
-    await expect(value(page, 0)).toHaveValue("6.400");
+    await expect(value(page, 0)).toHaveValue("15.960");
   });
 });
 
 test.describe("Einen Betrag eintragen", () => {
   test("ein Betrag verschiebt die Plaetze darunter und senkt den Eigenanteil", async ({ page }) => {
     await frontenac(page);
-    expect(await sichern(page)).toEqual(["+73.333", "Sicher", "+1.060", "+530", "+170"]);
-    expect(await summe(page, "sumOwn")).toBe("75143");
+    expect(await sichern(page)).toEqual(["+59.401", "Sicher", "+2.660", "+1.332", "+400"]);
+    expect(await summe(page, "sumOwn")).toBe("63925");
 
-    // Jemand nimmt P1 und zahlt 10.000 statt der gerechneten 6.400.
+    // Jemand nimmt P1 und zahlt 20.000 statt der gerechneten 15.960.
     await unit(page, "fp").click();
-    await value(page, 0).fill("10000");
+    await value(page, 0).fill("20000");
 
-    expect(await sichern(page)).toEqual(["+66.133", "+3.600", "+1.060", "+530", "+170"]);
-    expect(await summe(page, "sumOwn")).toBe("71543");
+    expect(await sichern(page)).toEqual(["+51.321", "+4.040", "+2.660", "+1.332", "+400"]);
+    expect(await summe(page, "sumOwn")).toBe("59885");
     // Die 3.600 mehr Fremdkapital sind genau der Betrag, den du weniger zahlst.
-    expect(await summe(page, "sumExternal")).toBe("14590");
+    expect(await summe(page, "sumExternal")).toBe("31436");
   });
 
   test("ein Betrag macht den Platz eigen und laesst sich zuruecknehmen", async ({ page }) => {
     await frontenac(page);
     await unit(page, "fp").click();
-    await value(page, 0).fill("10000");
+    await value(page, 0).fill("20000");
 
     await expect(state(page, 0)).toHaveText("angepasst");
     await expect(state(page, 1)).toHaveText("folgt");
@@ -434,8 +438,8 @@ test.describe("Einen Betrag eintragen", () => {
 
     await row(page, 0).locator(".slot-reset").click();
     await expect(state(page, 0)).toHaveText("folgt");
-    await expect(value(page, 0)).toHaveValue("6.400");
-    expect(await summe(page, "sumOwn")).toBe("75143");
+    await expect(value(page, 0)).toHaveValue("15.960");
+    expect(await summe(page, "sumOwn")).toBe("63925");
   });
 
   test("ein eingestellter Platz behaelt seine Einheit beim Umschalten", async ({ page }) => {
@@ -444,13 +448,13 @@ test.describe("Einen Betrag eintragen", () => {
     // zulaessigen Bereichs, also nicht darstellbar.
     await frontenac(page);
     await unit(page, "fp").click();
-    await value(page, 0).fill("10000");
+    await value(page, 0).fill("20000");
 
     await unit(page, "factor").click();
-    expect(await shown(page)).toEqual(["10.000", "2,00", "2,00", "2,00", "2,00"]);
+    expect(await shown(page)).toEqual(["20.000", "2,00", "2,00", "2,00", "2,00"]);
     // Der Nachsatz nennt jetzt beide Einheiten, denn im Feld steht eine
     // andere als im Umschalter — sonst laese man die 10.000 als Faktor.
-    await expect(hint(page, 0)).toHaveText("10.000 FP ≙ Faktor 3,13");
+    await expect(hint(page, 0)).toHaveText("20.000 FP ≙ Faktor 2,51");
     await expect(state(page, 0)).toHaveText("angepasst");
   });
 
@@ -474,10 +478,10 @@ test.describe("Einen Betrag eintragen", () => {
     // Faktor dem Umschalter. Gespeichert bleibt der Faktor.
     await frontenac(page);
     await value(page, 2).fill("1,85");
-    await expect(hint(page, 2)).toHaveText("≙ 990 FP");
+    await expect(hint(page, 2)).toHaveText("≙ 2.461 FP");
 
     await unit(page, "fp").click();
-    await expect(value(page, 2)).toHaveValue("990");
+    await expect(value(page, 2)).toHaveValue("2.461");
     await expect(hint(page, 2)).toHaveText("≙ Faktor 1,85");
     await expect(state(page, 2)).toHaveText("angepasst");
 
@@ -503,25 +507,25 @@ test.describe("Einen Betrag eintragen", () => {
   test("ein getippter Betrag ueberdauert das Neuladen und klappt den Block auf", async ({ page }) => {
     await frontenac(page);
     await unit(page, "fp").click();
-    await value(page, 0).fill("10000");
+    await value(page, 0).fill("20000");
 
     await page.reload();
     await expect(page.locator("#slots")).toHaveAttribute("open", "");
-    await expect(value(page, 0)).toHaveValue("10.000");
-    expect(await summe(page, "sumOwn")).toBe("71543");
+    await expect(value(page, 0)).toHaveValue("20.000");
+    expect(await summe(page, "sumOwn")).toBe("59885");
   });
 
   test('"Alle wieder angleichen" nimmt auch Betraege zurueck', async ({ page }) => {
     await frontenac(page);
     await unit(page, "fp").click();
-    await value(page, 0).fill("10000");
+    await value(page, 0).fill("20000");
     await value(page, 3).fill("400");
     await expect(page.locator("#slotsBadge")).toHaveText("2 angepasst");
 
     await page.click("#slotsReset");
     for (let slot = 0; slot < 5; slot++) await expect(state(page, slot)).toHaveText("folgt");
     await expect(page.locator("#slotsBadge")).toBeHidden();
-    expect(await summe(page, "sumOwn")).toBe("75143");
+    expect(await summe(page, "sumOwn")).toBe("63925");
   });
 
   test("das Abzeichen zaehlt, sobald Betraege im Spiel sind", async ({ page }) => {
@@ -547,7 +551,7 @@ test.describe("Wenn der Betrag nicht passt", () => {
     // zwischen 1,30 und 2,00 kann das nicht entstehen, aus einer getippten
     // Zahl schon.
     await unit(page, "fp").click();
-    await value(page, 3).fill("2000");
+    await value(page, 3).fill("3000");
     await expect(page.locator("#warn")).toContainText("besser bezahlter über ihm");
 
     await row(page, 3).locator(".slot-reset").click();
@@ -557,7 +561,7 @@ test.describe("Wenn der Betrag nicht passt", () => {
   test("ein hoher Betrag auf einem hohen Platz ist keine Warnung wert", async ({ page }) => {
     await frontenac(page);
     await unit(page, "fp").click();
-    await value(page, 0).fill("10000");
+    await value(page, 0).fill("20000");
     await expect(page.locator("#warn .warnline")).toHaveCount(0);
   });
 
@@ -565,12 +569,12 @@ test.describe("Wenn der Betrag nicht passt", () => {
     await frontenac(page);
     await unit(page, "fp").click();
     await value(page, 0).fill("abc");
-    expect(await summe(page, "sumOwn")).toBe("75143");
+    expect(await summe(page, "sumOwn")).toBe("63925");
     await expect(state(page, 0)).toHaveText("folgt");
 
     // Und beim Verlassen steht der gerechnete Wert wieder da.
     await value(page, 0).blur();
-    await expect(value(page, 0)).toHaveValue("6.400");
+    await expect(value(page, 0)).toHaveValue("15.960");
   });
 });
 
@@ -585,7 +589,7 @@ test.describe("Der Block passt auch auf schmale Telefone", () => {
       await frontenac(page);
       await value(page, 0).fill("1,85");
       await unit(page, "fp").click();
-      await value(page, 1).fill("10000");
+      await value(page, 1).fill("20000");
       await page.locator("#buildingShort").click();
 
       const ueberbreite = await page.evaluate(() =>

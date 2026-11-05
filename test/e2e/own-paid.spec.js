@@ -2,11 +2,13 @@
  * Browsertests fuer das Feld "Deine FP schon im Bauwerk".
  *
  * Der Fall aus der Rueckmeldung: Arche 181, P1 zahlt 10.000, P2 9.999 —
+ * seit dem Prestige-Update nachgestellt am Atomium 181 (Kupfer, 5 Plaetze),
+ * denn die Arche 181 ist jetzt eine Gold-Stufe mit sieben.
  * beide, bevor irgendetwas gesichert war. Ohne Stand rechnet cipher, als
  * haettest du vor P1 schon gesichert, und P3 bis P5 passen nicht mehr.
  * Mit Stand 0 rechnet es vom jetzigen Bauwerk aus.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 
 const summe = (page, id) => page.locator(`#${id}`).getAttribute("data-value");
 const sichern = (page) => page.locator("#rows .pre").allTextContents();
@@ -15,7 +17,7 @@ async function open(page, extra) {
   await page.goto("/index.html");
   await page.evaluate((extra) => {
     localStorage.setItem("cipher:state", JSON.stringify(Object.assign({
-      building: "The_Arc",
+      building: "Atomium",
       level: 181,
       factor: 200,
       enabled: [true, true, true, true, true],
@@ -43,10 +45,10 @@ test("leer rechnet wie bisher, mit Stand 0 passen P3 bis P5", async ({ page }) =
 
   await page.locator("#ownPaid").fill("0");
   await expect.poll(() => sichern(page)).toEqual(
-    ["vergeben", "vergeben", "+43.715", "+600", "+190"]);
-  await expect.poll(() => summe(page, "lumpValue")).toBe("44505");
-  await expect.poll(() => summe(page, "sumOwn")).toBe("44565");
-  await expect.poll(() => summe(page, "sumExternal")).toBe("21589");
+    ["vergeben", "vergeben", "+36.521", "+872", "+262"]);
+  await expect.poll(() => summe(page, "lumpValue")).toBe("37655");
+  await expect.poll(() => summe(page, "sumOwn")).toBe("37743");
+  await expect.poll(() => summe(page, "sumExternal")).toBe("22273");
   await expect(page.locator("#warn")).toHaveText("");
 
   // Leeren fuehrt zurueck zur alten Rechnung.
@@ -57,15 +59,15 @@ test("leer rechnet wie bisher, mit Stand 0 passen P3 bis P5", async ({ page }) =
 
 test("die Summe beginnt bei dem, was schon drin ist", async ({ page }) => {
   await open(page, { secureMode: "total" });
-  await page.locator("#ownPaid").fill("40.000");
+  await page.locator("#ownPaid").fill("30.000");
   await expect.poll(() => sichern(page)).toEqual(
-    ["vergeben", "vergeben", "43.715", "44.315", "44.505"]);
+    ["vergeben", "vergeben", "36.521", "37.393", "37.655"]);
 });
 
 test("der Stand gilt nur fuer seine Stufe", async ({ page }) => {
   await open(page);
   await page.locator("#ownPaid").fill("0");
-  await expect.poll(() => sichern(page)).toContain("+43.715");
+  await expect.poll(() => sichern(page)).toContain("+36.521");
   await page.reload();
   await expect(page.locator("#ownPaid")).toHaveValue("0");
 

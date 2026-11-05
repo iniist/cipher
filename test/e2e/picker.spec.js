@@ -5,7 +5,7 @@
  * kann, muss sie selbst koennen — genau das halten diese Tests fest:
  * Tastatur, Esc, Zurueck-Geste, Fokus, gesperrter Hintergrund.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 
 const dialog = (page) => page.locator("#picker");
 const options = (page) => page.locator("#pickerList [role=option]");

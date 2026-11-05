@@ -3,7 +3,7 @@
  * Der wichtigste Test hier ist der erste: cipher darf keine einzige
  * Anfrage an einen fremden Host stellen.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("@playwright/test");
 const { nameEintragen, themaWaehlen } = require("./menue");
 
 const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html", "/rundgang.html"];
@@ -129,8 +129,11 @@ test("Daten des Vorgaengers werden einmalig uebernommen", async ({ page }) => {
   await expect(page.locator("#playerName")).toHaveValue("Altbestand");
   await expect(page.locator("#factor")).toHaveValue("1,95");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await expect(page.locator('#rows input[data-slot="2"]')).not.toBeChecked();
-  await expect(page.locator(".note.man")).toContainText("Gesamt");
+  // Die Gesamtkosten des Vorgaengers liegen danach unter cipher:totals. Sie
+  // stammen von vor dem Prestige-Update; cipher fragt darum neu.
+  expect(JSON.parse(await page.evaluate(() => localStorage.getItem("cipher:totals"))))
+    .toEqual({ "Notre_Dame:55": 4321 });
+  await expect(page.locator("#inputTotal")).toBeVisible();
 
   const keys = await page.evaluate(() => Object.keys(localStorage));
   expect(keys.some((key) => key.startsWith("lgr-"))).toBe(false);
@@ -146,6 +149,9 @@ test("die Anwendung laeuft auch ohne nutzbaren localStorage", async ({ page }) =
   });
   await page.goto("/index.html");
 
+  // Eingetragene Kosten gelten dann eben nur bis zum Neuladen.
+  await page.fill("#inputTotal", "970");
+  await page.click("#applyInput");
   await expect(page.locator("#rows tr")).toHaveCount(5);
   await page.click("#favSave");
   await expect(page.locator("#favList li")).toHaveCount(1);

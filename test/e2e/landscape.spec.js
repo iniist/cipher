@@ -4,7 +4,7 @@
  * Die Haelfte dieser Tests prueft nicht, dass quer besser wird, sondern
  * dass hochkant sich dabei nicht veraendert hat.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 
 /** Kennzahlen des Aufbaus, die der Querformat-Block veraendern wuerde. */
 const layout = (page) => page.evaluate(() => {

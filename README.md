@@ -18,7 +18,7 @@ Eine bebilderte Vorstellung aller Funktionen steht unter
 
 ## Funktionen
 
-- **Förderplan** für P1–P5: Belohnung, Kosten für den Förderer und was du
+- **Förderplan** für P1–P5, auf Gold-Stufen P1–P7: Belohnung, Kosten für den Förderer und was du
   vorher sichern musst — wahlweise als Schritt je Platz oder als laufender
   Stand deiner FP im Bauwerk.
 - **Plätze angeboten, vergeben oder selbst gezahlt** — ein Tipp aufs Häkchen
@@ -34,7 +34,7 @@ Eine bebilderte Vorstellung aller Funktionen steht unter
   Wunsch schließt P5 die Stufe ab; den Rest teilen sich dann alle Plätze nach
   ihrer Belohnung, keiner über den eingestellten Faktor. Passt selbst 1,00 nicht,
   fallen P5, dann P4 usw. weg.
-- **Arche-Faktor 1,00–2,00**, auf Wunsch je Platz eigens als Faktor oder als
+- **Arche-Faktor 1,00–2,00**, getrennt für Kupfer- und Gold-Stufen, auf Wunsch je Platz eigens als Faktor oder als
   tatsächlich gezahlter Betrag, auch direkt in der Tabelle.
 - **Chat-Zeile** mit oder ohne FP-Beträge, Bauwerk als vollem Namen, Kürzel
   oder eigenem Kürzel; eine **Sammlung** fasst Zeilen mehrerer Bauwerke zu
@@ -55,16 +55,24 @@ die Plätze von P1 abwärts durch, bestimmt für jeden diesen Schwellwert und
 summiert, was du dafür vorstrecken musst. Was am Ende übrig bleibt, zahlst du
 selbst ein und levelst damit.
 
-- Belohnungen: P2 = P1/2, P3 = P2/3, P4 = P3/4, P5 = P4/5, jeweils
-  kaufmännisch auf ein Vielfaches von 5 gerundet.
+- **Seit dem Prestige-Update (5.11.2026)** bekommen die Mäzene einen festen
+  Anteil der Stufenkosten: 25 % (Stufe 1–9), 30 % (10–39), 40 % (40–69),
+  25 % (70–100), 15 % (101–200), 10 %, 7 %, ab 401 5 %. Der Topf geht im
+  Verhältnis der alten Kette 1 : ½ : ⅙ : 1⁄24 : 1⁄120 (Gold dazu 1⁄720,
+  1⁄5040) auf die Plätze, jeder Platz einzeln kaufmännisch auf ganze FP
+  gerundet; 3 FP zeigt das Spiel als 4. Geprüft an Ablesungen aus dem Spiel,
+  siehe `test/prestige.test.js`.
+- **Gold-Kategorie**: 21 Bauwerke ab Stufe 101, mit 7 Plätzen und eigenem
+  Faktor (Gold-Mäzen-Bonus, Vorgabe 1,00). Alle anderen enden bei Stufe 200.
+- **Gesamtkosten** kennt der Datensatz für das neue System noch nicht. cipher
+  fragt je Bauwerk und Stufe nach den Gesamt-FP aus dem Förderfenster und
+  merkt sie sich (`cipher:costs`).
 - Einzahlung: `floor((Belohnung × Faktor + 50) / 100)`.
 - Fremdeinzahlungen: Von P1 abwärts bekommt die größte noch offene den
   Platz, sobald sie mindestens so viel hat, wie die Gilde dort zahlen würde
   (bei Gleichstand behält ihn, wer früher eingezahlt hat). Einen Platz, den
   du nicht anbietest, nimmt jede. Abgesichert werden sie nicht: wer sie
   überbietet, schiebt nur sie nach unten, nie einen bezahlten Gildenplatz.
-- Fehlen im Datensatz Gesamtkosten oder P1 (sehr hohe Stufen, neue Bauwerke),
-  fragt cipher danach und rechnet ab Stufe 11 mit × 1,025 je Stufe hoch.
 
 Der Rechenkern steckt in [`calc.js`](./calc.js): reine Funktionen, ohne DOM
 und Speicherzugriff, vollständig getestet.

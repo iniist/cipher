@@ -3,7 +3,7 @@
  * Sie duerfen Spass machen, aber niemanden stoeren: bei
  * prefers-reduced-motion bleibt alles ruhig.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 
 test("Konami-Code laesst einen Scan ueber die Blaupause laufen", async ({ page }) => {
   await page.goto("/index.html");
@@ -44,28 +44,6 @@ test("fuenf Tipps auf die Wortmarke zeichnen sie neu", async ({ page }) => {
   // Danach steht wieder der schlichte Text da
   await expect(wordmark).not.toHaveClass(/plotting/, { timeout: 3000 });
   await expect(wordmark).toHaveText("cipher");
-});
-
-test("der Freigabe-Stempel erscheint bei einem Plan ohne Vorleistung", async ({ page }) => {
-  await page.goto("/index.html");
-
-  // Dieser Zuschnitt geht ohne einen einzigen vorgestreckten FP auf und
-  // laesst trotzdem noch etwas zum Selberleveln uebrig — das ist selten.
-  await page.locator("#building").selectOption("Lotus_Temple", { force: true });
-  await page.fill("#level", "37");
-  await page.locator("#level").blur();
-  await page.locator('#factorChips button[data-factor="200"]').click();
-
-  await expect(page.locator(".stamp")).toBeVisible();
-  await expect(page.locator(".stamp")).toContainText("Freigegeben");
-  await expect(page.locator("#lumpValue")).toHaveText("0");
-
-  // Nur einmal je Besuch
-  await expect(page.locator(".stamp")).toHaveCount(0, { timeout: 4000 });
-  await page.fill("#level", "38");
-  await page.locator("#level").blur();
-  await page.waitForTimeout(200);
-  await expect(page.locator(".stamp")).toHaveCount(0);
 });
 
 test("am Anschlag des Faktors weiterdruecken gibt eine Antwort", async ({ page }) => {

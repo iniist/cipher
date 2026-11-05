@@ -5,7 +5,7 @@
  * Content-Security-Policy, der die Seite zerlegt, faellt damit hier auf
  * und nicht erst nach dem Deploy.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 const { nameEintragen, themaWaehlen } = require("./menue");
 const { abwaehlen } = require("./plaetze");
 const path = require("node:path");

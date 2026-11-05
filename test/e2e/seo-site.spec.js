@@ -3,7 +3,7 @@
  * strukturierte Daten des Rundgangs, das Vorschaubild — und dass die
  * Projektdateien im Wurzelverzeichnis nicht mit ausgeliefert werden.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 
 const SITE = "https://foe-foerderrechner.com";
 const { PAGES } = require("../../tools/build-pages.js");

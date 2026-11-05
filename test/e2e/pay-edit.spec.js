@@ -6,28 +6,31 @@
  * "Fertig". Es ist derselbe Wert wie im Block "Faktor oder FP je Platz" —
  * nur dort, wo man ihn sieht.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 
 const zahl = (page, slot) => page.locator(`[data-pay-open="${slot}"]`);
 const feld = (page) => page.locator("#rows .pay-in");
 const zusatz = (page) => page.locator("#rows tr.pay-edit");
 const blockFeld = (page, slot) => page.locator(`.slot-list li[data-slot="${slot}"] input`);
 
-async function frontenac(page) {
+// Seit dem Prestige-Update: das Atomium hat keine Gold-Kategorie, Stufe 198
+// ist also Kupfer mit fuenf Plaetzen (Belohnungen 7.980 / 3.990 / 1.330 /
+// 332 / 66 bei den Testkosten von 91.321 FP).
+async function atomium(page) {
   await page.goto("/index.html");
-  await page.locator("#building").selectOption("Château_Frontenac", { force: true });
+  await page.locator("#building").selectOption("Atomium", { force: true });
   await page.fill("#level", "198");
   await page.fill("#factor", "2,00");
   await page.locator("#level").blur();
-  await expect(zahl(page, 1)).toHaveText("3.200");
+  await expect(zahl(page, 1)).toHaveText("7.980");
 }
 
 test("ein Tipp auf die Zahl oeffnet das Feld in der Zeile, in FP", async ({ page }) => {
-  await frontenac(page);
+  await atomium(page);
   await zahl(page, 1).click();
 
   await expect(feld(page)).toBeFocused();
-  await expect(feld(page)).toHaveValue("3.200");
+  await expect(feld(page)).toHaveValue("7.980");
   await expect(feld(page)).toHaveAttribute("inputmode", "numeric");
   await expect(zusatz(page)).toContainText("≙ Faktor 2,00");
   // Die Zusatzzeile zaehlt nur, solange sie offen ist.
@@ -37,39 +40,39 @@ test("ein Tipp auf die Zahl oeffnet das Feld in der Zeile, in FP", async ({ page
 });
 
 test("getippt wird mitgerechnet, und der Platz ist danach eigen", async ({ page }) => {
-  await frontenac(page);
+  await atomium(page);
   const vorher = await page.locator("#sumExternal").getAttribute("data-value");
 
   await zahl(page, 1).click();
-  await feld(page).fill("3.500");
+  await feld(page).fill("8.500");
   await expect(feld(page)).toBeFocused();
   await expect(page.locator("#sumExternal")).not.toHaveAttribute("data-value", vorher);
-  await expect(zusatz(page)).toContainText("≙ Faktor 2,19");
+  await expect(zusatz(page)).toContainText("≙ Faktor 2,13");
 
   await feld(page).press("Enter");
   await expect(zusatz(page)).toHaveCount(0);
   await expect(page.locator("#rows tr")).toHaveCount(5);
-  await expect(zahl(page, 1)).toHaveText("3.500");
+  await expect(zahl(page, 1)).toHaveText("8.500");
   await expect(zahl(page, 1)).toBeFocused();
   await expect(page.locator("#rows tr").nth(1)).toHaveClass(/own/);
 
   // Derselbe Wert steht im Block oben.
   await page.locator("#slots summary").click();
-  await expect(blockFeld(page, 1)).toHaveValue("3.500");
+  await expect(blockFeld(page, 1)).toHaveValue("8.500");
 });
 
 test("umgeschaltet auf Faktor wird ein Faktor getippt", async ({ page }) => {
-  await frontenac(page);
+  await atomium(page);
   await zahl(page, 0).click();
   await zusatz(page).locator('[data-pay-unit="factor"]').click();
 
   await expect(feld(page)).toHaveValue("2,00");
   await expect(feld(page)).toBeFocused();
   await feld(page).fill("1,90");
-  await expect(zusatz(page)).toContainText("≙ 6.080 FP");
+  await expect(zusatz(page)).toContainText("≙ 15.162 FP");
 
   await zusatz(page).locator(".pay-edit-done").click();
-  await expect(zahl(page, 0)).toHaveText("6.080");
+  await expect(zahl(page, 0)).toHaveText("15.162");
 
   // Ein Platz mit eigenem Faktor oeffnet wieder in Faktor.
   await zahl(page, 0).click();
@@ -77,7 +80,7 @@ test("umgeschaltet auf Faktor wird ein Faktor getippt", async ({ page }) => {
 });
 
 test("Zuruecknehmen laesst den Platz wieder dem Faktor oben folgen", async ({ page }) => {
-  await frontenac(page);
+  await atomium(page);
   await zahl(page, 2).click();
   await expect(zusatz(page).locator(".pay-edit-reset")).toBeHidden();
   await feld(page).fill("1.500");
@@ -85,16 +88,16 @@ test("Zuruecknehmen laesst den Platz wieder dem Faktor oben folgen", async ({ pa
 
   await zusatz(page).locator(".pay-edit-reset").click();
   await expect(zusatz(page)).toHaveCount(0);
-  await expect(zahl(page, 2)).toHaveText("1.070");
+  await expect(zahl(page, 2)).toHaveText("2.660");
   await expect(page.locator("#rows tr").nth(2)).not.toHaveClass(/own/);
 });
 
 test("ein Tipp daneben schliesst, ein Tipp auf eine andere Zahl oeffnet die", async ({ page }) => {
-  await frontenac(page);
+  await atomium(page);
   await zahl(page, 1).click();
   await zahl(page, 3).click();
   await expect(zusatz(page)).toHaveCount(1);
-  await expect(feld(page)).toHaveValue("270");
+  await expect(feld(page)).toHaveValue("664");
 
   await page.locator("h2").first().click();
   await expect(zusatz(page)).toHaveCount(0);
@@ -102,7 +105,7 @@ test("ein Tipp daneben schliesst, ein Tipp auf eine andere Zahl oeffnet die", as
 });
 
 test("ein abgewaehlter Platz laesst sich nicht oeffnen", async ({ page }) => {
-  await frontenac(page);
+  await atomium(page);
   const haken = page.locator('#rows input[data-slot="4"]');
   // Angeboten -> vergeben -> nicht angeboten.
   await haken.click();
@@ -112,7 +115,7 @@ test("ein abgewaehlter Platz laesst sich nicht oeffnen", async ({ page }) => {
 });
 
 test("mit Tab aus dem Feld heraus schliesst es", async ({ page }) => {
-  await frontenac(page);
+  await atomium(page);
   await zahl(page, 1).focus();
   await page.keyboard.press("Enter");
   await expect(feld(page)).toBeFocused();
@@ -122,7 +125,7 @@ test("mit Tab aus dem Feld heraus schliesst es", async ({ page }) => {
 });
 
 test("ein Tipp auf die Checkbox darunter trifft die Checkbox", async ({ page }) => {
-  await frontenac(page);
+  await atomium(page);
   await zahl(page, 1).click();
   await page.locator('#rows input[data-slot="3"]').click();
   await expect(zusatz(page)).toHaveCount(0);
@@ -130,9 +133,9 @@ test("ein Tipp auf die Checkbox darunter trifft die Checkbox", async ({ page }) 
 });
 
 test("ein Betrag, der nicht passt, laesst das Feld offen", async ({ page }) => {
-  await frontenac(page);
+  await atomium(page);
   await zahl(page, 1).click();
-  await feld(page).fill("99999");
+  await feld(page).fill("99999999");
   await expect(feld(page)).toBeFocused();
   await expect(zusatz(page)).toHaveCount(1);
   await feld(page).fill("3.000");

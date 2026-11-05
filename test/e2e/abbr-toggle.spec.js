@@ -5,7 +5,7 @@
  * abbr.js ("AO" statt "Arktische Orangerie") — ueberall, wo es kurz genannt wird.
  * Ein selbst vergebenes Kuerzel gilt in beiden Stellungen.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 const { imMenue, nameEintragen } = require("./menue");
 
 const schalter = (page) => page.locator("#useAbbr");
