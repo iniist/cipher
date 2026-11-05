@@ -2,21 +2,25 @@
  * Browsertests fuer die beiden Lesarten der Absicherungsspalte.
  *
  * Dieselbe Zahl, zwei verbreitete Sichtweisen: der Schritt, den dieser Platz
- * kostet ("+1.060"), oder der Stand, den du erreicht hast, wenn er sicher ist
- * ("74.393"). Wie bei der Stufenzahl entscheidet ein Umschalter, welche
+ * kostet ("+2.660"), oder der Stand, den du erreicht hast, wenn er sicher ist
+ * ("62.061"). Wie bei der Stufenzahl entscheidet ein Umschalter, welche
  * dasteht — und die Beschriftung nennt sie, damit niemand die falsche liest.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 const { abwaehlen } = require("./plaetze");
 
 const kopf = (page) => page.locator("#secureModeLabel");
 const spalte = (page) => page.locator("#rows .pre");
 const werte = (page) => spalte(page).allTextContents();
 
-/** Chateau Frontenac auf Stufe 198 mit Faktor 2,00. */
+/**
+ * Atomium auf Stufe 198 mit Faktor 2,00 — eine Kupfer-Stufe mit fuenf
+ * Plaetzen (vor dem Prestige-Update stand hier Château Frontenac 198, das
+ * ist jetzt Gold).
+ */
 async function frontenac(page) {
   await page.goto("/index.html");
-  await page.locator("#building").selectOption("Château_Frontenac", { force: true });
+  await page.locator("#building").selectOption("Atomium", { force: true });
   await page.fill("#level", "198");
   await page.fill("#factor", "2,00");
 }
@@ -25,7 +29,7 @@ test.describe("Die Vorgabe", () => {
   test("ist der Schritt je Platz", async ({ page }) => {
     await frontenac(page);
     await expect(kopf(page)).toHaveText("Sichern");
-    expect(await werte(page)).toEqual(["+73.333", "Sicher", "+1.060", "+530", "+170"]);
+    expect(await werte(page)).toEqual(["+59.401", "Sicher", "+2.660", "+1.332", "+400"]);
   });
 });
 
@@ -35,7 +39,7 @@ test.describe("Umschalten", () => {
     await page.click("#secureMode");
 
     await expect(kopf(page)).toHaveText("Eigen");
-    expect(await werte(page)).toEqual(["73.333", "Sicher", "74.393", "74.923", "75.093"]);
+    expect(await werte(page)).toEqual(["59.401", "Sicher", "62.061", "63.393", "63.793"]);
   });
 
   test("schaltet auch ein Klick auf die Zahl", async ({ page }) => {
@@ -121,7 +125,7 @@ test.describe('"Sicher" in beiden Lesarten', () => {
 
     await expect(spalte(page).nth(1)).not.toHaveText("Sicher");
     await page.click("#secureMode");
-    await expect(spalte(page).nth(1)).toHaveText("73.813");
+    await expect(spalte(page).nth(1)).toHaveText("60.597");
   });
 
   test("erscheint sie auch bei einem eigenen Betrag", async ({ page }) => {

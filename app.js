@@ -22,7 +22,8 @@
   var KEY = {
     state: "cipher:state",           // Auswahl, Faktor, Name, Theme
     favorites: "cipher:favorites",   // Gemerkte Bauwerk/Stufe-Paare
-    totals: "cipher:totals",         // Selbst eingetragene Gesamtkosten
+    totals: "cipher:totals",         // Gesamtkosten von vor dem Prestige-Update (ungenutzt)
+    costs: "cipher:costs",           // Gesamtkosten seit dem Prestige-Update, aus dem Spiel
     p1: "cipher:p1",                 // Selbst eingetragene P1-Belohnungen
     collection: "cipher:collection", // Gesammelte Chat-Zeilen mehrerer Bauwerke
     shorts: "cipher:shorts"          // Selbst vergebene Kuerzel je Bauwerk
@@ -33,6 +34,12 @@
 
   /** Faktoren, die als Schnellwahl angeboten werden. */
   var FACTOR_PRESETS = [180, 185, 190, 192, 195, 200];
+
+  /**
+   * Voreinstellung fuer Gold-Stufen: 1,00. Den Gold-Maezen-Bonus haben
+   * anfangs kaum Spieler, mit 1,90 zahlte ein Foerderer ohne ihn drauf.
+   */
+  var GOLD_FACTOR_DEFAULT = 100;
 
   /** Grenzen des Arche-Faktors, als Ganzzahl in Prozent. */
   var FACTOR_MIN = 100;
@@ -51,6 +58,14 @@
    */
   var LEVEL_MAX = 1000;
 
+  /**
+   * Hoechste Stufe eines Bauwerks seit dem Prestige-Update: Bauwerke ohne
+   * Gold-Kategorie enden bei 200, Gold-Bauwerke haben keine Grenze.
+   */
+  function levelMaxOf(buildingId) {
+    return Calc.maxLevelOf(buildingId) || LEVEL_MAX;
+  }
+
   var THEMES = ["light", "dark", "contrast", "writer", "space", "forge"];
   var DEFAULT_BUILDING = "The_Arc";
   var MAX_FAVORITES = 12;
@@ -64,12 +79,12 @@
   var MAX_COLLECTED = 15;
 
   /**
-   * Obergrenze fuer einen getippten Betrag. Die teuerste bekannte Stufe
-   * liegt bei gut 86.000 FP, ein Platz darin bei knapp 10.000 — eine
-   * Million ist reichlich Luft und faengt trotzdem ab, wenn jemand eine
-   * Stelle zu viel tippt.
+   * Obergrenze fuer einen getippten Betrag. Seit dem Prestige-Update kostet
+   * ein Gold-Bauwerk bis Stufe 500 rund 756 Mio. FP, eine einzelne hohe
+   * Stufe also Millionen — hundert Millionen lassen dafuer Luft und fangen
+   * trotzdem ab, wenn jemand mehrere Stellen zu viel tippt.
    */
-  var AMOUNT_MAX = 1000000;
+  var AMOUNT_MAX = 100000000;
 
   /**
    * Hoechstlaenge eines selbst vergebenen Kuerzels. Der laengste Name im
@@ -78,17 +93,6 @@
    */
   var SHORT_MAX = 24;
 
-  /** Quellen, die keinen Hinweis ausloesen — sie gelten als belastbar. */
-  var TRUSTED_SOURCES = { table: true, formula: true, manual: true };
-
-  /**
-   * Quellen, deren P1 danebenliegen kann. Ein zu hohes P1 ist die
-   * gefaehrliche Richtung, weil die Absicherung dann zu niedrig ausfaellt.
-   * Darum rechnet sie bei diesen Quellen mit P1 minus einem Zuschlag, der
-   * mit dem Abstand zur naechsten gesicherten Stufe waechst (Calc.p1Slack,
-   * dort auch die Messung); angezeigt wird weiter das echte P1.
-   */
-  var UNSURE_P1_SOURCES = { derived: true, conflict: true };
 
   var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -287,7 +291,7 @@
    * Theme, Spielername, Kuerzel-Schalter, die Lesarten von Stufe, Sichern
    * und Plaetzen — gilt ueberall gleich.
    */
-  var WORLD_FIELDS = ["building", "level", "factor", "enabled", "taken", "slotsFor",
+  var WORLD_FIELDS = ["building", "level", "factor", "goldFactor", "enabled", "taken", "slotsFor",
     "slotFactors", "slotPays", "ownPaid", "ownPaidFor", "foreign", "fit", "fitLevel", "chatMode"];
 
   /**
@@ -371,7 +375,13 @@
       : byId[DEFAULT_BUILDING] ? DEFAULT_BUILDING
       : DATA.buildings[0].id,
     level: Number(stored.level) > 0 ? Math.floor(stored.level) : 10,
+    // Zwei Faktoren seit dem Prestige-Update: Wer auf eine Kupfer-Stufe
+    // einzahlt, bekommt seinen Kupfer-Arche-Bonus, auf eine Gold-Stufe nur
+    // den Gold-Bonus (Arche Gold, Siphon Gold, Technologien). Welcher gilt,
+    // haengt an Bauwerk und Stufe, siehe currentFactor. "factor" bleibt der
+    // Kupfer-Faktor, damit ein gespeicherter Stand weiter passt.
     factor: clampFactor(Number(stored.factor)) || 190,
+    goldFactor: clampFactor(Number(stored.goldFactor)) || GOLD_FACTOR_DEFAULT,
     name: typeof stored.name === "string" ? stored.name : "",
     enabled: normaliseEnabled(stored.enabled),
     // Schon vergebene Plaetze: nicht mehr ausschreiben, aber weiter als
@@ -431,12 +441,12 @@
   });
 
   /**
-   * Immer genau fuenf Eintraege: ein gueltiger Faktor oder null.
+   * Immer genau sieben Eintraege (so viele Plaetze hat eine Gold-Stufe): ein gueltiger Faktor oder null.
    * clampFactor liefert 0 fuer alles Unbrauchbare, daraus wird null.
    */
   function normaliseSlotFactors(value) {
     var result = [];
-    for (var i = 0; i < Calc.SLOTS; i++) {
+    for (var i = 0; i < Calc.MAX_SLOTS; i++) {
       var own = Array.isArray(value) ? clampFactor(Number(value[i])) : 0;
       result.push(own || null);
     }
@@ -444,13 +454,13 @@
   }
 
   /**
-   * Immer genau fuenf Eintraege: ein getippter Betrag oder null.
+   * Immer genau sieben Eintraege (so viele Plaetze hat eine Gold-Stufe): ein getippter Betrag oder null.
    * Betraege sind ganze Forge-Punkte und groesser als null; alles andere
    * waere keine Einzahlung.
    */
   function normaliseSlotPays(value) {
     var result = [];
-    for (var i = 0; i < Calc.SLOTS; i++) {
+    for (var i = 0; i < Calc.MAX_SLOTS; i++) {
       var own = Array.isArray(value) ? Math.floor(Number(value[i])) : 0;
       result.push(own > 0 && isFinite(own) ? own : null);
     }
@@ -517,10 +527,31 @@
     state.slotPays[index] = null;
   }
 
+  /** Ob die Stufe, die gerade gefoerdert wird, zur Gold-Kategorie gehoert. */
+  function goldNow() {
+    return Calc.isGold(state.building, state.level);
+  }
+
+  /** Wie viele Maezen-Plaetze die Stufe hat: 7 auf Gold, sonst 5. */
+  function slotCount() {
+    return goldNow() ? 7 : 5;
+  }
+
+  /** Der Faktor, der fuer diese Stufe gilt: Kupfer- oder Gold-Faktor. */
+  function currentFactor() {
+    return goldNow() ? state.goldFactor : state.factor;
+  }
+
+  /** Den Faktor der Kategorie setzen, in der die Stufe gerade liegt. */
+  function setCurrentFactor(value) {
+    if (goldNow()) state.goldFactor = value;
+    else state.factor = value;
+  }
+
   /** Der Faktor, der fuer jeden Platz tatsaechlich gilt. */
   function effectiveFactors() {
     return state.slotFactors.map(function (own) {
-      return own == null ? state.factor : own;
+      return own == null ? currentFactor() : own;
     });
   }
 
@@ -532,19 +563,19 @@
    */
   function levelOffset() { return state.levelMode === "current" ? 1 : 0; }
 
-  /** Immer genau fuenf Wahrheitswerte, egal was im Speicher lag. */
+  /** Immer genau sieben Wahrheitswerte, egal was im Speicher lag. */
   function normaliseEnabled(value) {
     var result = [];
-    for (var i = 0; i < Calc.SLOTS; i++) {
+    for (var i = 0; i < Calc.MAX_SLOTS; i++) {
       result.push(Array.isArray(value) ? value[i] !== false : true);
     }
     return result;
   }
 
-  /** Immer genau fuenf Eintraege; nur ein ausdrueckliches true heisst vergeben. */
+  /** Immer genau sieben Eintraege; nur ein ausdrueckliches true heisst vergeben. */
   function normaliseTaken(value) {
     var result = [];
-    for (var i = 0; i < Calc.SLOTS; i++) {
+    for (var i = 0; i < Calc.MAX_SLOTS; i++) {
       result.push(Array.isArray(value) && value[i] === true);
     }
     return result;
@@ -583,8 +614,21 @@
     return changed ? state.building + ":" + state.level : null;
   }
 
-  var ownTotals = read(KEY.totals, {});
-  var ownP1 = read(KEY.p1, {});
+  /**
+   * Gesamtkosten, die aus dem Spiel eingetragen sind, Schluessel "id:stufe".
+   *
+   * Eigener Schluessel seit dem Prestige-Update: Was unter cipher:totals
+   * liegt, ist vor dem 5.11.2026 eingetragen und stimmt nicht mehr. Es
+   * bleibt liegen (die Datenschutzseite loescht es mit), wird aber nicht
+   * mehr gelesen.
+   */
+  var ownCosts = read(KEY.costs, {});
+
+  /** Gesamtkosten einer Stufe, wenn eingetragen. */
+  function costOf(buildingId, level) {
+    var value = Number(ownCosts[buildingId + ":" + level]);
+    return value > 0 ? { value: value, source: "manual" } : { value: null, source: null };
+  }
   var favorites = normaliseFavorites(read(HERE.favorites, []));
 
   /**
@@ -1340,9 +1384,9 @@
    * und ein neu geschriebenes innerHTML wuerde bei jedem Tastendruck den
    * Cursor verlieren. Gezeichnet werden spaeter nur noch die Werte.
    */
-  function buildSlotRows() {
+  function buildSlotRows(count) {
     var rows = [];
-    for (var index = 0; index < Calc.SLOTS; index++) {
+    for (var index = 0; index < count; index++) {
       var slot = index + 1;
       rows.push(
         '<li data-slot="' + index + '">' +
@@ -1387,9 +1431,13 @@
    * waehlt, was eine folgende Zeile zeigt und was beim Tippen gemeint ist.
    */
   function renderSlots(plan) {
-    var values = effectiveFactors();
+    // Eine Kupfer-Stufe hat fuenf Plaetze, eine Gold-Stufe sieben.
+    var count = plan ? plan.rows.length : slotCount();
+    var values = effectiveFactors().slice(0, count);
     var own = 0;
     var anyPay = false;
+
+    if ($("slotList").querySelectorAll("li").length !== count) buildSlotRows(count);
 
     $("slotList").querySelectorAll("li").forEach(function (item) {
       var index = Number(item.dataset.slot);
@@ -1544,9 +1592,9 @@
 
     $("level").value = String(state.level - offset);
     $("level").min = String(1 - offset);
-    $("level").max = String(LEVEL_MAX - offset);
+    $("level").max = String(levelMaxOf(state.building) - offset);
     $("levelDown").disabled = state.level <= 1;
-    $("levelUp").disabled = state.level >= LEVEL_MAX;
+    $("levelUp").disabled = state.level >= levelMaxOf(state.building);
 
     $("levelLabel").textContent = offset ? "Aktuelle Stufe" : "Nächste Stufe";
     $("levelHint").textContent = offset
@@ -1602,23 +1650,28 @@
 
   function render() {
     var building = byId[state.building];
-    state.level = Math.min(Math.max(1, Math.floor(state.level) || 1), LEVEL_MAX);
+    state.level = Math.min(Math.max(1, Math.floor(state.level) || 1), levelMaxOf(state.building));
 
     $("building").value = building.id;
     $("buildingPickName").textContent = building.name;
     $("buildingPickEra").textContent = building.era;
     renderLevelField();
     // Waehrend des Tippens nicht dazwischenfunken.
-    if (document.activeElement !== $("factor")) $("factor").value = formatFactor(state.factor);
+    if (document.activeElement !== $("factor")) $("factor").value = formatFactor(currentFactor());
     $("factorGauge").style.width =
-      ((state.factor - FACTOR_MIN) / (FACTOR_MAX - FACTOR_MIN) * 100) + "%";
+      ((currentFactor() - FACTOR_MIN) / (FACTOR_MAX - FACTOR_MIN) * 100) + "%";
     // aria-disabled statt disabled: ein abgeschalteter Knopf nimmt keinen
     // Tipp mehr an, und wer am Anschlag weiterdrueckt, soll eine Antwort
     // bekommen (Egg 4).
-    $("factorDown").setAttribute("aria-disabled", String(state.factor <= FACTOR_MIN));
-    $("factorUp").setAttribute("aria-disabled", String(state.factor >= FACTOR_MAX));
+    $("factorDown").setAttribute("aria-disabled", String(currentFactor() <= FACTOR_MIN));
+    $("factorUp").setAttribute("aria-disabled", String(currentFactor() >= FACTOR_MAX));
+    // Kupfer- und Gold-Stufen haben je ihren Faktor; das Feld zeigt den,
+    // der fuer diese Stufe gilt, und sagt das auch.
+    $("factorLabel").textContent = goldNow()
+      ? "Faktor Gold (Gold-Mäzen-Bonus)"
+      : "Faktor Kupfer (Arche-Bonus)";
     document.querySelectorAll("#factorChips button").forEach(function (chip) {
-      chip.classList.toggle("on", Number(chip.dataset.factor) === state.factor);
+      chip.classList.toggle("on", Number(chip.dataset.factor) === currentFactor());
     });
     if (document.activeElement !== $("playerName")) $("playerName").value = state.name;
     $("nameNeedTop").hidden = Boolean(state.name.trim());
@@ -1630,9 +1683,11 @@
     syncFavoriteLevel();
     renderFavorites();
 
-    var total = Calc.totalCost(building, state.level, ownTotals);
-    var p1 = Calc.p1Reward(building, state.level, DATA.curves, ownP1);
-    renderNote(building, total, p1);
+    // Seit dem Prestige-Update stimmen die Kosten im Datensatz nicht mehr.
+    // Gerechnet wird nur mit Gesamtkosten, die aus dem Spiel eingetragen
+    // sind; die Belohnungen folgen daraus exakt (Calc.rewardsFromCost).
+    var total = costOf(state.building, state.level);
+    renderNote(building, total);
 
     // Die Haekchen gelten wie der Stand nur fuer eine Stufe: wer das Bauwerk
     // oder die Stufe wechselt, faengt wieder mit allen Plaetzen angeboten an.
@@ -1658,7 +1713,7 @@
     }
     standKey = ownPaidKey();
 
-    if (total.value == null || p1.value == null) {
+    if (total.value == null) {
       lastPlan = null;
       lastFit = null;
       renderEmpty();
@@ -1668,13 +1723,12 @@
       return;
     }
 
+    var rewards = Calc.rewardsFromCost(total.value, state.level, goldNow());
     var options = {
       total: total.value,
-      p1: p1.value,
-      p1Secure: UNSURE_P1_SOURCES[p1.source]
-        ? p1.value - Calc.p1Slack(DATA.curves[building.curve], state.level)
-        : null,
-      factor: state.factor,
+      rewards: rewards,
+      p1: rewards[0],
+      factor: currentFactor(),
       factors: state.slotFactors,
       payments: state.slotPays,
       enabled: state.enabled,
@@ -1766,7 +1820,7 @@
     var parts = [];
     if (state.ownPaid != null) parts.push(formatNumber(state.ownPaid) + " eigen");
     if (amounts.length) parts.push(amounts.length + " fremd");
-    if (lastFit && lastFit.factor !== state.factor) parts.push("Faktor " + formatFactor(lastFit.factor));
+    if (lastFit && lastFit.factor !== currentFactor()) parts.push("Faktor " + formatFactor(lastFit.factor));
     $("standBadge").hidden = parts.length === 0;
     $("standBadge").textContent = parts.join(" · ");
   }
@@ -1803,9 +1857,9 @@
     }
 
     var parts = [];
-    parts.push(fit.factor === state.factor
+    parts.push(fit.factor === currentFactor()
       ? "Passt mit deinem Faktor " + formatFactor(fit.factor) + "."
-      : "Alle offenen Plätze mit Faktor " + formatFactor(fit.factor) + " statt " + formatFactor(state.factor) + ".");
+      : "Alle offenen Plätze mit Faktor " + formatFactor(fit.factor) + " statt " + formatFactor(currentFactor()) + ".");
     if (fit.dropped.length) {
       var names = fit.dropped.map(function (slot) { return "P" + slot; });
       parts.push("Selbst mit 1,00 passen nicht alle: " + joinSlots(names) +
@@ -1817,11 +1871,11 @@
     if (fit.levelSlot) {
       parts.push(fit.levelExtra > 0
         ? "Die übrigen " + formatNumber(fit.levelExtra) + " FP teilen sich die Plätze, keiner über Faktor " +
-          formatFactor(state.factor) + ". P" + fit.levelSlot + " schließt die Stufe ab."
+          formatFactor(currentFactor()) + ". P" + fit.levelSlot + " schließt die Stufe ab."
         : "P" + fit.levelSlot + " schließt die Stufe ab.");
     } else if (fit.levelTooBig) {
       parts.push("Leveln lassen geht hier nicht: Der Rest ist zu groß, um ihn auf die Plätze zu verteilen, ohne über Faktor " +
-        formatFactor(state.factor) + " zu kommen. " + formatNumber(plan.remainder) + " FP zahlst du selbst.");
+        formatFactor(currentFactor()) + " zu kommen. " + formatNumber(plan.remainder) + " FP zahlst du selbst.");
     } else if (plan.remainder > 0) {
       parts.push(formatNumber(plan.remainder) + " FP bleiben für dich zum Leveln.");
     }
@@ -1922,7 +1976,7 @@
   function renderEmpty() {
     var table = $("rows").closest("table");
     table.classList.add("none");
-    $("rows").innerHTML = '<tr><td colspan="4" class="empty">Für diese Stufe fehlen noch Gesamtkosten oder P1. Trag sie unten aus dem Förderfenster ein.</td></tr>';
+    $("rows").innerHTML = '<tr><td colspan="4" class="empty">Für diese Stufe fehlen noch die Gesamt-FP. Trag sie unten aus dem Förderfenster ein.</td></tr>';
     ["sumTotal", "sumExternal", "sumOwn"].forEach(function (id) {
       $(id).textContent = "–";
       delete $(id).dataset.value;
@@ -1951,9 +2005,9 @@
    * so auch der Fokus auf einer Checkbox stehen, ohne dass ihn jemand
    * zurueckgeben muss.
    */
-  function buildRows() {
+  function buildRows(count) {
     var rows = [];
-    for (var index = 0; index < Calc.SLOTS; index++) {
+    for (var index = 0; index < count; index++) {
       var slot = index + 1;
       rows.push(
         '<tr data-row="' + index + '">' +
@@ -1973,7 +2027,9 @@
   function renderRows(plan) {
     $("rows").closest("table").classList.remove("none");
     // Nach dem Leerzustand steht statt der Zeilen ein Hinweis in der Tabelle.
-    if (!$("rows").querySelector("tr[data-row]")) buildRows();
+    // Fuenf Zeilen auf Kupfer, sieben auf Gold: neu gebaut wird nur, wenn
+    // sich die Zahl aendert.
+    if ($("rows").querySelectorAll("tr[data-row]").length !== plan.rows.length) buildRows(plan.rows.length);
 
     // Ein abgewaehlter Platz hat nichts mehr zu bearbeiten.
     if (payEdit && !payEditable(plan.rows[payEdit.index], payEdit.index)) payEdit = null;
@@ -2225,6 +2281,7 @@
     var bar = $("bar");
     bar.hidden = false;
     $("legend").hidden = false;
+    $("legendRest").textContent = "P4–P" + plan.rows.length;
 
     var segments = [["own", plan.ownShare]].concat(plan.rows.map(function (row) {
       return [String(row.slot), row.offered || row.taken || row.foreign ? row.contribution : 0];
@@ -2446,125 +2503,33 @@
   }
 
   /**
-   * Den Ausblendtest fuer das Zeitalter eines Bauwerks holen.
-   * @returns {{samples:number, misses:number, worst:number}|null}
-   *   null heisst: zu wenige belegte Stufen, um etwas zu behaupten.
+   * Der Hinweis ueber dem Plan: die Bitte um die Gesamtkosten der Stufe.
+   *
+   * Seit dem Prestige-Update (5.11.2026) sind die Stufenkosten neu verteilt,
+   * und weder Wiki noch Datensatz kennen sie schon. Das Spiel zeigt sie
+   * aber im Foerderfenster im Balken ("0/136088"). Mit dieser einen Zahl
+   * stehen alle Belohnungen exakt fest, also fragt cipher genau danach —
+   * einmal je Bauwerk und Stufe, danach ist sie gemerkt.
+   *
+   * Bauwerke ohne Gold-Kategorie enden bei Stufe 200; render() laesst das
+   * Stufenfeld darueber gar nicht erst hin.
    */
-  function curveReliability(building) {
-    if (!building.curve) return null;
-    var curve = DATA.curves[building.curve];
-    return curve ? Calc.curveReliability(building.curve, curve) : null;
-  }
-
-  /** Das Eingabefeld fuer eine eigene P1-Belohnung. */
-  function fieldP1(p1) {
-    return '<div><label for="inputP1">P1-Belohnung</label>' +
-      '<input id="inputP1" type="number" inputmode="numeric" min="5" step="5" value="' +
-      (p1.value == null ? "" : p1.value) + '"></div>';
-  }
-
-  /**
-   * Woher ein hochgerechnetes P1 kommt und wie weit es danebenliegen kann.
-   *
-   * Die Spanne ist keine Schaetzung, sondern gemessen: curveReliability
-   * fittet die Kurve des Zeitalters auf ihrem unteren Teil und prueft sie
-   * gegen die echten Werte darueber — also genau gegen die Lage, in der
-   * diese Zahl hier steht.
-   */
-  function derivedP1Text(building) {
-    var reliability = curveReliability(building);
-    var origin = state.level > building.maxLevel
-      ? "Stufe " + state.level + " liegt über dem, was das Wiki für " + escapeHtml(building.name) +
-        " dokumentiert (bis " + building.maxLevel + "); P1 ist aus der Kurve des Zeitalters hochgerechnet."
-      : "P1 ist auf dieser Stufe aus der Kurve des Zeitalters hochgerechnet.";
-
-    return origin + " " + (reliability
-      ? "Im Rückblick traf die Kurve die belegten Stufen dieses Zeitalters bis auf " + reliability.worst + " FP genau."
-      : "Für dieses Zeitalter sind zu wenige Stufen belegt, um zu sagen, wie genau die Kurve trifft.");
-  }
-
-  /**
-   * Die ruhige Fassung des Hinweises: eine Zeile, kein Kasten.
-   *
-   * Der Plan stimmt ja — es fehlt nur die letzte Bestaetigung. Wer sie
-   * geben will, klappt sich das Feld mit dem Textknopf auf; bis dahin
-   * kostet es keine Hoehe und lenkt nichts ab.
-   */
-  function quietNote(building, p1) {
-    return '<div class="note quiet">' + derivedP1Text(building) +
-      ' <button type="button" class="link" id="noteReveal">Aus dem Spiel eintragen</button>' +
-      '<div class="in" id="noteFields" hidden>' + fieldP1(p1) +
-      '<button type="button" class="go" id="applyInput">Bestätigen</button></div></div>';
-  }
-
-  /**
-   * Hinweise zu unsicheren Werten und das Eingabefeld fuer eigene Zahlen.
-   *
-   * Drei Toene, weil es drei Lagen gibt. Fehlt ein Wert, kann ich ohne
-   * Eintrag gar nicht rechnen — das ist eine Bitte, und der Kasten warnt.
-   * Ist ein Wert dagegen aus widerspruechlichen Wiki-Angaben gewaehlt oder
-   * aus einem eigenen Eintrag hochgerechnet, steht bereits die
-   * bestbegruendete Zahl im Plan und im Feld; dann ist der Kasten eine
-   * Einladung zum Gegenlesen.
-   *
-   * Der dritte Ton ist der leiseste und gilt dem haeufigsten Fall: einem
-   * P1, das aus der Kurve des Zeitalters stammt. Wie treffsicher die ist,
-   * steht nicht zur Vermutung, sondern wird gemessen (curveReliability).
-   * Zeitalter, die den Ausblendtest ohne Fehlschuss bestehen, bekommen gar
-   * keinen Hinweis — dort waere er nur Misstrauen gegen die eigene Rechnung.
-   *
-   * Ueber Kosten steht hier nichts, solange das Bauwerk einen Basiswert
-   * hat: die Formel A * 1,025^Stufe ist gegen jede Ablesung aus dem Spiel
-   * geprueft und trifft. Nur ohne Basiswert — also hochgerechnet aus einem
-   * eigenen Eintrag oder gar nicht vorhanden — ist dazu etwas zu sagen.
-   */
-  function renderNote(building, total, p1) {
-    var needTotal = !TRUSTED_SOURCES[total.source];
-    var needP1 = !TRUSTED_SOURCES[p1.source];
+  function renderNote(building, total) {
     var html = "";
-
-    if (needTotal || needP1) {
-      var missing = []; // Ohne diese Zahlen fehlt dem Plan die Grundlage
-      var checks = [];  // Diese Zahlen stehen im Plan, nur ungeprueft
-
-      if (total.source === null) {
-        missing.push(building.base == null
-          ? "Für " + escapeHtml(building.name) + " gibt es noch keine Kostendaten. Nach deinem ersten Eintrag rechne ich die übrigen Stufen hoch."
-          : "Gesamtkosten fehlen.");
-      }
-      if (total.source === "derived") checks.push("Gesamt ist aus deinem Eintrag auf Stufe " + total.from + " hochgerechnet.");
-      if (p1.source === null) missing.push("P1 ist für diese Stufe noch unbekannt.");
-      if (p1.source === "conflict") checks.push("Für P1 auf dieser Stufe nennt das Wiki mehr als eine Zahl. Im Plan steht die, die zur Kurve des Zeitalters passt — erfahrungsgemäß ist das die richtige.");
-
-      // Ein hochgerechnetes P1 ist der haeufigste und der harmloseste Fall.
-      // Steht es allein da, entscheidet der Ausblendtest des Zeitalters,
-      // wie viel Aufhebens noetig ist: gar keins, oder eine Zeile.
-      if (p1.source === "derived" && !missing.length && !checks.length) {
-        var sure = curveReliability(building);
-        if (!sure || sure.misses) html += quietNote(building, p1);
-      } else {
-        if (p1.source === "derived") checks.push(derivedP1Text(building));
-
-        var urgent = missing.length > 0;
-        var lead = missing.concat(checks).join(" ") + " " + (urgent
-          ? "Bitte im Förderfenster nachsehen und eintragen, dann ist alles exakt."
-          : "Ein Blick ins Förderfenster bestätigt das in Sekunden. Stimmt die Zahl, übernimm sie einmal — dann rechne ich hier ohne Vorbehalt weiter und frage auf dieser Stufe nicht wieder.");
-
-        html += '<div class="note' + (urgent ? "" : " chk") + '">' + lead +
-          '<div class="in">' +
-            (needTotal ? '<div><label for="inputTotal">Gesamt-FP</label><input id="inputTotal" type="number" inputmode="numeric" min="1" value="' + (total.value == null ? "" : total.value) + '"></div>' : "") +
-            (needP1 ? fieldP1(p1) : "") +
-            '<button type="button" class="go" id="applyInput">' + (urgent ? "Übernehmen" : "Bestätigen") + '</button>' +
-          "</div></div>";
-      }
+    if (total.source == null) {
+      html = '<div class="note">Seit dem Prestige-Update stehen die Kosten jeder Stufe nur im Spiel. ' +
+        "Trag die Gesamt-FP aus dem Förderfenster ein — die Zahl rechts im Balken, bei „0/136088“ also 136088. " +
+        "Belohnungen und Plätze rechne ich daraus exakt." +
+        '<div class="in">' +
+          '<div><label for="inputTotal">Gesamt-FP</label>' +
+          '<input id="inputTotal" type="number" inputmode="numeric" min="1"></div>' +
+          '<button type="button" class="go" id="applyInput">Übernehmen</button>' +
+        "</div></div>";
+    } else {
+      html = '<div class="note man">Gesamt ' + formatNumber(total.value) +
+        ' FP auf dieser Stufe von dir aus dem Spiel eingetragen. ' +
+        '<button type="button" class="link" id="resetInput">Ändern</button></div>';
     }
-
-    var manual = [total.source === "manual" && "Gesamt", p1.source === "manual" && "P1"].filter(Boolean);
-    if (manual.length) {
-      html += '<div class="note man">' + manual.join(" und ") +
-        ' auf dieser Stufe von dir aus dem Spiel eingetragen. <button type="button" class="link" id="resetInput">Zurücksetzen</button></div>';
-    }
-
     $("note").innerHTML = html;
   }
 
@@ -2754,13 +2719,13 @@
     // Beim Tippen mitrechnen, solange etwas Brauchbares dasteht.
     $("factor").addEventListener("input", function (event) {
       var parsed = parseFactor(event.target.value);
-      if (parsed) { state.factor = parsed; render(); }
+      if (parsed) { setCurrentFactor(parsed); render(); }
     });
 
     // Beim Verlassen aufraeumen: der Wert steht danach sauber formatiert da,
     // auch wenn jemand "1,9" oder Unsinn eingetippt hat.
     $("factor").addEventListener("blur", function () {
-      $("factor").value = formatFactor(state.factor);
+      $("factor").value = formatFactor(currentFactor());
     });
 
     $("factor").addEventListener("keydown", function (event) {
@@ -2773,7 +2738,7 @@
 
     $("factorChips").addEventListener("click", function (event) {
       var factor = event.target.dataset.factor;
-      if (factor) { state.factor = Number(factor); render(); }
+      if (factor) { setCurrentFactor(Number(factor)); render(); }
     });
 
     $("slotList").addEventListener("click", function (event) {
@@ -3099,41 +3064,34 @@
     $("note").addEventListener("click", function (event) {
       var key = state.building + ":" + state.level;
 
-      // Der Textknopf der ruhigen Zeile holt das Feld hervor. Ohne render(),
-      // sonst waere es im selben Atemzug wieder zugeklappt.
-      if (event.target.id === "noteReveal") {
-        var fields = $("noteFields");
-        if (!fields) return;
-        fields.hidden = false;
-        event.target.hidden = true;
-        if ($("inputP1")) $("inputP1").focus();
-        return;
-      }
-
       if (event.target.id === "applyInput") {
         var totalInput = $("inputTotal");
-        var p1Input = $("inputP1");
-        if (totalInput) {
-          var totalValue = Number(totalInput.value);
-          if (!(totalValue > 0)) return totalInput.focus();
-          ownTotals[key] = totalValue;
-        }
-        if (p1Input) {
-          var p1Value = Number(p1Input.value);
-          if (!(p1Value > 0 && p1Value % 5 === 0)) return p1Input.focus();
-          ownP1[key] = p1Value;
-        }
-        write(KEY.totals, ownTotals);
-        write(KEY.p1, ownP1);
+        var totalValue = Math.floor(Number(totalInput.value));
+        if (!(totalValue > 0)) return totalInput.focus();
+        ownCosts[key] = totalValue;
+        write(KEY.costs, ownCosts);
         render();
       }
 
+      // "Aendern" nimmt den Eintrag zurueck und zeigt das Feld wieder, mit
+      // der alten Zahl darin — meist ist es ein Tippfehler.
       if (event.target.id === "resetInput") {
-        delete ownTotals[key];
-        delete ownP1[key];
-        write(KEY.totals, ownTotals);
-        write(KEY.p1, ownP1);
+        var before = ownCosts[key];
+        delete ownCosts[key];
+        write(KEY.costs, ownCosts);
         render();
+        if ($("inputTotal")) {
+          $("inputTotal").value = before || "";
+          $("inputTotal").focus();
+        }
+      }
+    });
+
+    // Enter im Feld uebernimmt wie der Knopf.
+    $("note").addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && event.target.id === "inputTotal") {
+        event.preventDefault();
+        $("applyInput").click();
       }
     });
 
@@ -3177,10 +3135,10 @@
 
   /** Den Faktor um eine Stufe verschieben und das Feld mitziehen. */
   function stepFactor(delta) {
-    var next = clampFactor(state.factor + delta);
-    if (next === state.factor) { pushedPastLimit(delta); return; }
+    var next = clampFactor(currentFactor() + delta);
+    if (next === currentFactor()) { pushedPastLimit(delta); return; }
     if (!next) return;
-    state.factor = next;
+    setCurrentFactor(next);
     $("factor").value = formatFactor(next);
     render();
   }
@@ -3268,7 +3226,7 @@
     if (stampShown || prefersReducedMotion) return;
 
     var offered = plan.rows.filter(function (row) { return row.offered; });
-    var perfect = offered.length === Calc.SLOTS &&
+    var perfect = offered.length === plan.rows.filter(function (row) { return row.reward > 0; }).length &&
       plan.upfront === 0 &&
       plan.remainder > 0 &&
       !plan.anyTooTight;
@@ -3674,7 +3632,7 @@
   applyLink();
   buildBuildingSelect();
   buildFactorChips();
-  buildSlotRows();
+  buildSlotRows(slotCount());
   // Aufgeklappt, wenn es etwas zu sehen gibt: entweder war der Block zuletzt
   // offen, oder ein Platz hat einen eigenen Wert. Danach gehoert der Zustand
   // dem Browser, das toggle-Ereignis schreibt ihn nur mit.

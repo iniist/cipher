@@ -2,12 +2,10 @@
  * Browsertests fuer die Anwendung.
  * Ausfuehren mit: npm run test:e2e
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 const { nameEintragen, themaWaehlen } = require("./menue");
 const { haekchen, vergeben, abwaehlen } = require("./plaetze");
 const DATA = require("../../data.js");
-const Calc = require("../../calc.js");
-const { mitTestdaten, testDaten, OHNE_DATEN, WACKLIG, WACKLIG_STUFEN } = require("./testdaten");
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/index.html");
@@ -50,9 +48,10 @@ test("die Stufe laesst sich ueber die Knoepfe aendern", async ({ page }) => {
 });
 
 test("die Stufe wird erst weit oberhalb des Dokumentierten begrenzt", async ({ page }) => {
-  // Die Stufe aus dem Wiki ist keine Wand mehr — Bauwerke im Spiel stehen
-  // hoeher. Abgefangen wird nur, was kein Spielstand hergibt.
-  await page.locator("#building").selectOption("Tower_of_Babel", { force: true });
+  // Die Stufe aus dem Wiki ist keine Wand — Gold-Bauwerke haben seit dem
+  // Prestige-Update gar keine Grenze. Abgefangen wird nur, was kein
+  // Spielstand hergibt.
+  await page.locator("#building").selectOption("The_Arc", { force: true });
   await page.fill("#level", "260");
   await page.locator("#level").blur();
   await expect(page.locator("#level")).toHaveValue("260");
@@ -60,6 +59,14 @@ test("die Stufe wird erst weit oberhalb des Dokumentierten begrenzt", async ({ p
   await page.fill("#level", "9999");
   await page.locator("#level").blur();
   await expect(page.locator("#level")).toHaveValue("1000");
+});
+
+test("Bauwerke ohne Gold-Kategorie enden bei Stufe 200", async ({ page }) => {
+  await page.locator("#building").selectOption("Tower_of_Babel", { force: true });
+  await page.fill("#level", "260");
+  await page.locator("#level").blur();
+  await expect(page.locator("#level")).toHaveValue("200");
+  await expect(page.locator("#levelUp")).toBeDisabled();
 });
 
 test("der Faktor laesst sich ueber die Schnellwahl setzen", async ({ page }) => {
@@ -240,119 +247,6 @@ test("Bauwerk, Stufe und Name ueberleben einen Neuladen", async ({ page }) => {
   await expect(page.locator("#playerName")).toHaveValue("Testspielerin");
 });
 
-test("fehlende Daten fuehren zur Eingabeaufforderung, eigene Werte rechnen weiter", async ({ page }) => {
-  // Der Leerzustand braucht ein Bauwerk ohne Kosten und ohne Kurve. Statt
-  // auf eine Luecke im echten Datensatz zu hoffen, liefern die Testdaten
-  // eines mit.
-  await mitTestdaten(page);
-  await page.goto("/index.html");
-  await page.locator("#building").selectOption(OHNE_DATEN, { force: true });
-  await page.fill("#level", "20");
-  await page.locator("#level").blur();
-
-  await expect(page.locator("td.empty")).toBeVisible();
-  await expect(page.locator("#inputTotal")).toBeVisible();
-  await expect(page.locator("#inputP1")).toBeVisible();
-
-  await page.fill("#inputTotal", "2500");
-  await page.fill("#inputP1", "300");
-  await page.click("#applyInput");
-
-  await expect(page.locator("td.empty")).toHaveCount(0);
-  await expect(page.locator("#rows tr")).toHaveCount(5);
-  await expect(page.locator(".note.man")).toContainText("Gesamt und P1");
-
-  // Eine hoehere Stufe wird aus dem Eintrag hochgerechnet
-  await page.fill("#level", "25");
-  await page.locator("#level").blur();
-  await expect(page.locator(".note")).toContainText("aus deinem Eintrag auf Stufe 20 hochgerechnet");
-
-  // Zuruecksetzen raeumt den Eintrag wieder weg
-  await page.fill("#level", "20");
-  await page.locator("#level").blur();
-  await page.click("#resetInput");
-  await expect(page.locator("td.empty")).toBeVisible();
-});
-
-test("ein widerspruechlicher Wiki-Wert bittet um Bestaetigung, nicht um Rettung", async ({ page }) => {
-  // Stufe 84 des Observatoriums: Die Kosten stehen fest, nur die P1-Angaben
-  // des Wikis widersprechen sich. Der Plan rechnet trotzdem mit dem Wert,
-  // der zur Kurve passt — der Kasten darf also nicht warnen.
-  await page.locator("#building").selectOption("Observatory", { force: true });
-  await page.fill("#level", "84");
-  await page.locator("#level").blur();
-
-  await expect(page.locator("#rows tr")).toHaveCount(5);
-  await expect(page.locator("td.empty")).toHaveCount(0);
-
-  const note = page.locator(".note.chk");
-  await expect(note).toContainText("mehr als eine Zahl");
-  await expect(page.locator("#inputTotal")).toHaveCount(0);
-  await expect(page.locator("#inputP1")).toHaveValue("890");
-  await expect(page.locator("#applyInput")).toHaveText("Bestätigen");
-
-  // Bestaetigen heisst: einmal antippen, und der Hinweis ist erledigt.
-  await page.click("#applyInput");
-  await expect(page.locator(".note.chk")).toHaveCount(0);
-  await expect(page.locator(".note.man")).toContainText("P1");
-});
-
-test("ein wackliges Zeitalter sagt, wie weit es danebenliegen kann", async ({ page }) => {
-  // Gegenstueck zur Bronzezeit, wo ueber der Wiki-Grenze nichts steht: eine
-  // Kurve, die den Ausblendtest nicht besteht, bekommt eine Zeile — eine
-  // Zeile, kein Kasten, und die Gesamtkosten kommen nicht vor, denn die
-  // Kostenformel ist geprueft.
-  //
-  // Das Zeitalter kommt aus den Testdaten, nicht aus dem Wiki. Vorher stand
-  // hier die Virtuelle Zukunft; als zwei abgelesene Stufen ihre Kurve
-  // absicherten, verschwand der Hinweis und der Test fiel um — geprueft
-  // worden war die Datenlage, nicht die Anzeige.
-  await mitTestdaten(page);
-  await page.goto("/index.html");
-
-  const stufe = WACKLIG_STUFEN + 30;
-  await page.locator("#building").selectOption(WACKLIG, { force: true });
-  await page.fill("#level", String(stufe));
-  await page.locator("#level").blur();
-
-  const note = page.locator(".note.quiet");
-  await expect(note).toContainText("hochgerechnet");
-  await expect(note).toContainText(/bis auf \d+ FP genau/);
-  await expect(note).not.toContainText("Gesamt");
-  await expect(page.locator(".note.chk")).toHaveCount(0);
-
-  // Das Feld ist da, es draengt sich nur nicht auf, und es steht die Zahl
-  // drin, mit der der Plan gerechnet hat.
-  const daten = testDaten();
-  const erwartet = Calc.p1Reward(daten.buildings.find((b) => b.id === WACKLIG), stufe, daten.curves);
-  expect(erwartet.source).toBe("derived");
-
-  await expect(page.locator("#inputP1")).toBeHidden();
-  await page.click("#noteReveal");
-  await expect(page.locator("#inputP1")).toBeVisible();
-  await expect(page.locator("#inputP1")).toHaveValue(String(erwartet.value));
-  await expect(page.locator("#inputTotal")).toHaveCount(0);
-
-  await page.click("#applyInput");
-  await expect(page.locator(".note.quiet")).toHaveCount(0);
-  await expect(page.locator(".note.man")).toContainText("P1");
-});
-
-test("eine ungueltige P1-Eingabe wird abgelehnt", async ({ page }) => {
-  await mitTestdaten(page);
-  await page.goto("/index.html");
-  await page.locator("#building").selectOption(OHNE_DATEN, { force: true });
-  await page.fill("#level", "20");
-  await page.locator("#level").blur();
-
-  await page.fill("#inputTotal", "2500");
-  await page.fill("#inputP1", "302"); // nicht durch 5 teilbar
-  await page.click("#applyInput");
-
-  await expect(page.locator("#inputP1")).toBeFocused();
-  await expect(page.locator("td.empty")).toBeVisible();
-});
-
 test("der Kopierknopf quittiert den Kopiervorgang", async ({ page, context, browserName }) => {
   test.skip(browserName !== "chromium", "Zwischenablage-Rechte gibt es hier nur in Chromium");
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
@@ -394,15 +288,14 @@ test.describe("Datum der Datenquelle", () => {
 test.describe("Stufen-Stepper an den Grenzen", () => {
   test("bei Stufe 1 ist Minus aus, beim Maximum Plus", async ({ page }) => {
     await page.goto("/index.html");
-    await page.locator("#building").selectOption("Tower_of_Babel", { force: true });
+    await page.locator("#building").selectOption("The_Arc", { force: true });
 
     await page.fill("#level", "1");
     await page.locator("#level").blur();
     await expect(page.locator("#levelDown")).toBeDisabled();
     await expect(page.locator("#levelUp")).toBeEnabled();
 
-    // Die Grenze ist nicht mehr die dokumentierte Stufe des Bauwerks,
-    // sondern der Schutzwert des Feldes.
+    // Ein Gold-Bauwerk hat keine Grenze; es gilt der Schutzwert des Feldes.
     await page.fill("#level", "200");
     await page.locator("#level").blur();
     await expect(page.locator("#levelUp")).toBeEnabled();
@@ -417,18 +310,14 @@ test.describe("Stufen-Stepper an den Grenzen", () => {
     await page.goto("/index.html");
     await page.locator("#building").selectOption("Statue_of_Zeus", { force: true });
 
-    // Stufe 202 gibt es im Wiki nicht mehr — im Spiel schon.
+    // Stufe 202 gibt es im Wiki nicht mehr — im Spiel schon, als Gold-Stufe.
     await page.fill("#level", "202");
     await page.locator("#level").blur();
     await expect(page.locator("#level")).toHaveValue("202");
 
     await expect(page.locator("td.empty")).toHaveCount(0);
-    await expect(page.locator("#rows tr")).toHaveCount(5);
+    await expect(page.locator("#rows tr")).toHaveCount(7);
     await expect(page.locator("#sumTotal")).toHaveText("58.419");
-
-    // Die Kurve der Bronzezeit besteht den Ausblendtest ohne Fehlschuss:
-    // hier ist nichts zu beteuern, der Plan steht einfach da.
-    await expect(page.locator("#note .note")).toHaveCount(0);
   });
 
   test("in der Lesart „aktuell“ gilt die Grenze bei angezeigter Stufe 0", async ({ page }) => {

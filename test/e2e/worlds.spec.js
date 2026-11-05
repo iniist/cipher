@@ -5,7 +5,7 @@
  * nichts. Die erste Welt behaelt die alten Schluessel, jede weitere bekommt
  * eigene unter "cipher:w:<welt>:".
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("@playwright/test");
 const { nameEintragen, themaWaehlen } = require("./menue");
 
 /** Ein Stand, wie er vor den Welten im Speicher lag. */

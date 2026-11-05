@@ -5,7 +5,7 @@
  * Foerdergruppe, und am Ende soll eine Nachricht alle Zeilen enthalten.
  * Frueher war der Umweg dafuer eine Notiz ausserhalb von cipher.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 const { nameEintragen } = require("./menue");
 
 const eintraege = (page) => page.locator("#collList li");

@@ -4,7 +4,7 @@
  * Eine Zeile, ein Knopf; ob die FP mitgehen, sagt der Schalter darueber.
  * Kopiert wird erst mit Spielernamen.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 const { nameEintragen } = require("./menue");
 
 const knopf = (page) => page.locator("#chatCopy");

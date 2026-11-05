@@ -6,10 +6,10 @@
  * Platz, den er mit seinem Betrag behaelt — von Hand einsortieren muss
  * niemand mehr.
  *
- * Château Frontenac 80 bei 1,90 (Vorgabe): die Gilde zahlt 2.043, 1.026,
- * 342, 86 und 19.
+ * Château Frontenac 80 bei 1,90 (Vorgabe): die Gilde zahlt seit dem
+ * Prestige-Update 1.294, 646, 215, 53 und 11.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 const { haekchen, vergeben } = require("./plaetze");
 
 const sichern = (page) => page.locator("#rows .pre").allTextContents();
@@ -46,36 +46,36 @@ test("der Block ist zugeklappt, bis es etwas einzutragen gibt", async ({ page })
 test("jede Fremdeinzahlung landet auf dem Platz, den sie behaelt", async ({ page }) => {
   await chateau(page);
   const ohne = await summe(page, "sumOwn");
-  // In beliebiger Reihenfolge: 5 FP reichen fuer keinen Platz, 300 schlagen
-  // P4 (86), aber nicht P3 (342), 1.500 schlagen P2 (1.026), nicht P1.
-  await eintragen(page, 5, 300, 1500);
+  // In beliebiger Reihenfolge: 5 FP reichen fuer keinen Platz, 150 schlagen
+  // P4 (53), aber nicht P3 (215), 700 schlagen P2 (646), nicht P1.
+  await eintragen(page, 5, 150, 700);
 
   await expect.poll(() => platz(page)).toEqual(["kein Platz", "hält P4", "hält P2", ""]);
-  // Kleinere Fremdeinzahlungen koennten nachlegen: die 1.500 bis P1, die
-  // 300 bis P3, die 5 bis P5. Jeder Gildenplatz sichert so weit vor, dass
+  // Kleinere Fremdeinzahlungen koennten nachlegen: die 700 bis P1, die
+  // 150 bis P3, die 5 bis P5. Jeder Gildenplatz sichert so weit vor, dass
   // es danach hoechstens zum Gleichstand reicht.
-  await expect.poll(() => sichern(page)).toEqual(["+284", "fremd", "+159", "fremd", "+9"]);
+  await expect.poll(() => sichern(page)).toEqual(["+1.932", "fremd", "+314", "fremd", "+48"]);
   expect((await kosten(page)).map((text) => text.trim()))
-    .toEqual(["2.043", "1.500", "342", "300", "19"]);
+    .toEqual(["1.294", "700", "215", "150", "11"]);
   await expect(page.locator("#standBadge")).toHaveText("3 fremd");
 
   // Ausgeschrieben werden nur die Plaetze, die die Gilde noch bekommt.
   await page.locator('[data-chat-mode="points"]').click();
-  await expect(page.locator("#chatPoints")).toContainText("P5(19) P3(342) P1(2043)");
+  await expect(page.locator("#chatPoints")).toContainText("P5(11) P3(215) P1(1294)");
   await expect(page.locator("#lumpText")).toContainText("P1, P3 und P5 sicher");
 
-  // Alle 1.805 FP liegen im Bauwerk, auch die 5 ohne Platz.
+  // Alle 855 FP liegen im Bauwerk, auch die 5 ohne Platz.
   expect(Number(await summe(page, "sumOwn"))).toBeLessThan(Number(ohne));
   const gesamt = Number(await summe(page, "sumTotal"));
   const foerderer = Number(await summe(page, "sumExternal"));
-  expect(foerderer).toBe(2043 + 1500 + 342 + 300 + 19 + 5);
+  expect(foerderer).toBe(1294 + 700 + 215 + 150 + 11 + 5);
   expect(Number(await summe(page, "sumOwn"))).toBe(gesamt - foerderer);
   await expect(page.locator("#bar i")).toHaveCount(7);
 });
 
 test("ein fremd gehaltener Platz laesst sich nicht abhaken", async ({ page }) => {
   await chateau(page);
-  await eintragen(page, 1500);
+  await eintragen(page, 700);
   await expect(haekchen(page, 1)).toBeDisabled();
   await expect(page.locator('#rows tr[data-row="1"]')).toHaveClass(/foreign/);
   await expect(page.locator('#rows tr[data-row="1"] .pay-btn')).toBeDisabled();
@@ -97,24 +97,24 @@ test("ohne eigene Angabe zaehlt dein Stand als 0", async ({ page }) => {
 test("ein leeres Feld fuer den naechsten Betrag, das Kreuz nimmt einen heraus", async ({ page }) => {
   await chateau(page);
   await expect(fremd(page)).toHaveCount(1);
-  await fremd(page).nth(0).fill("300");
+  await fremd(page).nth(0).fill("150");
   await expect(fremd(page)).toHaveCount(2);
   // Das Feld, in dem getippt wird, behaelt den Fokus.
   await expect(fremd(page).nth(0)).toBeFocused();
 
-  await fremd(page).nth(1).fill("1500");
+  await fremd(page).nth(1).fill("700");
   await expect(fremd(page)).toHaveCount(3);
   await expect.poll(() => platz(page)).toEqual(["hält P4", "hält P2", ""]);
 
   await page.locator("#foreignList .foreign-del").nth(0).click();
   await expect(fremd(page)).toHaveCount(2);
-  await expect(fremd(page).nth(0)).toHaveValue("1.500");
-  expect((await zustand(page)).foreign).toEqual([1500]);
+  await expect(fremd(page).nth(0)).toHaveValue("700");
+  expect((await zustand(page)).foreign).toEqual([700]);
 });
 
 test("geleerte Felder fallen weg, sobald die Liste verlassen wird", async ({ page }) => {
   await chateau(page);
-  await eintragen(page, 300, 1500);
+  await eintragen(page, 150, 700);
   await fremd(page).nth(0).fill("");
   // Noch in der Liste: das Feld bleibt, damit dort weitergetippt werden kann.
   await fremd(page).nth(1).click();
@@ -122,7 +122,7 @@ test("geleerte Felder fallen weg, sobald die Liste verlassen wird", async ({ pag
 
   await page.locator("h2").first().click();
   await expect(fremd(page)).toHaveCount(2);
-  await expect(fremd(page).nth(0)).toHaveValue("1.500");
+  await expect(fremd(page).nth(0)).toHaveValue("700");
 });
 
 test("die Betraege ueberdauern das Neuladen und gelten nur fuer ihre Stufe", async ({ page }) => {

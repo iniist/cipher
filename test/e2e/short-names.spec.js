@@ -6,7 +6,7 @@
  * beiden — die eine "Orangerie", die naechste "AO". Darum laesst sich das
  * Kuerzel je Bauwerk selbst setzen; leer heisst "die Vorgabe".
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 const { nameEintragen } = require("./menue");
 
 const feld = (page) => page.locator("#buildingShort");

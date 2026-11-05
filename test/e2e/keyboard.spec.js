@@ -1,7 +1,7 @@
 /**
  * Browsertests fuer die Tastaturbedienung und den Betrieb ohne JavaScript.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 
 /** Was gerade den Fokus hat, kurz beschrieben. */
 const activeDescriptor = (page) => page.evaluate(() => ({

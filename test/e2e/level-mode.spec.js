@@ -7,7 +7,7 @@
  * Feld steht. Diese Tests halten genau das fest: die Anzeige wandert, der
  * Plan nicht.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 const { nameEintragen } = require("./menue");
 
 const modeButton = (page, mode) => page.locator(`#levelMode button[data-level-mode="${mode}"]`);
@@ -58,7 +58,8 @@ test("im aktuellen Modus rechnet cipher die Stufe darueber", async ({ page }) =>
 });
 
 test("die Grenzen des Feldes wandern mit", async ({ page }) => {
-  await page.locator("#building").selectOption("Tower_of_Babel", { force: true });
+  // Ein Gold-Bauwerk: ohne Grenze bis auf den Schutzwert des Feldes.
+  await page.locator("#building").selectOption("The_Arc", { force: true });
 
   await expect(page.locator("#level")).toHaveAttribute("min", "1");
   await expect(page.locator("#level")).toHaveAttribute("max", "1000");

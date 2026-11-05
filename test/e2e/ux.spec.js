@@ -3,7 +3,7 @@
  * ersten Bauen ungeprueft geblieben waren: schmale Geraete, volle
  * Favoritenliste, der Leerzustand ohne Daten.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 const { nameEintragen, themaWaehlen } = require("./menue");
 const { mitTestdaten, OHNE_DATEN } = require("./testdaten");
 
@@ -91,7 +91,6 @@ test.describe("Leerzustand", () => {
 
   test("sie schalten sich wieder ein, sobald ein Plan da ist", async ({ page }) => {
     await page.fill("#inputTotal", "2500");
-    await page.fill("#inputP1", "300");
     await page.click("#applyInput");
 
     await expect(page.locator("#legend")).toBeVisible();

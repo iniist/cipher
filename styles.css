@@ -1126,7 +1126,7 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 .slot-1 { --c: var(--gold) }
 .slot-2 { --c: var(--silver) }
 .slot-3 { --c: var(--bronze) }
-.slot-4, .slot-5 { --c: var(--iron) }
+.slot-4, .slot-5, .slot-6, .slot-7 { --c: var(--iron) }
 
 .tag {
   display: inline-block;
@@ -1670,8 +1670,3 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
      Modus gar nicht erst eingeblendet (siehe app.js). */
 }
 
-/* ------------------------------------------------ Pause zum Prestige-Update
-   pause.js setzt .paused auf <html>; dann weicht der Rechner dem Hinweis. */
-.pause-note { display: none }
-.paused .pause-note { display: block; grid-column: 1 / -1 }
-.paused .calc-only { display: none }

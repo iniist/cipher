@@ -1,7 +1,7 @@
 /**
  * Browsertests fuer die Favoriten.
  */
-const { test, expect } = require("./vor-dem-update");
+const { test, expect } = require("./mit-kosten");
 
 const favEntries = (page) => page.locator("#favList li");
 

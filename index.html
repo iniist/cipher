@@ -50,8 +50,6 @@
   } catch (e) { /* Speicher gesperrt — das Standard-Theme bleibt stehen. */ }
 })();
 </script>
-<!-- Ab dem Prestige-Update (5.11.2026) blendet pause.js den Rechner aus. -->
-<script src="./pause.js"></script>
 
 <link rel="stylesheet" href="./fonts.css">
 <link rel="stylesheet" href="./styles.css">
@@ -121,7 +119,7 @@
           "name": "Wie rechnet cipher die Belohnungen der Mäzen-Plätze?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Die Gesamt-FP der Stufe und die Belohnung für P1 stammen aus dem Datensatz, der auf dem Forge of Empires Wiki beruht. P2 bis P5 leitet cipher daraus ab: P2 ist die Hälfte von P1, P3 ein Drittel von P2, P4 ein Viertel von P3 und P5 ein Fünftel von P4, jeweils auf 5 gerundet. Fehlt ein Wert oder ist er nur geschätzt, bittet cipher dich, die Zahl aus dem Förderfenster einzutragen."
+            "text": "Seit dem Prestige-Update vom 5. November 2026 bekommen die Mäzene einen festen Anteil der Stufenkosten: je nach Stufe zwischen 25 und 40 % bis Stufe 100, danach 15 % und weniger. Diesen Topf teilt das Spiel wie bisher im Verhältnis 1 : ½ : ⅙ … auf die Plätze auf, auf ganze FP gerundet; Gold-Stufen haben 7 Plätze statt 5. cipher braucht dafür nur die Gesamt-FP der Stufe aus dem Förderfenster und rechnet daraus jeden Platz so, wie ihn das Spiel zeigt."
           }
         },
         {
@@ -214,7 +212,7 @@
     </section>
   </noscript>
 
-  <section class="panel calc-only">
+  <section class="panel">
     <h2>Bauwerk</h2>
 
     <!-- Solange kein Spielername eingetragen ist: hier oben, wo man anfängt.
@@ -292,7 +290,7 @@
     </button>
 
     <div class="factor-block">
-      <label class="l" for="factor">Faktor (Arche-Bonus)</label>
+      <label class="l" for="factor" id="factorLabel">Faktor Kupfer (Arche-Bonus)</label>
       <div class="step fac">
         <button type="button" id="factorDown" aria-label="Faktor verringern">−</button>
         <input id="factor" type="text" inputmode="decimal" autocomplete="off"
@@ -325,7 +323,7 @@
     </div>
   </section>
 
-  <section class="panel calc-only">
+  <section class="panel">
     <h2>Förderplan</h2>
 
     <div class="bar" id="bar" role="img" aria-label="Verteilung der Gesamtkosten auf deine FP und die Mäzen-Plätze"></div>
@@ -334,7 +332,7 @@
       <span><i class="slot-1"></i>P1</span>
       <span><i class="slot-2"></i>P2</span>
       <span><i class="slot-3"></i>P3</span>
-      <span><i class="slot-4"></i>P4–P5</span>
+      <span><i class="slot-4"></i><span id="legendRest">P4–P5</span></span>
     </div>
 
     <table>
@@ -390,7 +388,7 @@
     </div>
   </section>
 
-  <section class="panel calc-only">
+  <section class="panel">
     <!-- Derselbe Schalter wie im Menü, ein zweites Mal: hier sieht man, was
          er bewirkt, und hier wird kopiert. Beide zeigen denselben Stand. -->
     <div class="chat-head">
@@ -432,13 +430,13 @@
     </div>
   </section>
 
-  <div class="foot calc-only">
+  <div class="foot">
     <!-- Zwei Zeilen, nicht drei: quer auf einem iPhone SE kostet jede weitere
      Zeile hier ein Zwanzigstel Bildschirm, und der Test daneben haelt die
      Seite unter 4,5 Bildschirmen. Wann genau eingezahlt wird, erklaert der
      Kasten ueber der Tabelle ohnehin genauer. -->
   <p>„Sichern“ ist, was du vorab einzahlen musst, damit der Platz nicht überboten werden kann; „Eigen“ zeigt deinen laufenden Stand. Grün = deine FP. Häkchen weg = Eigen, Strich = vergeben.</p>
-    <p>Daten: <a href="https://forgeofempires.fandom.com/de/wiki/" target="_blank" rel="noopener noreferrer">Forge of Empires Wiki</a> (Fandom, <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.de" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a>), Stand <span id="dataDate">28.9.2026</span>. Kosten per Formel, P2–P5 aus P1 berechnet.</p>
+    <p>Daten: <a href="https://forgeofempires.fandom.com/de/wiki/" target="_blank" rel="noopener noreferrer">Forge of Empires Wiki</a> (Fandom, <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.de" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a>), Stand <span id="dataDate">28.9.2026</span>. Belohnungen aus den eingetragenen Gesamt-FP berechnet.</p>
   </div>
 
   <!-- Erklärung und Fragen zum Nachlesen. Für die Bedienung braucht es sie
@@ -447,14 +445,14 @@
        lesen: nur behaupten, was cipher wirklich tut. Die Fragen und Antworten
        stehen wortgleich im JSON-LD im <head> — test/e2e/seo-rechner.spec.js
        vergleicht beides. -->
-  <section class="info calc-only" aria-labelledby="howTitle">
+  <section class="info" aria-labelledby="howTitle">
     <p class="info-sep">Wissenswertes zum Fördern</p>
     <div class="panel">
       <h2 id="howTitle">So funktioniert der Förderrechner</h2>
       <p>cipher ist ein FP-Rechner für Forge of Empires: Er hilft dir, ein Legendäres Bauwerk (LG) zu fördern, ohne dass dir jemand die Mäzen-Plätze wegschnappt. Du stellst ein, was im Förderfenster steht, und liest ab, was du vorab einzahlen musst.</p>
       <ol class="info-steps">
-        <li><b>Bauwerk und Stufe wählen.</b> Gesamt-FP und die Belohnungen für P1 bis P5 kommen aus dem Datensatz.</li>
-        <li><b>Arche-Faktor einstellen.</b> Voreingestellt ist 1,90, die übliche Arche 1,9. Möglich sind Werte von 1,00 bis 2,00.</li>
+        <li><b>Bauwerk und Stufe wählen</b> und die Gesamt-FP aus dem Förderfenster eintragen. Die Belohnungen aller Plätze rechnet cipher daraus.</li>
+        <li><b>Arche-Faktor einstellen.</b> Kupfer- und Gold-Stufen haben je einen eigenen Faktor: voreingestellt 1,90 für Kupfer, die übliche Arche 1,9, und 1,00 für Gold. Möglich sind Werte von 1,00 bis 2,00.</li>
         <li><b>Plan ablesen.</b> Je Platz stehen die Kosten, die ein Förderer einzahlt, und was du vorher sichern musst; darunter die Aufteilung in Eigen und Förderer.</li>
         <li><b>Chat-Zeile kopieren.</b> Ein Tipp, und die Plätze stehen fertig für den Förderchat bereit.</li>
       </ol>
@@ -476,7 +474,7 @@
         </details>
         <details>
           <summary>Wie rechnet cipher die Belohnungen der Mäzen-Plätze?</summary>
-          <p>Die Gesamt-FP der Stufe und die Belohnung für P1 stammen aus dem Datensatz, der auf dem Forge of Empires Wiki beruht. P2 bis P5 leitet cipher daraus ab: P2 ist die Hälfte von P1, P3 ein Drittel von P2, P4 ein Viertel von P3 und P5 ein Fünftel von P4, jeweils auf 5 gerundet. Fehlt ein Wert oder ist er nur geschätzt, bittet cipher dich, die Zahl aus dem Förderfenster einzutragen.</p>
+          <p>Seit dem Prestige-Update vom 5. November 2026 bekommen die Mäzene einen festen Anteil der Stufenkosten: je nach Stufe zwischen 25 und 40 % bis Stufe 100, danach 15 % und weniger. Diesen Topf teilt das Spiel wie bisher im Verhältnis 1 : ½ : ⅙ … auf die Plätze auf, auf ganze FP gerundet; Gold-Stufen haben 7 Plätze statt 5. cipher braucht dafür nur die Gesamt-FP der Stufe aus dem Förderfenster und rechnet daraus jeden Platz so, wie ihn das Spiel zeigt.</p>
         </details>
         <details>
           <summary>Was sind Eigenanteil und Fremdkapital?</summary>
@@ -505,18 +503,6 @@
       </div>
     </div>
   </section>
-
-  <!-- Sichtbar erst ab dem Prestige-Update, siehe pause.js. Er steht am Ende
-       von <main> und ist ein <div> ohne .panel: Das Raster in styles.css
-       ordnet die Panels per :nth-of-type an, und im Pausenzustand ist alles
-       davor ausgeblendet, er steht dann trotzdem oben. -->
-  <div class="pause-note" id="pause">
-  <section class="panel" aria-labelledby="pauseTitle">
-    <h2 id="pauseTitle">cipher macht eine kurze Pause</h2>
-    <p>Mit dem Prestige-Update vom 5. November 2026 hat InnoGames die Kosten der Legendären Bauwerke und die Mäzen-Belohnungen neu berechnet. Die Zahlen in cipher stimmen damit nicht mehr, und falsche Zahlen kosten beim Fördern FP oder Plätze.</p>
-    <p>Darum rechnet cipher erst wieder, wenn die neuen Werte drin sind. Deine Favoriten und Einstellungen bleiben gespeichert.</p>
-  </section>
-  </div>
 
 </main>
 

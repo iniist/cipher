@@ -111,10 +111,8 @@ td.own { color: var(--ok); font-weight: 600 }
 .foot-links { display: flex; flex-wrap: wrap; gap: 18px }
 .foot-links a { color: var(--gold) }
 
-/* Pause zum Prestige-Update: pause.js setzt .paused auf <html>. */
-.pause-note { display: none }
-.paused .pause-note {
-  display: block;
+/* Hinweis: die Tabellen sind vom Stand vor dem Prestige-Update. */
+.prestige-note {
   max-width: 62ch;
   padding: 12px 16px;
   border-left: 4px solid var(--gold);
