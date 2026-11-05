@@ -228,7 +228,7 @@ ${JSON.stringify(jsonLd, null, 2)}
 
 <main>
   <h1>${esc(name)} fördern: Kosten und Mäzenplätze je Stufe</h1>
-  <p class="prestige-note" role="note">Die Tabellen auf dieser Seite stammen von vor dem Prestige-Update vom 5. November 2026. Seitdem berechnet das Spiel Kosten und Mäzen-Belohnungen neu; die neuen Kosten je Stufe sind noch nicht veröffentlicht. Im Förderrechner trägst du die Gesamt-FP aus dem Spiel ein und bekommst alle Plätze exakt.</p>
+  <p class="prestige-note" role="note">Die Tabellen auf dieser Seite stammen von vor dem Prestige-Update vom 5. November 2026 und werden gerade erneuert. Der Förderrechner rechnet schon mit den neuen Kosten und Mäzen-Belohnungen.</p>
   <p class="lead">${esc(page.about)} Hier stehen für jede Stufe bis ${building.maxLevel} die Gesamtkosten in Forge-Punkten, die Belohnungen der Mäzenplätze P1 bis P5 und was ein Förderer mit Arche-Faktor 1,9 einzahlt.</p>
   <p><a class="btn" href="${calcLink(building.id, example.level)}">${esc(page.short)} im Förderrechner öffnen</a></p>
 

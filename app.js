@@ -11,6 +11,9 @@
   "use strict";
 
   var DATA = window.CIPHER_DATA;
+  // Stufenkosten seit dem Prestige-Update (kosten.js, aus dem Wiki von
+  // InnoGames). Fehlt die Datei, fragt cipher bei jeder Stufe nach.
+  var COSTS = window.CIPHER_COSTS || { costs: {} };
   var Calc = window.CipherCalc;
   // Kuerzel je Bauwerk, von Hand gepflegt in abbr.js. Fehlt die Datei oder
   // ein Eintrag, gilt der volle Name.
@@ -632,10 +635,18 @@
    */
   var ownCosts = read(KEY.costs, {});
 
-  /** Gesamtkosten einer Stufe, wenn eingetragen. */
+  /**
+   * Gesamtkosten einer Stufe: ein eigener Eintrag vor der Tabelle aus
+   * kosten.js. Die Tabelle reicht bei Gold-Bauwerken bis Stufe 500, sonst
+   * bis 200; darueber fragt cipher nach.
+   */
   function costOf(buildingId, level) {
     var value = Number(ownCosts[buildingId + ":" + level]);
-    return value > 0 ? { value: value, source: "manual" } : { value: null, source: null };
+    if (value > 0) return { value: value, source: "manual" };
+    var table = COSTS.costs[buildingId];
+    var fromTable = table ? Number(table[level - 1]) : 0;
+    if (fromTable > 0) return { value: fromTable, source: "table" };
+    return { value: null, source: null };
   }
   var favorites = normaliseFavorites(read(HERE.favorites, []));
 
@@ -2533,8 +2544,10 @@
    */
   function renderNote(building, total) {
     var html = "";
-    if (total.source == null) {
-      html = '<div class="note">Seit dem Prestige-Update stehen die Kosten jeder Stufe nur im Spiel. ' +
+    if (total.source === "table") {
+      // Die Kosten stehen fest, es gibt nichts zu sagen.
+    } else if (total.source == null) {
+      html = '<div class="note">Für diese Stufe kenne ich die Kosten noch nicht. ' +
         "Trag die Gesamt-FP aus dem Förderfenster ein — die Zahl rechts im Balken, bei „0/136088“ also 136088. " +
         "Belohnungen und Plätze rechne ich daraus exakt." +
         '<div class="in">' +
@@ -2543,9 +2556,14 @@
           '<button type="button" class="go" id="applyInput">Übernehmen</button>' +
         "</div></div>";
     } else {
+      // Gibt es die Stufe auch in der Tabelle, fuehrt Zuruecksetzen dorthin;
+      // sonst ist es ein Aendern der eigenen Zahl.
+      var table = COSTS.costs[building.id];
+      var inTable = Boolean(table && table[state.level - 1]);
       html = '<div class="note man">Gesamt ' + formatNumber(total.value) +
-        ' FP auf dieser Stufe von dir aus dem Spiel eingetragen. ' +
-        '<button type="button" class="link" id="resetInput">Ändern</button></div>';
+        ' FP auf dieser Stufe von dir aus dem Spiel eingetragen' +
+        (inTable ? " (laut Wiki " + formatNumber(table[state.level - 1]) + ")" : "") + '. ' +
+        '<button type="button" class="link" id="resetInput">' + (inTable ? "Zurücksetzen" : "Ändern") + "</button></div>";
     }
     $("note").innerHTML = html;
   }
@@ -3635,6 +3653,7 @@
   $("stand").open = state.standOpen || state.ownPaid != null || state.foreign.length > 0;
   setTheme(state.theme);
   $("dataDate").textContent = formatDate(DATA.generated);
+  if (COSTS.generated) $("costDate").textContent = formatDate(COSTS.generated);
   bindEvents();
   bindWorlds();
   bindSettings();
