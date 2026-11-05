@@ -95,3 +95,16 @@ test("ein Plan aus den Belohnungen rechnet mit allen 7 Plätzen", () => {
   assert.equal(plan.total, 22732);
   assert.equal(plan.external + plan.ownShare, 22732);
 });
+
+test("die Chat-Zeile haengt auf Wunsch den Faktor an, wie Gilden ihn schreiben", () => {
+  const plan = (factors, fixed = []) => ({ rows: factors.map((factor, index) => ({
+    slot: index + 1, offered: true, factor, contribution: 100 - index, fixed: Boolean(fixed[index]) })) });
+  assert.equal(Calc.chatLine(plan([190, 190]), "Dani Arche", true, true), "Dani Arche P2(99) P1(100) ... 1.9");
+  assert.equal(Calc.chatLine(plan([200]), "Fridolin Alca", true, true), "Fridolin Alca P1(100) ... 2.0");
+  assert.equal(Calc.chatLine(plan([120]), "X", false, true), "X P1 ... 1.2");
+  assert.equal(Calc.chatLine(plan([192]), "X", false, true), "X P1 ... 1.92");
+  assert.equal(Calc.chatLine(plan([185, 190]), "X", false, true), "X P2 P1 ... 1.85-1.9");
+  // Ein getippter Betrag hat keinen Faktor; ohne Schalter bleibt alles wie bisher.
+  assert.equal(Calc.chatLine(plan([190], [true]), "X", true, true), "X P1(100)");
+  assert.equal(Calc.chatLine(plan([190]), "X", true, false), "X P1(100)");
+});

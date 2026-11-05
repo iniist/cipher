@@ -1179,13 +1179,35 @@
    * @param {boolean} withPoints Einzahlungsbetraege mit ausgeben
    * @returns {string} Leerer String, wenn kein Platz angeboten wird
    */
-  function chatLine(plan, heading, withPoints) {
+  function chatLine(plan, heading, withPoints, withFactor) {
     var offered = plan.rows.filter(function (row) { return row.offered; }).reverse();
     if (!offered.length) return "";
     var parts = offered.map(function (row) {
       return withPoints ? "P" + row.slot + "(" + row.contribution + ")" : "P" + row.slot;
     });
-    return [heading, parts.join(" ")].filter(Boolean).join(" ");
+    var line = [heading, parts.join(" ")].filter(Boolean).join(" ");
+    var factor = withFactor ? chatFactor(offered) : "";
+    return factor ? line + " ... " + factor : line;
+  }
+
+  /**
+   * Der Faktor fuer die Chat-Zeile, so wie Gilden ihn schreiben: mit Punkt
+   * und mindestens einer Nachkommastelle — "1.9", "2.0", "1.92". Zaehlen
+   * nur die Plaetze, die mit einem Faktor rechnen; ein getippter Betrag hat
+   * keinen. Rechnen sie mit verschiedenen Faktoren, steht die Spanne da.
+   * @param {Array} rows angebotene Zeilen aus buildPlan
+   * @returns {string} leer, wenn kein Platz mit einem Faktor rechnet
+   */
+  function chatFactor(rows) {
+    var factors = rows.filter(function (row) { return !row.fixed; })
+      .map(function (row) { return row.factor; });
+    if (!factors.length) return "";
+    var low = Math.min.apply(null, factors);
+    var high = Math.max.apply(null, factors);
+    function text(value) {
+      return (value / 100).toFixed(2).replace(/(\.\d)0$/, "$1");
+    }
+    return low === high ? text(low) : text(low) + "-" + text(high);
   }
 
   return {
