@@ -37,18 +37,10 @@ const ENTRIES = [
   },
   {
     loc: "/rundgang",
-    sources: ["rundgang.html", "rundgang.css", "rundgang.js", "bilder/rundgang.mp4", "bilder/rundgang.webm", "bilder/rundgang-poster.webp"],
+    sources: ["rundgang.html", "rundgang.css", "rundgang.js", "bilder/ueberblick.webp"],
     extra: `    <image:image>
       <image:loc>${OG_IMAGE}</image:loc>
-    </image:image>
-    <video:video>
-      <video:thumbnail_loc>${SITE}/bilder/rundgang-poster.webp</video:thumbnail_loc>
-      <video:title>cipher in 40 Sekunden</video:title>
-      <video:description>Der Förderrechner cipher für Forge of Empires: die Arche wählen, Stufe und Arche-Faktor setzen, den Förderplan mit den Mäzenplätzen sichern und die Chat-Zeile kopieren.</video:description>
-      <video:content_loc>${SITE}/bilder/rundgang.mp4</video:content_loc>
-      <video:duration>40</video:duration>
-      <video:family_friendly>yes</video:family_friendly>
-    </video:video>`
+    </image:image>`
   }
 ].concat(PAGES.map((page) => ({
   loc: "/" + page.slug,

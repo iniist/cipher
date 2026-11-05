@@ -18,14 +18,6 @@
     <image:image>
       <image:loc>https://foe-foerderrechner.com/bilder/og-cipher.png</image:loc>
     </image:image>
-    <video:video>
-      <video:thumbnail_loc>https://foe-foerderrechner.com/bilder/rundgang-poster.webp</video:thumbnail_loc>
-      <video:title>cipher in 40 Sekunden</video:title>
-      <video:description>Der Förderrechner cipher für Forge of Empires: die Arche wählen, Stufe und Arche-Faktor setzen, den Förderplan mit den Mäzenplätzen sichern und die Chat-Zeile kopieren.</video:description>
-      <video:content_loc>https://foe-foerderrechner.com/bilder/rundgang.mp4</video:content_loc>
-      <video:duration>40</video:duration>
-      <video:family_friendly>yes</video:family_friendly>
-    </video:video>
   </url>
   <url>
     <loc>https://foe-foerderrechner.com/arche</loc>

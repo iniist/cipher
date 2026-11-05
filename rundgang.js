@@ -192,34 +192,6 @@
     }
   }
 
-  /**
-   * Hero-Video: stumm in Schleife, aber nur solange es zu sehen ist. Bei
-   * weniger Bewegung (oder wenn der Browser das Abspielen verweigert) bleibt
-   * das Standbild mit Bedienleiste stehen.
-   */
-  function heroVideo() {
-    var video = document.getElementById("heroVideo");
-    if (!video || reduce) return;
-    video.muted = true;
-    video.controls = false;
-    function play() {
-      var promise = video.play();
-      if (promise && promise.catch) {
-        promise.catch(function () { video.controls = true; });
-      }
-    }
-    if (!("IntersectionObserver" in window)) {
-      play();
-      return;
-    }
-    new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) play();
-        else video.pause();
-      });
-    }, { threshold: 0.25 }).observe(video);
-  }
-
   function init() {
     reveal();
     embers();
@@ -227,7 +199,6 @@
     tilt();
     planSwap();
     fan();
-    heroVideo();
   }
 
   if (document.readyState === "loading") {

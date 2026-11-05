@@ -25,10 +25,6 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="cipher, der Förderrechner für Forge of Empires: ein Förderplan mit den Mäzenplätzen P1 bis P5.">
-<meta property="og:video" content="https://foe-foerderrechner.com/bilder/rundgang.mp4">
-<meta property="og:video:type" content="video/mp4">
-<meta property="og:video:width" content="720">
-<meta property="og:video:height" content="1280">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="cipher — Förderrechner für Forge of Empires">
 <meta name="twitter:description" content="Mäzenplätze sichern, Arche-Faktor einrechnen, FP-Einsatz planen und die Chat-Zeile gleich mitnehmen. Kostenlos, ohne Konto.">
@@ -58,20 +54,7 @@
       "isPartOf": { "@id": "https://foe-foerderrechner.com/#website" },
       "about": { "@id": "https://foe-foerderrechner.com/#app" },
       "primaryImageOfPage": { "@type": "ImageObject", "url": "https://foe-foerderrechner.com/bilder/og-cipher.png", "width": 1200, "height": 630 },
-      "video": { "@id": "https://foe-foerderrechner.com/rundgang#video" },
       "breadcrumb": { "@id": "https://foe-foerderrechner.com/rundgang#breadcrumb" }
-    },
-    {
-      "@type": "VideoObject",
-      "@id": "https://foe-foerderrechner.com/rundgang#video",
-      "name": "cipher in 40 Sekunden",
-      "description": "Der Förderrechner cipher für Forge of Empires in 40 Sekunden: die Arche wählen, Stufe und Arche-Faktor setzen, den Förderplan mit den Mäzenplätzen sichern, die Chat-Zeile kopieren und zwischen den sechs Darstellungen wechseln.",
-      "thumbnailUrl": "https://foe-foerderrechner.com/bilder/rundgang-poster.webp",
-      "contentUrl": "https://foe-foerderrechner.com/bilder/rundgang.mp4",
-      "uploadDate": "2026-09-26",
-      "duration": "PT40S",
-      "inLanguage": "de",
-      "isFamilyFriendly": true
     },
     {
       "@type": "SoftwareApplication",
@@ -128,14 +111,11 @@
   </div>
 
   <div class="hero-art">
-    <!-- Das Video laeuft stumm in Schleife, sobald es zu sehen ist; das
-         startet rundgang.js. Ohne Skript und bei weniger Bewegung bleibt das
-         Standbild mit Bedienleiste stehen — abspielen, wer mag. -->
+    <!-- Bis zum Prestige-Update stand hier ein Erklaervideo. Es zeigte den
+         alten Rechner und ist darum ersetzt durch das Bildschirmfoto, das
+         tools/screenshots.js erzeugt. -->
     <figure class="phone tilt reveal">
-      <video id="heroVideo" poster="./bilder/rundgang-poster.webp" width="720" height="1280" muted loop playsinline controls preload="none" aria-label="cipher in 40 Sekunden: die Arche wählen, Stufe und Arche-Faktor setzen, den Förderplan mit den Mäzenplätzen sichern, die Chat-Zeile kopieren und zwischen den sechs Looks wechseln.">
-        <source src="./bilder/rundgang.webm" type="video/webm; codecs=vp9">
-        <source src="./bilder/rundgang.mp4" type="video/mp4">
-      </video>
+      <img src="./bilder/ueberblick.webp" width="786" height="1702" alt="cipher auf dem Handy: gemerkte Bauwerke, Saturn VI Tor HYDRA auf Stufe 89 und der Faktor für Kupfer-Stufen." fetchpriority="high">
     </figure>
   </div>
 </header>

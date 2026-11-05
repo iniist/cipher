@@ -111,13 +111,6 @@ test.describe("mit prefers-reduced-motion", () => {
   test("bleiben die Animationen aus, die Hinweise aber lesbar", async ({ page }) => {
     await page.goto("/index.html");
 
-    // Kein Stempel, auch nicht bei einem perfekten Zuschnitt
-    await page.locator("#building").selectOption("Lotus_Temple", { force: true });
-    await page.fill("#level", "37");
-    await page.locator("#level").blur();
-    await page.locator('#factorChips button[data-factor="200"]').click();
-    await expect(page.locator(".stamp")).toHaveCount(0);
-
     // Konami meldet sich, ohne den Lichtstrahl zu zeigen
     await page.locator("#wordmark").focus();
     for (const key of ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"]) {

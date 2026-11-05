@@ -1378,35 +1378,6 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 
 /* ------------------------------------------------------------ Easter Eggs */
 
-/* 1) Freigabe-Stempel: erscheint, wenn ein Plan ohne Vorleistung aufgeht. */
-.stamp {
-  position: fixed;
-  right: clamp(10px, 4vw, 40px);
-  bottom: clamp(10px, 4vw, 40px);
-  z-index: 3;
-  pointer-events: none;
-  display: grid; place-items: center;
-  width: 118px; height: 118px;
-  border: 3px double var(--ok);
-  border-radius: 50%;
-  color: var(--ok);
-  font-weight: 700; font-size: .82rem; letter-spacing: .14em;
-  text-transform: uppercase; text-align: center;
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
-  transform: rotate(-14deg);
-  animation: stamp-in 2.8s cubic-bezier(.2, 1.4, .3, 1) forwards;
-}
-.stamp span { display: block; font-size: .62rem; letter-spacing: .1em; color: var(--dim); margin-top: 3px }
-
-@keyframes stamp-in {
-  0%   { opacity: 0; transform: rotate(-30deg) scale(2.6) }
-  14%  { opacity: 1; transform: rotate(-14deg) scale(1) }
-  18%  { transform: rotate(-14deg) scale(1.07) }
-  24%  { transform: rotate(-14deg) scale(1) }
-  80%  { opacity: 1 }
-  100% { opacity: 0; transform: rotate(-14deg) scale(1) }
-}
-
 /* 2) Blaupausen-Scan: ein Lichtstrahl laeuft einmal ueber die Seite. */
 .scan {
   position: fixed; inset: 0;
@@ -1660,13 +1631,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 
 @media (prefers-reduced-motion: reduce) {
   .bar i { transition: none }
-  .safe, td.chg, .stamp, .scan, .wordmark.plotting > span, .toast { animation: none }
+  .safe, td.chg, .scan, .wordmark.plotting > span, .toast { animation: none }
   .coll-list li.fresh { animation: none }
   .modes button, .seg button, .chips button, .fav-save, .fav-go, .filter-hit,
   .copy button, .coll-copy, .note .go, .slot-reset, select, input, .pick, .world-pick, .settings-pick { transition: none }
   .chips button:active, .fav-save:active, .copy button:active,
   .coll-copy:active, .note .go:active, .modes button:active, .world-pick:active, .settings-pick:active { transform: none }
-  /* Der Stempel wuerde sonst dauerhaft stehen bleiben — er wird in diesem
-     Modus gar nicht erst eingeblendet (siehe app.js). */
 }
 
