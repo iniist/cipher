@@ -73,7 +73,7 @@ const STICHPROBEN = [
   ["Arctic_Orangery", 155, 87593], ["Alcatraz", 122, 38357],
   ["Château_Frontenac", 102, 9237], ["Space_Carrier", 78, 7008],
   ["Observatory", 102, 7604], ["The_Kraken", 112, 26574],
-  ["Shattered_Horizon_Siphon", 64, 265600]
+  ["Shattered_Horizon_Siphon", 64, 265600], ["Shattered_Horizon_Siphon", 72, 298800]
 ];
 
 /** Die Kupfer-Kategorie rundet der Artikel auf volle Tausend. */

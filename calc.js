@@ -182,15 +182,15 @@
   /**
    * Eine Belohnung so runden, wie das Spiel sie anzeigt.
    *
-   * Kaufmaennisch auf ganze FP — gemessen an 24 abgelesenen Plaetzen auf
-   * Kupfer- und Gold-Stufen, alle exakt. Einzige Ausnahme: 3 FP lassen sich
-   * nicht in Paketen auszahlen (Artikel 7011), das Spiel zeigt dann 4
-   * (Castel del Monte Stufe 112, P6: gerechnet 2,76). Was aus einer 1 wird,
-   * ist noch nicht abgelesen; sie bleibt 1.
+   * Kaufmaennisch auf ganze FP — gemessen an 25 abgelesenen Plaetzen auf
+   * Kupfer- und Gold-Stufen, alle exakt. Ausnahme sind 1 und 3 FP: Sie
+   * lassen sich nicht in Paketen auszahlen (Artikel 7011), das Spiel zeigt
+   * dann den naechsten auszahlbaren Wert. Abgelesen: Castel del Monte Stufe
+   * 112, P6 gerechnet 2,76 -> 4; Alcatraz Stufe 122, P7 gerechnet 0,66 -> 2.
    */
   function roundReward(value) {
     var rounded = Math.floor(value + 0.5 + EPSILON);
-    return rounded === 3 ? 4 : rounded;
+    return rounded === 1 || rounded === 3 ? rounded + 1 : rounded;
   }
 
   /**

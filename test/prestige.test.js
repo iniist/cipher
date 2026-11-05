@@ -13,10 +13,12 @@ const ABLESUNGEN = [
   ["The_Arc", 189, 136088, [11880, 5940, 1980, 495, 99, 17, 2]],
   ["Castel_del_Monte", 112, 22732, [1984, 992, 331, 83, 17, 4, 0]],
   ["Saturn_VI_Gate_HYDRA", 89, 28556, [4159, 2079, 693, 173, 35]],
+  ["Shattered_Horizon_Siphon", 72, 298800, [43515, 21757, 7252, 1813, 363]],
+  ["Shattered_Horizon_Siphon", 64, 265600, [61887]],
   ["The_Blue_Galaxy", 103, 13758, [1201]],
   ["Himeji_Castle", 102, 12781, [1116]],
   ["Arctic_Orangery", 155, 87593, [7647]],
-  ["Alcatraz", 122, 38357, [3348]],
+  ["Alcatraz", 122, 38357, [3348, null, null, null, null, null, 2]],
   ["Château_Frontenac", 102, 9237, [806]],
   ["Space_Carrier", 78, 7008, [1021]],
   ["Observatory", 102, 7604, [664]],
@@ -28,6 +30,7 @@ test("jede Ablesung aus dem Spiel trifft die Regel exakt", () => {
   for (const [id, level, cost, seen] of ABLESUNGEN) {
     const rewards = Calc.rewardsFromCost(cost, level, Calc.isGold(id, level));
     seen.forEach((value, index) => {
+      if (value == null) return;
       assert.equal(rewards[index], value, `${id} Stufe ${level} P${index + 1}`);
     });
   }
@@ -67,10 +70,12 @@ test("die Gewichte sind die normierte alte Kette", () => {
   assert.ok(Math.abs(seven[6] / seven[5] - 1 / 7) < 1e-12);
 });
 
-test("3 FP lassen sich nicht auszahlen und werden zu 4", () => {
+test("1 und 3 FP lassen sich nicht auszahlen und werden zu 2 und 4", () => {
   assert.equal(Calc.roundReward(2.76), 4);
   assert.equal(Calc.roundReward(3.4), 4);
   assert.equal(Calc.roundReward(2.4), 2);
+  assert.equal(Calc.roundReward(0.66), 2);
+  assert.equal(Calc.roundReward(1.4), 2);
   assert.equal(Calc.roundReward(0.39), 0);
 });
 
