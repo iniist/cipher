@@ -30,7 +30,7 @@ const OG_IMAGE = `${SITE}/bilder/og-cipher.png`;
 const ENTRIES = [
   {
     loc: "/",
-    sources: ["index.html", "app.js", "calc.js", "data.js", "abbr.js", "styles.css", "fonts.css"],
+    sources: ["index.html", "app.js", "calc.js", "data.js", "kosten.js", "abbr.js", "styles.css", "fonts.css"],
     extra: `    <image:image>
       <image:loc>${OG_IMAGE}</image:loc>
     </image:image>`

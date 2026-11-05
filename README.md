@@ -64,9 +64,13 @@ selbst ein und levelst damit.
   siehe `test/prestige.test.js`.
 - **Gold-Kategorie**: 21 Bauwerke ab Stufe 101, mit 7 Plätzen und eigenem
   Faktor (Gold-Mäzen-Bonus, Vorgabe 1,00). Alle anderen enden bei Stufe 200.
-- **Gesamtkosten** kennt der Datensatz für das neue System noch nicht. cipher
-  fragt je Bauwerk und Stufe nach den Gesamt-FP aus dem Förderfenster und
-  merkt sie sich (`cipher:costs`).
+- **Gesamtkosten** je Stufe stehen in `kosten.js`, erzeugt von
+  `tools/import-inno.js` aus dem Forge of Empires Wiki von InnoGames
+  (de.wiki.forgeofempires.com). Das Werkzeug prüft jede Tabelle gegen die
+  Gesamtsummen aus Artikel 7009 und gegen Ablesungen aus dem Spiel, bevor es
+  schreibt. Gold-Bauwerke reichen bis Stufe 500, die übrigen bis 200; darüber
+  fragt cipher nach den Gesamt-FP aus dem Förderfenster. Ein eigener Eintrag
+  (`cipher:costs`) geht immer vor.
 - Einzahlung: `floor((Belohnung × Faktor + 50) / 100)`.
 - Fremdeinzahlungen: Von P1 abwärts bekommt die größte noch offene den
   Platz, sobald sie mindestens so viel hat, wie die Gilde dort zahlen würde

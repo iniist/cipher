@@ -122,8 +122,7 @@ test.describe("Die neue Adresse", () => {
   test("ein kaputter Anhang schadet nicht", async ({ page }) => {
     await speicherSetzen(page, {});
     await page.goto("/index.html#umzug=%E0%A4%A");
-    // Die Seite steht wie sonst auch: ohne eingetragene Kosten mit der Bitte darum.
-    await expect(page.locator("#inputTotal")).toBeVisible();
+    await expect(page.locator("#rows tr")).toHaveCount(5);
     await expect(page.locator(".toast")).toHaveCount(0);
     expect(new URL(page.url()).hash).toBe("");
   });
