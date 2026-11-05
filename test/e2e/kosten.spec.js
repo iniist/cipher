@@ -148,3 +148,23 @@ test("der Schalter „Faktor“ hängt ihn an die Chat-Zeile, auf Gold-Stufen de
   await page.reload();
   await expect(page.locator("#chatPoints")).toHaveText(/ \.\.\. 1\.0$/);
 });
+
+test("die Zeile über dem Plan nennt Anteil und Sprünge", async ({ page }) => {
+  const info = page.locator("#planInfo");
+  await page.goto("/index.html" + HYDRA_89.hash);
+  await expect(info).toHaveText("Kupfer-Stufe · 5 Plätze · Mäzen-Anteil 25 % der Stufenkosten");
+
+  // Siphon: auf 69 kündigt sich der Sprung an, auf 70 steht, was davor galt.
+  await page.goto("/index.html#lg=Shattered_Horizon_Siphon&stufe=69");
+  await page.reload();
+  await expect(info).toHaveText("Kupfer-Stufe · 5 Plätze · Mäzen-Anteil 40 % der Stufenkosten · ab Stufe 70: 25 %");
+  await page.click("#levelUp");
+  await expect(info).toHaveText("Kupfer-Stufe · 5 Plätze · Mäzen-Anteil 25 % der Stufenkosten (bis Stufe 69: 40 %)");
+
+  // Gold-Bauwerk an der Grenze zu Gold.
+  await page.goto("/index.html#lg=The_Arc&stufe=100");
+  await page.reload();
+  await expect(info).toHaveText("Kupfer-Stufe · 5 Plätze · Mäzen-Anteil 25 % der Stufenkosten · ab Stufe 101: Gold, 7 Plätze, 15 %");
+  await page.click("#levelUp");
+  await expect(info).toHaveText("Gold-Stufe · 7 Plätze · Mäzen-Anteil 15 % der Stufenkosten (bis Stufe 100: 25 %)");
+});
