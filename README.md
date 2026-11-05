@@ -60,7 +60,7 @@ selbst ein und levelst damit.
   25 % (70–100), 15 % (101–200), 10 %, 7 %, ab 401 5 %. Der Topf geht im
   Verhältnis der alten Kette 1 : ½ : ⅙ : 1⁄24 : 1⁄120 (Gold dazu 1⁄720,
   1⁄5040) auf die Plätze, jeder Platz einzeln kaufmännisch auf ganze FP
-  gerundet; 3 FP zeigt das Spiel als 4. Geprüft an Ablesungen aus dem Spiel,
+  gerundet; 1 und 3 FP zeigt das Spiel als 2 und 4. Geprüft an Ablesungen aus dem Spiel,
   siehe `test/prestige.test.js`.
 - **Gold-Kategorie**: 21 Bauwerke ab Stufe 101, mit 7 Plätzen und eigenem
   Faktor (Gold-Mäzen-Bonus, Vorgabe 1,00). Alle anderen enden bei Stufe 200.
