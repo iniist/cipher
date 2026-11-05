@@ -36,6 +36,14 @@
   var FACTOR_PRESETS = [180, 185, 190, 192, 195, 200];
 
   /**
+   * Schnellwahl auf Gold-Stufen. Dort zaehlt nur der Gold-Maezen-Bonus:
+   * die Arche bringt ihn ab Stufe 101 mit 5 %, bei 188 mit 21 %, bis 500
+   * hoechstens 40 %; Siphon und Technologien kommen dazu. Die ueblichen
+   * Werte liegen darum weit unter denen fuer Kupfer.
+   */
+  var GOLD_FACTOR_PRESETS = [100, 105, 110, 115, 120, 125];
+
+  /**
    * Voreinstellung fuer Gold-Stufen: 1,00. Den Gold-Maezen-Bonus haben
    * anfangs kaum Spieler, mit 1,90 zahlte ein Foerderer ohne ihn drauf.
    */
@@ -1544,8 +1552,17 @@
       : formatFactor(low) + "–" + formatFactor(high);
   }
 
+  /**
+   * Die Schnellwahl bauen — fuer Kupfer- oder Gold-Stufen. Neu gebaut wird
+   * nur, wenn die Kategorie wechselt; sonst bliebe der Fokus nicht auf
+   * dem Chip, den man gerade angetippt hat.
+   */
   function buildFactorChips() {
-    $("factorChips").innerHTML = FACTOR_PRESETS.map(function (factor) {
+    var presets = goldNow() ? GOLD_FACTOR_PRESETS : FACTOR_PRESETS;
+    var kind = goldNow() ? "gold" : "copper";
+    if ($("factorChips").dataset.kind === kind) return;
+    $("factorChips").dataset.kind = kind;
+    $("factorChips").innerHTML = presets.map(function (factor) {
       return '<button type="button" data-factor="' + factor + '">' + formatFactor(factor) + "</button>";
     }).join("");
   }
@@ -1670,6 +1687,7 @@
     $("factorLabel").textContent = goldNow()
       ? "Faktor Gold (Gold-Mäzen-Bonus)"
       : "Faktor Kupfer (Arche-Bonus)";
+    buildFactorChips();
     document.querySelectorAll("#factorChips button").forEach(function (chip) {
       chip.classList.toggle("on", Number(chip.dataset.factor) === currentFactor());
     });
