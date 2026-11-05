@@ -425,6 +425,7 @@ select, .pick {
 /* Am Foerderchat steht der Schalter rechts neben der Ueberschrift. */
 .chat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px }
 .chat-head .abbr-toggle { margin: 0 0 10px }
+.chat-toggles { display: flex; gap: 14px }
 
 /* Dieselbe Zahl heisst fuer die einen "steht auf 80", fuer die anderen
    "wird auf 81 gezogen". Umschalter und erklaerende Zeile stehen zusammen

@@ -130,3 +130,21 @@ test("die Fußzeile nennt die Quelle der Kosten", async ({ page }) => {
   await expect(zeile).toContainText("© InnoGames GmbH");
   await expect(zeile.locator('a[href="https://de.wiki.forgeofempires.com/"]')).toHaveCount(1);
 });
+
+test("der Schalter „Faktor“ hängt ihn an die Chat-Zeile, auf Gold-Stufen den Gold-Faktor", async ({ page }) => {
+  await page.goto("/index.html" + HYDRA_89.hash);
+  await expect(page.locator("#chatFactor")).not.toBeChecked();
+  await expect(page.locator("#chatPoints")).not.toContainText("...");
+
+  await page.locator("#chatFactor").check();
+  await expect(page.locator("#chatPoints")).toHaveText(/ \.\.\. 1\.9$/);
+  await expect(page.locator("#chatPlain")).toHaveText(/ \.\.\. 1\.9$/);
+
+  // Gemerkt über das Neuladen.
+  await page.reload();
+  await expect(page.locator("#chatFactor")).toBeChecked();
+
+  await page.goto("/index.html" + CASTEL_112.hash);
+  await page.reload();
+  await expect(page.locator("#chatPoints")).toHaveText(/ \.\.\. 1\.0$/);
+});

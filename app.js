@@ -303,7 +303,7 @@
    * und Plaetzen — gilt ueberall gleich.
    */
   var WORLD_FIELDS = ["building", "level", "factor", "goldFactor", "enabled", "taken", "slotsFor",
-    "slotFactors", "slotPays", "ownPaid", "ownPaidFor", "foreign", "fit", "fitLevel", "chatMode"];
+    "slotFactors", "slotPays", "ownPaid", "ownPaidFor", "foreign", "fit", "fitLevel", "chatMode", "chatFactor"];
 
   /**
    * Die Welt, die zuerst gewaehlt wurde ("home"), behaelt die Schluessel, die
@@ -439,7 +439,11 @@
     // Welche Fassung der Chat-Zeile kopiert wird: nur die Plaetze oder
     // mit den FP je Platz. "points" ist die Vorgabe — die meisten Gilden
     // wollen die Betraege sehen.
-    chatMode: stored.chatMode === "plain" ? "plain" : "points"
+    chatMode: stored.chatMode === "plain" ? "plain" : "points",
+    // Ob der Faktor hinten an die Chat-Zeile kommt ("... 1.9"). Viele
+    // Gilden schreiben ihn seit dem Prestige-Update dazu, weil Kupfer- und
+    // Gold-Stufen verschieden zahlen. Aus ist die Vorgabe.
+    chatFactor: stored.chatFactor === true
   };
   state.slotsFor = slotsForOf(stored);
 
@@ -1707,6 +1711,7 @@
     renderShortField(building);
     $("useAbbr").checked = state.useAbbr;
     $("useAbbrChat").checked = state.useAbbr;
+    $("chatFactor").checked = state.chatFactor;
     if (relabelCollection()) renderCollection();
 
     syncFavoriteLevel();
@@ -2386,8 +2391,8 @@
 
   function renderChat(plan, building) {
     var heading = [state.name.trim(), shortName(building)].filter(Boolean).join(" ");
-    setChatLine("chatPlain", Calc.chatLine(plan, heading, false));
-    setChatLine("chatPoints", Calc.chatLine(plan, heading, true));
+    setChatLine("chatPlain", Calc.chatLine(plan, heading, false, state.chatFactor));
+    setChatLine("chatPoints", Calc.chatLine(plan, heading, true, state.chatFactor));
   }
 
   function setChatLine(id, text) {
@@ -2862,6 +2867,11 @@
         state.useAbbr = event.target.checked;
         render();
       });
+    });
+
+    $("chatFactor").addEventListener("change", function (event) {
+      state.chatFactor = event.target.checked;
+      render();
     });
 
     // Leer heisst: wieder der Reihe nach gesichert rechnen. Punkte und

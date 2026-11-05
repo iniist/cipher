@@ -135,7 +135,7 @@
           "name": "Was schreibe ich in den Förderchat?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "cipher baut die Zeile aus deinem Namen, dem Bauwerk und den angebotenen Plätzen, etwa „Dani Arche P5 P4 P3“, auf Wunsch mit den FP je Platz in Klammern. Statt des vollen Namens kann ein Kürzel stehen. Jede kopierte Zeile landet zusätzlich in einer Sammlung, so gibst du mehrere Bauwerke auf einmal in den Chat."
+            "text": "cipher baut die Zeile aus deinem Namen, dem Bauwerk und den angebotenen Plätzen, etwa „Dani Arche P5 P4 P3“, auf Wunsch mit den FP je Platz in Klammern und dem Faktor am Ende, etwa „… 1.9“. Statt des vollen Namens kann ein Kürzel stehen. Jede kopierte Zeile landet zusätzlich in einer Sammlung, so gibst du mehrere Bauwerke auf einmal in den Chat."
           }
         },
         {
@@ -393,7 +393,10 @@
          er bewirkt, und hier wird kopiert. Beide zeigen denselben Stand. -->
     <div class="chat-head">
       <h2>Förderchat</h2>
-      <label class="abbr-toggle" title="Im Chat „AO“ statt „Arktische Orangerie“ schreiben"><input type="checkbox" id="useAbbrChat"> Kürzel<span class="sr-only"> statt Namen verwenden</span></label>
+      <div class="chat-toggles">
+        <label class="abbr-toggle" title="Im Chat „AO“ statt „Arktische Orangerie“ schreiben"><input type="checkbox" id="useAbbrChat"> Kürzel<span class="sr-only"> statt Namen verwenden</span></label>
+        <label class="abbr-toggle" title="Den Faktor hinten anhängen, etwa „… 1.9“"><input type="checkbox" id="chatFactor"> Faktor<span class="sr-only"> an die Zeile anhängen</span></label>
+      </div>
     </div>
     <!-- Eine Zeile, eine Wahl: ob die Beträge mitgehen, stellt der Schalter
          ein, und er merkt es sich je Welt — jede Gilde hält es anders. Früher
@@ -482,7 +485,7 @@
         </details>
         <details>
           <summary>Was schreibe ich in den Förderchat?</summary>
-          <p>cipher baut die Zeile aus deinem Namen, dem Bauwerk und den angebotenen Plätzen, etwa „Dani Arche P5 P4 P3“, auf Wunsch mit den FP je Platz in Klammern. Statt des vollen Namens kann ein Kürzel stehen. Jede kopierte Zeile landet zusätzlich in einer Sammlung, so gibst du mehrere Bauwerke auf einmal in den Chat.</p>
+          <p>cipher baut die Zeile aus deinem Namen, dem Bauwerk und den angebotenen Plätzen, etwa „Dani Arche P5 P4 P3“, auf Wunsch mit den FP je Platz in Klammern und dem Faktor am Ende, etwa „… 1.9“. Statt des vollen Namens kann ein Kürzel stehen. Jede kopierte Zeile landet zusätzlich in einer Sammlung, so gibst du mehrere Bauwerke auf einmal in den Chat.</p>
         </details>
         <details>
           <summary>Geht das auch mit verschiedenen Faktoren je Platz?</summary>
