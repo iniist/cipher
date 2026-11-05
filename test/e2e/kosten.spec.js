@@ -103,3 +103,22 @@ test("Gold-Bauwerke gehen über Stufe 200 hinaus", async ({ page }) => {
   await page.goto("/index.html#lg=The_Arc&stufe=250");
   await expect(page.locator("#levelUp")).toBeEnabled();
 });
+
+test("die Schnellwahl bietet auf Gold-Stufen eigene Werte an", async ({ page }) => {
+  const chips = page.locator("#factorChips button");
+  await page.goto("/index.html" + CASTEL_112.hash);
+  await eintragen(page, CASTEL_112.cost);
+  await expect(chips).toHaveText(["1,00", "1,05", "1,10", "1,15", "1,20", "1,25"]);
+  await expect(page.locator('#factorChips button[data-factor="100"]')).toHaveClass(/on/);
+
+  await page.locator('#factorChips button[data-factor="120"]').click();
+  await expect(page.locator("#factor")).toHaveValue("1,20");
+  // P1 zahlt 1.984 × 1,20 = 2.380,8, also 2.381.
+  await expect(page.locator('[data-pay-open="0"]')).toHaveText("2.381");
+
+  // Auf einer Kupfer-Stufe die gewohnte Schnellwahl und der Kupfer-Faktor.
+  await page.fill("#level", "100");
+  await page.locator("#level").blur();
+  await expect(chips).toHaveText(["1,80", "1,85", "1,90", "1,92", "1,95", "2,00"]);
+  await expect(page.locator("#factor")).toHaveValue("1,90");
+});
