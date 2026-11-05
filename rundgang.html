@@ -53,7 +53,7 @@
       "@id": "https://foe-foerderrechner.com/rundgang#webpage",
       "url": "https://foe-foerderrechner.com/rundgang",
       "name": "FoE-Förderrechner mit Arche-Faktor für LGs — cipher",
-      "description": "Ein Rundgang durch cipher, einen Förderrechner für Legendäre Bauwerke in Forge of Empires: Mäzenplätze P1–P5 sichern, Arche-Faktor einrechnen, FP-Einsatz planen, Chat-Zeile kopieren.",
+      "description": "Ein Rundgang durch cipher, einen Förderrechner für Legendäre Bauwerke in Forge of Empires: Mäzenplätze P1–P7 sichern, Arche-Faktor einrechnen, FP-Einsatz planen, Chat-Zeile kopieren.",
       "inLanguage": "de",
       "isPartOf": { "@id": "https://foe-foerderrechner.com/#website" },
       "about": { "@id": "https://foe-foerderrechner.com/#app" },
@@ -214,9 +214,10 @@
       <p class="kicker">Arche-Faktor</p>
       <h3>Ein Faktor für alle — oder einer je Platz</h3>
       <p>Der Faktor läuft über einen Stepper mit Schnellwahl für die üblichen Werte. Getippt werden darf, wie es gerade kommt: <code>1,93</code>, <code>1.93</code>, <code>193</code> oder <code>193 %</code> meinen alle dasselbe.</p>
-      <p>Weil der Arche-Bonus dem Förderer gehört und nicht dem Bauwerk, lässt sich hinter „Faktor oder FP je Platz“ jeder der fünf Plätze einzeln einstellen.</p>
+      <p>Weil der Arche-Bonus dem Förderer gehört und nicht dem Bauwerk, lässt sich hinter „Faktor oder FP je Platz“ jeder Platz einzeln einstellen.</p>
       <ul class="ticks">
         <li>Schnellwahl: 1,80 · 1,85 · 1,90 · 1,92 · 1,95 · 2,00 — erlaubt ist alles von 1,00 bis 2,00.</li>
+        <li>Kupfer- und Gold-Stufen haben je einen eigenen Faktor: Auf Gold-Stufen zählt der Gold-Mäzen-Bonus, nicht die Arche. cipher nimmt automatisch den passenden.</li>
         <li>Je Platz wahlweise als Faktor oder als fester FP-Betrag, etwa wenn jemand einen Platz mit krummer Summe übernimmt.</li>
         <li>Ein Platz <em>folgt</em> dem Wert oben, bis du ihn anfasst — danach ist er <em>angepasst</em>. „Alle wieder angleichen“ holt alle zurück.</li>
         <li>Kein Schieberegler, der beim Scrollen versehentlich springt.</li>
@@ -239,15 +240,15 @@
     <div class="feature-text reveal">
       <p class="kicker">Förderplan</p>
       <h3>Was jeder Platz kostet — und was du vorstreckst</h3>
-      <p>Für jeden der fünf Mäzen-Plätze stehen Belohnung und Kosten samt Arche-Bonus da. Die letzte Spalte sagt, was du vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann.</p>
+      <p>Für jeden Mäzen-Platz stehen Belohnung und Kosten samt Arche-Bonus da — fünf auf Kupfer-Stufen, sieben auf Gold-Stufen. Die letzte Spalte sagt, was du vorab einzahlen musst, damit der Platz nicht mehr überboten werden kann.</p>
       <p>Ein Tipp auf die Spaltenüberschrift wechselt zwischen zwei verbreiteten Lesarten: <strong>Sichern</strong> zeigt den Schritt je Platz, <strong>Eigen</strong> deinen laufenden Stand.</p>
       <ul class="ticks">
         <li>Häkchen antippen — erst „vergeben“ (Strich): schon belegt, zählt weiter zu den Förderern, fällt aber aus dem Chat. Noch einmal — der Platz wird nicht angeboten und zählt zu deinen eigenen FP.</li>
         <li>Unter „Schon im Bauwerk“ trägst du ein, was jetzt drin ist: deine FP und die von Fremdeinzahlern und Snipern. cipher setzt jeden Betrag auf den Platz, den er damit behält, und rechnet vom jetzigen Stand aus.</li>
-        <li>Mehr eingezahlt als nötig? „Überzahlt? Faktor anpassen“ senkt den Faktor für alle offenen Plätze gleich, bis sie trotzdem sicher passen. Wahlweise bleiben ein paar FP zum Leveln für dich, oder P5 schließt die Stufe ab und den Rest teilen sich alle Plätze — keiner zahlt drauf.</li>
-        <li>Ein Balken zeigt die Aufteilung auf deine FP (grün) und P1 bis P5.</li>
+        <li>Mehr eingezahlt als nötig? „Überzahlt? Faktor anpassen“ senkt den Faktor für alle offenen Plätze gleich, bis sie trotzdem sicher passen. Wahlweise bleiben ein paar FP zum Leveln für dich, oder der letzte Platz schließt die Stufe ab und den Rest teilen sich alle Plätze — keiner zahlt drauf.</li>
+        <li>Ein Balken zeigt die Aufteilung auf deine FP (grün) und die Mäzen-Plätze.</li>
         <li>Unter der Tabelle: Gesamt, Förderer, Eigen in FP und Prozent — grün sind überall deine eigenen FP — und ein Kasten, der erklärt, wann du was einzahlst.</li>
-        <li>Fehlen dem Datensatz Kosten oder P1 für eine sehr hohe Stufe, sagt cipher das offen und rechnet mit deinen Zahlen aus dem Förderfenster weiter.</li>
+        <li>Die Gesamt-FP einer Stufe trägst du einmal aus dem Förderfenster ein. Seit dem Prestige-Update rechnet cipher daraus jeden Platz so, wie ihn das Spiel zeigt, und merkt sich die Zahl.</li>
       </ul>
     </div>
   </article>

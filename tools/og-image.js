@@ -86,7 +86,7 @@ li {
     <h1>Förderrechner für Forge of Empires</h1>
     <h2>Arche &amp; Legendäre Bauwerke</h2>
     <ul>
-      <li>Mäzenplätze P1–P5 sichern</li>
+      <li>Mäzenplätze P1–P7 sichern</li>
       <li>Arche-Faktor 1,00–2,00</li>
       <li>FP-Einsatz planen</li>
       <li>Chat-Zeile fertig</li>
