@@ -64,3 +64,34 @@ test("der Preis einer Blaupause, wenn man für sie draufzahlt", () => {
   assert.equal(Calc.blueprintPrice(1000, 8, 21), 100);
   assert.equal(Calc.blueprintPrice(1000, 0, 21), null);
 });
+
+test("ein Einsatz: Platz, Sicherheit und wer überholen könnte", () => {
+  const options = { rewards: [100, 50, 20], open: 3000, taken: [5000, 2000, 900], bonus: 0 };
+  const at = (pay) => Calc.snipeDeposit(options, pay);
+  assert.equal(at(900).rank, 0, "900 reicht nicht an 900 vorbei");
+  assert.deepEqual([at(901).rank, at(901).safe, at(901).threat], [3, false, 2]);
+  assert.deepEqual([at(1949).safe, at(1950).safe], [false, true]);
+  assert.deepEqual([at(2001).rank, at(2500).rank, at(2500).safe], [2, 2, true]);
+  assert.equal(at(99999).pay, 3000, "mehr als offen geht nicht");
+});
+
+test("Blaupausen-Schätzung für die Arche liegt höchstens 1 daneben", () => {
+  // Ablesungen Arche, Gold-Stufen, P1..P7 (6.11.2026)
+  const seen = {
+    129: { copper: [10, 7, 6, 5, 4, 3, 3], gold: [5, 4, 3, 2, 2, 2, 2] },
+    141: { copper: [11, 8, 6, 5, 4, 4, 3], gold: [6, 4, 3, 3, 2, 2, 2] },
+    181: { copper: [12, 9, 7, 6, 5, 4, 4], gold: [8, 6, 5, 4, 3, 3, 2] },
+    183: { copper: [13], gold: [8] },
+    202: { copper: [13, 9, 7, 6, 5, 4, 4], gold: [9, 7, 5, 4, 4, 3, 3] }
+  };
+  for (const [level, kinds] of Object.entries(seen)) {
+    for (const [kind, list] of Object.entries(kinds)) {
+      list.forEach((value, index) => {
+        const estimate = Calc.estimateBlueprints("The_Arc", Number(level), index + 1)[kind];
+        assert.ok(Math.abs(estimate - value) <= 1, `${kind} ${level} P${index + 1}: ${estimate} statt ${value}`);
+      });
+    }
+  }
+  assert.equal(Calc.estimateBlueprints("The_Arc", 100, 1), null, "Kupfer-Stufe");
+  assert.equal(Calc.estimateBlueprints("Observatory", 150, 1), null, "andere Bauwerke");
+});

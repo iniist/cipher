@@ -1307,6 +1307,54 @@
   }
 
   /**
+   * Was ein bestimmter Einsatz bringt: auf welchem Platz man landet, ob man
+   * dort sicher ist und was es bringt. Gleiche Regeln wie snipePlaces.
+   * @param {object} options wie bei snipePlaces
+   * @param {number} pay geplanter Einsatz in FP
+   * @returns {object} rank (0 = kein Platz), value, safe, threat, profit
+   */
+  function snipeDeposit(options, pay) {
+    var open = Math.max(0, Math.floor(options.open || 0));
+    pay = Math.max(0, Math.min(Math.floor(pay || 0), open));
+    var taken = (options.taken || []).filter(function (amount) { return amount > 0; })
+      .slice().sort(function (a, b) { return b - a; });
+    // Wer schon so viel hat wie wir, war zuerst da und bleibt vorn.
+    var above = taken.filter(function (amount) { return amount >= pay; }).length;
+    var below = taken.filter(function (amount) { return amount < pay; });
+    var rank = pay > 0 && above < options.rewards.length ? above + 1 : 0;
+    var reward = rank ? options.rewards[rank - 1] : 0;
+    var value = reward + arcExtra(reward, options.bonus);
+    var under = below.length ? below[0] : 0;
+    var rest = open - pay;
+    // Wer am wenigsten braucht, um vorbeizuziehen: der Hoechste unter uns.
+    var threat = pay + 1 - under;
+    return {
+      pay: pay, rank: rank, reward: reward, value: value,
+      safe: rank > 0 && threat > rest, threat: threat, rest: rest,
+      profit: value - pay
+    };
+  }
+
+  /**
+   * Blaupausen je Platz schaetzen. Eine Regel von InnoGames kennen wir nicht;
+   * diese Kurven sind an Ablesungen der Arche auf den Gold-Stufen 129, 141,
+   * 181, 183 und 202 angepasst (6.11.2026) und liegen dort hoechstens um 1
+   * daneben. Fuer andere Bauwerke und Kupfer-Stufen gibt es keine Schaetzung.
+   * @returns {{copper: number, gold: number}|null}
+   */
+  var BLUEPRINT_FIT = {
+    copper: { a: 2.24335, level: 0.33, slot: 0.59 },
+    gold: { a: 0.00952928, level: 1.30, slot: 0.54 }
+  };
+  function estimateBlueprints(buildingId, level, slot) {
+    if (buildingId !== "The_Arc" || !isGold(buildingId, level)) return null;
+    function curve(fit) {
+      return Math.round(fit.a * Math.pow(level, fit.level) * Math.pow(slot, -fit.slot));
+    }
+    return { copper: curve(BLUEPRINT_FIT.copper), gold: curve(BLUEPRINT_FIT.gold) };
+  }
+
+  /**
    * Was eine Blaupause kostet, wenn man fuer sie FP draufzahlt.
    * @param {number} loss FP, die man mehr einzahlt, als zurueckkommen
    * @param {number} blueprints Blaupausen laut Tooltip, ohne Bonus
@@ -1349,6 +1397,8 @@
     chatLine: chatLine,
     arcExtra: arcExtra,
     snipePlaces: snipePlaces,
+    snipeDeposit: snipeDeposit,
+    estimateBlueprints: estimateBlueprints,
     blueprintPrice: blueprintPrice
   };
 });

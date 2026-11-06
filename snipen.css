@@ -1,53 +1,239 @@
 /*!
- * cipher — Snipen (snipen.html). Baut auf lg.css auf.
+ * cipher — Arche-Sniper (snipen.html)
+ *
+ * Bewusst anders als der Rechner: Nacht, Messing, ein Fadenkreuz. Farben
+ * tragen genau eine Bedeutung — Sicherheit: Rot = kein Platz, Bernstein =
+ * Platz, aber angreifbar, Gruen = sicher.
  */
 
-.snipe-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px 16px;
-  margin: 20px 0;
-  padding: 16px;
-  border: 2px solid var(--brass);
-  border-radius: 12px;
-  background: var(--wood-dark);
+:root {
+  --bg: #0b1118;
+  --panel: #121b25;
+  --panel-2: #182432;
+  --line: #24364a;
+  --ink: #eef3f8;
+  --dim: #8fa3b8;
+  --brass: #f2b54a;
+  --red: #ff5b57;
+  --amber: #ffad33;
+  --green: #35d68a;
+  --radius: 16px;
+  color-scheme: dark;
 }
-.snipe-form .wide { grid-column: 1 / -1 }
-.snipe-form label, .snipe-form legend { display: flex; flex-direction: column; gap: 4px; color: var(--dim); font-weight: 600 }
-.snipe-form small { font-weight: 400; font-size: .8em }
-.snipe-form fieldset { margin: 0; padding: 0; border: 0; min-width: 0 }
-.snipe-form legend { padding: 0; margin-bottom: 6px }
 
-.snipe-form input, .snipe-form select, .snipe-rows input {
-  width: 100%;
-  padding: 8px 10px;
-  border: 2px solid var(--brass);
-  border-radius: 8px;
-  background: var(--wood-deep);
+*, *::before, *::after { box-sizing: border-box }
+[hidden] { display: none !important }
+
+html { background: var(--bg) }
+body {
+  margin: 0;
   color: var(--ink);
-  font: inherit;
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(242, 181, 74, .14), transparent 60%),
+    radial-gradient(900px 600px at -10% 30%, rgba(53, 214, 138, .07), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+  font-family: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+a { color: var(--brass) }
+:focus-visible { outline: 3px solid var(--brass); outline-offset: 2px }
+
+.bar, main, .foot { max-width: 760px; margin: 0 auto; padding: 0 16px }
+
+/* --------------------------------------------------------------- Kopf */
+
+.bar { display: flex; align-items: center; justify-content: space-between; padding-top: 18px }
+.brand { color: var(--dim); font-weight: 700; text-decoration: none; letter-spacing: .04em }
+h1 {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0;
+  font-size: clamp(1.5rem, 6vw, 2.1rem);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.scope { width: 1.1em; height: 1.1em; fill: none; stroke: var(--brass); stroke-width: 2 }
+.intro { color: var(--dim); margin: 14px 0 22px; max-width: 60ch }
+
+/* ------------------------------------------------------------ Schritte */
+
+.step {
+  margin: 0 0 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+}
+.step h2 {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 0 0 12px;
+  font-size: 1.15rem; letter-spacing: .04em; text-transform: uppercase;
+}
+.step h2 small { color: var(--dim); font-size: .8rem; font-weight: 500; text-transform: none; letter-spacing: 0 }
+.no {
+  display: inline-grid; place-items: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--brass); color: var(--bg); font-weight: 700;
+}
+
+label { display: flex; flex-direction: column; gap: 4px; color: var(--dim); font-weight: 600; font-size: .95rem }
+label small { font-weight: 400; font-size: .8rem }
+input, select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #0a1017;
+  color: var(--ink);
+  font: inherit; font-size: 1.1rem;
   font-variant-numeric: tabular-nums;
 }
+input:focus, select:focus { border-color: var(--brass) }
 
-.taken { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px }
-.taken label { flex-direction: row; align-items: center; gap: 6px; color: var(--gold) }
-
-.summary { color: var(--dim); min-height: 1.5em }
-.summary b { color: var(--ink) }
-
-.snipe-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px }
-.snipe-rows li {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border-left: 6px solid var(--dim);
-  background: var(--wood-dark);
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px }
+.grid .wide { grid-column: 1 / -1 }
+.row { display: flex; gap: 12px; align-items: flex-end }
+.row label { flex: 1 }
+.go {
+  padding: 11px 20px; border: 0; border-radius: 10px;
+  background: var(--brass); color: var(--bg);
+  font: inherit; font-weight: 700; cursor: pointer;
 }
-.snipe-rows li.lohnt { border-left-color: var(--ok) }
-.snipe-rows li.riskant { border-left-color: var(--gold) }
-.snipe-rows li.teuer, .snipe-rows li.zu { border-left-color: #c8553d }
-.snipe-rows h3 { margin: 0 0 4px; font-size: 1.1rem; color: var(--gold) }
-.snipe-rows h3 span { color: var(--ink); font-weight: 600 }
-.snipe-rows p { margin: 2px 0; font-variant-numeric: tabular-nums }
-.snipe-rows .verdict { font-weight: 700 }
-.snipe-rows .bp { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 6px; color: var(--dim) }
-.snipe-rows .bp input { width: 6em }
+.note { margin: 10px 0 0; color: var(--dim); font-size: .95rem; font-variant-numeric: tabular-nums }
+.note b { color: var(--ink) }
+.note .warn { color: var(--amber) }
+
+/* A zugeklappt: eine Zeile zum Antippen */
+.arc-summary {
+  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 12px 14px; border: 1px dashed var(--line); border-radius: 10px;
+  background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+}
+.arc-summary span { color: var(--brass); font-weight: 600 }
+
+.taken { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px }
+.taken label { flex-direction: row; align-items: center; gap: 8px; color: var(--brass); font-size: 1rem }
+
+/* ------------------------------------------------------------ Ergebnis */
+
+.result { border-color: rgba(242, 181, 74, .35) }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 18px }
+.chips button {
+  position: relative;
+  min-width: 52px; padding: 8px 12px 8px 26px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: #0a1017; color: var(--ink);
+  font: inherit; font-weight: 700; cursor: pointer;
+}
+.chips button::before {
+  content: ""; position: absolute; left: 10px; top: 50%;
+  width: 9px; height: 9px; margin-top: -4.5px; border-radius: 50%;
+  background: var(--dim);
+}
+.chips button.lohnt::before { background: var(--green) }
+.chips button.riskant::before { background: var(--amber) }
+.chips button.teuer::before { background: var(--red) }
+.chips button[aria-pressed="true"] { border-color: var(--brass); background: rgba(242, 181, 74, .14) }
+
+/* Der Balken: Breite = noch offen. Die Fuellung ist der Einsatz. */
+.meter { padding: 14px 0 4px }
+.track {
+  position: relative;
+  height: 30px;
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 9.8%, rgba(255, 255, 255, .05) 9.8% 10%),
+    #070c12;
+  border: 1px solid var(--line);
+}
+.fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 0;
+  border-radius: 999px;
+  background: var(--red);
+  box-shadow: 0 0 22px currentColor;
+  color: var(--red);
+  transition: width .15s ease-out, background-color .2s, color .2s;
+}
+.fill.angreifbar { background: var(--amber); color: var(--amber) }
+.fill.sicher { background: var(--green); color: var(--green) }
+
+.mark {
+  position: absolute; top: -7px; bottom: -7px;
+  width: 3px; margin-left: -1.5px; border-radius: 2px;
+  background: var(--ink);
+}
+.mark.value { background: var(--brass) }
+.mark.safe { background: var(--green) }
+.mark.out { display: none }
+
+.legend {
+  display: flex; flex-wrap: wrap; gap: 6px 16px;
+  margin: 10px 0 0; padding: 0; list-style: none;
+  color: var(--dim); font-size: .9rem; font-variant-numeric: tabular-nums;
+}
+.legend li::before {
+  content: ""; display: inline-block; width: 3px; height: .9em; margin-right: 6px;
+  vertical-align: -1px; border-radius: 2px; background: var(--ink);
+}
+.legend .value::before { background: var(--brass) }
+.legend .safe::before { background: var(--green) }
+.legend b { color: var(--ink) }
+
+input[type="range"] {
+  width: 100%; margin: 12px 0 0; padding: 0;
+  border: 0; background: transparent;
+  accent-color: var(--brass);
+  height: 32px;
+}
+.scale { display: flex; justify-content: space-between; color: var(--dim); font-size: .8rem; font-variant-numeric: tabular-nums }
+
+.aim { display: grid; grid-template-columns: minmax(130px, 200px) 1fr; gap: 16px; align-items: start; margin-top: 16px }
+.readout p { margin: 0 }
+.status { font-size: 1.25rem; font-weight: 700; letter-spacing: .02em }
+.status.kein { color: var(--red) }
+.status.angreifbar { color: var(--amber) }
+.status.sicher { color: var(--green) }
+.profit { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1 }
+.detail { color: var(--dim); font-size: .95rem }
+
+.bp {
+  flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line);
+}
+.bp input { width: 6em }
+.bp output { color: var(--ink); font-weight: 600 }
+
+.all { margin-top: 16px }
+.all summary { cursor: pointer; color: var(--brass); font-weight: 600 }
+.rows { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px }
+.rows li {
+  padding: 8px 12px; border-radius: 10px; background: #0a1017;
+  border-left: 4px solid var(--dim); font-variant-numeric: tabular-nums;
+}
+.rows li.lohnt { border-left-color: var(--green) }
+.rows li.riskant { border-left-color: var(--amber) }
+.rows li.teuer { border-left-color: var(--red) }
+.rows h3 { margin: 0; font-size: 1rem; color: var(--brass) }
+.rows h3 span { color: var(--ink); font-weight: 500 }
+.rows p { margin: 2px 0 0; font-size: .92rem; color: var(--dim) }
+.rows .verdict { color: var(--ink) }
+
+/* ------------------------------------------------------------- Rest */
+
+.rules { margin: 28px 0 0; color: var(--dim) }
+.rules h2 { color: var(--ink); font-size: 1.1rem; text-transform: uppercase; letter-spacing: .04em }
+.rules b { color: var(--ink) }
+
+.foot { margin-top: 36px; padding-bottom: 32px; color: var(--dim); font-size: .88rem }
+.foot nav { display: flex; gap: 18px; flex-wrap: wrap }
+
+@media (max-width: 520px) {
+  .aim { grid-template-columns: 1fr }
+  .profit { font-size: 1.7rem }
+}
+@media (prefers-reduced-motion: reduce) { .fill { transition: none } }
