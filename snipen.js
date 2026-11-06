@@ -314,6 +314,7 @@
   }
 
   function render() {
+    updatePick();
     buildTaken();
     var id = buildingId();
     var level = number($("snLevel"));
@@ -383,6 +384,12 @@
     aim();
   }
 
+  function onBuildingChange() {
+    fillTotal();
+    saveLasting();
+    resetAll();
+  }
+
   /** Neues Ziel (Bauwerk, Stufe): Platz und Einsatz waehlt cipher wieder selbst. */
   function resetAll() {
     choice.slot = null;
@@ -415,6 +422,317 @@
     var next = fields[fields.indexOf(input) + 1];
     if (next) next.focus();
     else input.blur();
+  }
+
+  /* --------------------------------------------------- Bauwerksauswahl */
+
+  /*
+   * Wie im Foerderrechner (app.js, "Bauwerksauswahl"): ein Knopf mit Name
+   * und Zeitalter oeffnet ein <dialog>. Auf dem Telefon ein Blatt von unten,
+   * breit ein Fenster. Suche nach Name, Kuerzel und Zeitalter, Zeitalter als
+   * mitlaufende Ueberschriften, Tastatur wie bei einer Combobox, Zurueck-
+   * Geste und Wischen nach unten schliessen, das Blatt rueckt ueber die
+   * Bildschirmtastatur.
+   */
+  var ABBR = window.CIPHER_ABBR || {};
+  var SHEET_QUERY = "(max-width: 640px)";
+  var PICK_DOM_ID = {};
+  var picker = { ids: [], active: -1, historyPushed: false, closing: false, closeTimer: null, openedByTouch: false };
+
+  function escapeHtml(text) {
+    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function normalise(text) {
+    return String(text).toLowerCase()
+      .replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ß/g, "ss")
+      .normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+  function abbrOf(building) {
+    var abbr = ABBR[building.id];
+    return typeof abbr === "string" ? abbr.trim() : "";
+  }
+  function highlight(text, needle) {
+    if (!needle) return escapeHtml(text);
+    var folded = "";
+    var origin = [];
+    for (var i = 0; i < text.length; i++) {
+      var piece = normalise(text.charAt(i));
+      for (var j = 0; j < piece.length; j++) origin.push(i);
+      folded += piece;
+    }
+    var at = folded.indexOf(needle);
+    if (at < 0) return escapeHtml(text);
+    var from = origin[at];
+    var to = origin[at + needle.length - 1] + 1;
+    return escapeHtml(text.slice(0, from)) + "<mark>" + escapeHtml(text.slice(from, to)) + "</mark>" + escapeHtml(text.slice(to));
+  }
+  /** Namenstreffer vor Kuerzeln vor Zeitaltern — wie im Foerderrechner. */
+  function matchesFor(query) {
+    var needle = normalise(query).trim();
+    if (!needle) return [];
+    var byName = [];
+    var byEra = [];
+    DATA.buildings.forEach(function (building) {
+      if (normalise(building.name).indexOf(needle) >= 0) byName.push({ building: building, where: "name" });
+      else if (abbrOf(building) && normalise(abbrOf(building)).indexOf(needle) >= 0) {
+        byName.push({ building: building, where: "short", alias: abbrOf(building) });
+      } else if (normalise(building.era).indexOf(needle) >= 0) byEra.push({ building: building, where: "era" });
+    });
+    return byName.concat(byEra);
+  }
+
+  function updatePick() {
+    var building = DATA.buildings.filter(function (b) { return b.id === buildingId(); })[0];
+    $("buildingPickName").textContent = building ? building.name : "";
+    $("buildingPickEra").textContent = building ? building.era : "";
+  }
+
+  function pickerOption(building, needle, match) {
+    picker.ids.push(building.id);
+    var name = match && match.where === "name" ? highlight(building.name, needle) : escapeHtml(building.name);
+    var aside;
+    if (match) {
+      aside = (match.where === "era" ? highlight(building.era, needle) : escapeHtml(building.era)) +
+        (match.where === "short" ? " · " + highlight(match.alias, needle) : "");
+    } else {
+      aside = abbrOf(building) ? escapeHtml(abbrOf(building)) : "";
+    }
+    return '<li role="option" class="picker-opt" id="' + PICK_DOM_ID[building.id] + '"' +
+      ' data-pick="' + escapeHtml(building.id) + '" aria-selected="' + (building.id === buildingId()) + '">' +
+      "<b>" + name + "</b>" + (aside ? "<span>" + aside + "</span>" : "") + "</li>";
+  }
+
+  function renderPicker() {
+    var query = $("pickerFilter").value;
+    var needle = normalise(query).trim();
+    var matches = matchesFor(query);
+    picker.ids = [];
+    $("pickerFilterClear").hidden = !query;
+    $("pickerCount").textContent = !needle ? ""
+      : matches.length === 0 ? "Kein Bauwerk gefunden."
+      : matches.length === 1 ? "1 Bauwerk gefunden." : matches.length + " Bauwerke gefunden.";
+    if (needle) {
+      $("pickerList").innerHTML = matches.map(function (match) { return pickerOption(match.building, needle, match); }).join("");
+      return;
+    }
+    var groups = [];
+    var byEra = {};
+    DATA.buildings.forEach(function (building) {
+      if (!byEra[building.era]) { byEra[building.era] = []; groups.push(building.era); }
+      byEra[building.era].push(building);
+    });
+    $("pickerList").innerHTML = groups.map(function (era, index) {
+      return '<li role="presentation"><ul class="picker-group" role="group" aria-labelledby="pkg-' + index + '">' +
+        '<li role="presentation" class="picker-era" id="pkg-' + index + '">' + escapeHtml(era) + "</li>" +
+        byEra[era].map(function (building) { return pickerOption(building, "", null); }).join("") +
+        "</ul></li>";
+    }).join("");
+  }
+
+  function setPickerActive(index, reveal) {
+    var list = $("pickerList");
+    var previous = list.querySelector(".picker-opt.active");
+    if (previous) previous.classList.remove("active");
+    picker.active = picker.ids.length ? Math.max(-1, Math.min(index, picker.ids.length - 1)) : -1;
+    var domId = picker.active >= 0 ? PICK_DOM_ID[picker.ids[picker.active]] : "";
+    [$("pickerFilter"), list].forEach(function (element) {
+      if (domId) element.setAttribute("aria-activedescendant", domId);
+      else element.removeAttribute("aria-activedescendant");
+    });
+    if (!domId) return;
+    $(domId).classList.add("active");
+    if (reveal) $(domId).scrollIntoView({ block: "nearest" });
+  }
+
+  function centerPickerSelection() {
+    var list = $("pickerList");
+    var option = $(PICK_DOM_ID[buildingId()]);
+    if (!option) { list.scrollTop = 0; return; }
+    var listBox = list.getBoundingClientRect();
+    var optionBox = option.getBoundingClientRect();
+    list.scrollTop += optionBox.top - listBox.top - (listBox.height - optionBox.height) / 2;
+  }
+
+  function syncPickerViewport() {
+    var viewport = window.visualViewport;
+    if (!viewport) return;
+    var below = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+    $("picker").style.setProperty("--kb", Math.round(below) + "px");
+    $("picker").style.setProperty("--vvh", Math.round(viewport.height) + "px");
+  }
+  function watchPickerViewport(on) {
+    var viewport = window.visualViewport;
+    if (!viewport) return;
+    var method = on ? "addEventListener" : "removeEventListener";
+    viewport[method]("resize", syncPickerViewport);
+    viewport[method]("scroll", syncPickerViewport);
+    if (on) syncPickerViewport();
+  }
+
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function openPicker() {
+    var dialog = $("picker");
+    if (dialog.open) return;
+    window.clearTimeout(picker.closeTimer);
+    picker.closing = false;
+    dialog.classList.remove("closing");
+    $("pickerSheet").style.transform = "";
+    $("pickerFilter").value = "";
+    renderPicker();
+    document.documentElement.classList.add("picker-open");
+    watchPickerViewport(true);
+    dialog.showModal();
+    $("buildingPick").setAttribute("aria-expanded", "true");
+    try {
+      window.history.pushState({ cipherPicker: true }, "");
+      picker.historyPushed = true;
+    } catch (e) { picker.historyPushed = false; }
+    centerPickerSelection();
+    setPickerActive(picker.ids.indexOf(buildingId()), false);
+    (picker.openedByTouch ? $("pickerList") : $("pickerFilter")).focus({ preventScroll: true });
+  }
+
+  function closePicker() {
+    var dialog = $("picker");
+    if (!dialog.open || picker.closing) return;
+    if (reduceMotion) { dialog.close(); return; }
+    picker.closing = true;
+    dialog.classList.add("closing");
+    picker.closeTimer = window.setTimeout(function () { dialog.close(); }, 180);
+  }
+
+  function onPickerClosed() {
+    window.clearTimeout(picker.closeTimer);
+    picker.closing = false;
+    $("picker").classList.remove("closing");
+    $("pickerSheet").style.transform = "";
+    document.documentElement.classList.remove("picker-open");
+    watchPickerViewport(false);
+    $("buildingPick").setAttribute("aria-expanded", "false");
+    $("buildingPick").focus({ preventScroll: true });
+    if (picker.historyPushed) {
+      picker.historyPushed = false;
+      window.history.back();
+    }
+  }
+
+  function choosePicked(id) {
+    if (id !== buildingId()) {
+      $("snBuilding").value = id;
+      onBuildingChange();
+    }
+    closePicker();
+  }
+
+  function onPickerInput() {
+    renderPicker();
+    if (normalise($("pickerFilter").value).trim()) {
+      $("pickerList").scrollTop = 0;
+      setPickerActive(0, false);
+    } else {
+      centerPickerSelection();
+      setPickerActive(picker.ids.indexOf(buildingId()), false);
+    }
+  }
+
+  function onPickerKey(event) {
+    var input = $("pickerFilter");
+    var list = $("pickerList");
+    var inInput = event.target === input;
+    var inList = event.target === list;
+    if (!inInput && !inList) return;
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    var last = picker.ids.length - 1;
+    switch (event.key) {
+      case "ArrowDown": setPickerActive(picker.active < 0 ? 0 : picker.active + 1, true); break;
+      case "ArrowUp": setPickerActive(picker.active < 0 ? last : Math.max(0, picker.active - 1), true); break;
+      case "PageDown": setPickerActive(Math.min(last, picker.active + 8), true); break;
+      case "PageUp": setPickerActive(Math.max(0, picker.active - 8), true); break;
+      case "Home":
+      case "End":
+        if (inInput) return;
+        setPickerActive(event.key === "Home" ? 0 : last, true);
+        break;
+      case "Enter":
+        if (picker.active < 0) return;
+        choosePicked(picker.ids[picker.active]);
+        break;
+      case " ":
+        if (!inList || picker.active < 0) return;
+        choosePicked(picker.ids[picker.active]);
+        break;
+      case "Escape":
+        if (input.value) { input.value = ""; onPickerInput(); } else closePicker();
+        break;
+      default:
+        if (!inList || event.key.length !== 1) return;
+        input.value += event.key;
+        input.focus();
+        onPickerInput();
+    }
+    event.preventDefault();
+  }
+
+  function bindPickerSwipe() {
+    var head = $("pickerHead");
+    var sheet = $("pickerSheet");
+    var drag = null;
+    head.addEventListener("pointerdown", function (event) {
+      if (event.pointerType === "mouse" || event.target.closest("button")) return;
+      if (!window.matchMedia(SHEET_QUERY).matches || picker.closing) return;
+      drag = { id: event.pointerId, y: event.clientY, t: event.timeStamp, dy: 0 };
+      head.setPointerCapture(event.pointerId);
+      sheet.classList.add("dragging");
+    });
+    head.addEventListener("pointermove", function (event) {
+      if (!drag || event.pointerId !== drag.id) return;
+      drag.dy = Math.max(0, event.clientY - drag.y);
+      sheet.style.transform = drag.dy ? "translateY(" + drag.dy + "px)" : "";
+    });
+    function release(event, cancelled) {
+      if (!drag || event.pointerId !== drag.id) return;
+      var speed = drag.dy / Math.max(1, event.timeStamp - drag.t);
+      var dismiss = !cancelled && (drag.dy > 96 || (drag.dy > 32 && speed > .5));
+      drag = null;
+      sheet.classList.remove("dragging");
+      if (dismiss) closePicker();
+      else sheet.style.transform = "";
+    }
+    head.addEventListener("pointerup", function (event) { release(event, false); });
+    head.addEventListener("pointercancel", function (event) { release(event, true); });
+  }
+
+  function setupPicker() {
+    DATA.buildings.forEach(function (building, index) { PICK_DOM_ID[building.id] = "pk-" + index; });
+    var dialog = $("picker");
+    $("buildingPick").addEventListener("pointerdown", function (event) {
+      picker.openedByTouch = event.pointerType === "touch";
+    });
+    $("buildingPick").addEventListener("click", openPicker);
+    $("pickerClose").addEventListener("click", closePicker);
+    $("pickerFilter").addEventListener("input", onPickerInput);
+    $("pickerFilterClear").addEventListener("click", function () {
+      $("pickerFilter").value = "";
+      onPickerInput();
+      $("pickerFilter").focus();
+    });
+    dialog.addEventListener("keydown", onPickerKey);
+    dialog.addEventListener("cancel", function (event) { event.preventDefault(); closePicker(); });
+    dialog.addEventListener("close", onPickerClosed);
+    // Tippen auf den Hintergrund schliesst; das <dialog> fuellt nur das Blatt.
+    dialog.addEventListener("click", function (event) {
+      if (event.target === dialog) { closePicker(); return; }
+      var option = event.target.closest("[data-pick]");
+      if (option) choosePicked(option.dataset.pick);
+    });
+    window.addEventListener("popstate", function () {
+      if (!dialog.open) return;
+      picker.historyPushed = false;
+      closePicker();
+    });
+    bindPickerSwipe();
   }
 
   function init() {
@@ -455,7 +773,8 @@
       $("snArc").select();
     });
 
-    select.addEventListener("change", function () { fillTotal(); saveLasting(); resetAll(); });
+    select.addEventListener("change", onBuildingChange);
+    setupPicker();
     $("snLevel").addEventListener("input", function () { fillTotal(); resetAll(); });
     $("snProgress").addEventListener("input", resetPay);
     $("snTotal").addEventListener("input", resetPay);

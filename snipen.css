@@ -288,6 +288,131 @@ input:focus, select:focus { border-color: var(--brass) }
 .dock b { font-size: 1.1rem }
 .dock span { color: var(--dim); white-space: nowrap }
 
+/* ------------------------------------------------- Bauwerksauswahl
+   Gleicher Aufbau wie im Foerderrechner (styles.css), in den Farben hier. */
+
+.field { display: flex; flex-direction: column; gap: 4px }
+.flabel { color: var(--dim); font-weight: 600; font-size: .95rem }
+.pick {
+  display: flex; align-items: baseline; gap: 10px;
+  width: 100%; min-height: 48px; padding: 10px 40px 10px 12px;
+  border: 1px solid var(--edge); border-radius: 10px;
+  background: var(--field)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23f2b54a' stroke-width='2'/%3E%3C/svg%3E")
+    no-repeat right 14px center / 12px 8px;
+  text-align: left; cursor: pointer; font-size: 1.1rem;
+}
+.pick-name { flex: 1 1 auto; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.pick-era { flex: 0 1 auto; font-size: .85rem; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+
+html.picker-open { overflow: hidden; scrollbar-gutter: stable }
+
+.picker {
+  position: fixed;
+  inset: auto 0 var(--kb, 0px) 0;
+  margin: 0; padding: 0; border: 0;
+  width: 100%; max-width: none;
+  height: calc(var(--vvh, 100dvh) * .88);
+  max-height: calc(var(--vvh, 100dvh) - 16px);
+  background: transparent; color: var(--ink);
+  overflow: visible;
+}
+.picker[open] { display: flex }
+.picker::backdrop { background: rgba(2, 6, 10, .7) }
+.picker-sheet {
+  display: flex; flex-direction: column;
+  width: 100%; min-height: 0;
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--edge); border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, .5);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  transition: transform .2s ease-out;
+}
+.picker-sheet.dragging { transition: none }
+.picker-head {
+  position: relative;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 18px 10px 8px 16px;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.picker-grip {
+  position: absolute; top: 7px; left: 50%;
+  width: 40px; height: 4px; border-radius: 2px;
+  background: var(--edge); transform: translateX(-50%);
+}
+.picker-head h2 { margin: 0; font-size: 1.15rem; letter-spacing: .04em; text-transform: uppercase }
+.picker-close {
+  flex: 0 0 44px; width: 44px; height: 44px;
+  display: grid; place-items: center;
+  background: transparent; color: var(--dim); border: 0; border-radius: 10px; cursor: pointer;
+}
+.picker-close:hover { color: var(--ink) }
+.picker-close svg { width: 20px; height: 20px }
+.picker-search { position: relative; margin: 0 14px }
+.picker-search input { font-size: max(16px, 1rem); padding-right: 44px }
+.picker-search button {
+  position: absolute; right: 2px; top: 2px; bottom: 2px; width: 44px;
+  border: 0; background: transparent; color: var(--dim); font-size: 1.3rem; cursor: pointer;
+}
+.picker-count { margin: 6px 16px 0; color: var(--dim); font-size: .9rem }
+.picker-count:empty { display: none }
+.picker-list {
+  list-style: none;
+  flex: 1 1 auto; min-height: 0;
+  margin: 8px 0 0; padding: 0 8px 12px;
+  overflow-y: auto; overscroll-behavior: contain;
+}
+.picker-list:focus-visible { outline-offset: -3px }
+.picker-group { list-style: none; margin: 0; padding: 0 }
+.picker-era {
+  position: sticky; top: 0; z-index: 1;
+  padding: 12px 10px 4px;
+  font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--dim); background: var(--panel);
+}
+.picker-opt {
+  position: relative;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  min-height: 48px; padding: 12px 12px 12px 36px;
+  border: 1px solid transparent; border-radius: 10px;
+  cursor: pointer; scroll-margin: 40px 0 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.picker-opt b { font-weight: 600; min-width: 0; overflow-wrap: anywhere }
+.picker-opt span { font-size: .85rem; color: var(--dim); white-space: nowrap }
+.picker-opt:hover, .picker-opt:active { background: var(--field) }
+.picker-opt.active { background: var(--field); border-color: var(--edge) }
+.picker-opt[aria-selected="true"] b { color: var(--brass) }
+.picker-opt[aria-selected="true"]::before {
+  content: "✓"; content: "✓" / "";
+  position: absolute; left: 12px; color: var(--brass); font-weight: 700;
+}
+.picker-opt mark { background: none; color: var(--brass); font-weight: 700 }
+
+@keyframes picker-up { from { transform: translateY(100%) } }
+@keyframes picker-down { to { transform: translateY(100%) } }
+@keyframes picker-fade-in { from { opacity: 0 } }
+.picker[open] .picker-sheet { animation: picker-up .26s cubic-bezier(.2, .8, .25, 1) }
+.picker.closing .picker-sheet { animation: picker-down .18s ease-in forwards }
+.picker[open]::backdrop { animation: picker-fade-in .2s ease-out }
+
+@media (min-width: 641px) {
+  .picker {
+    inset: 0; margin: auto;
+    width: min(460px, calc(100% - 32px));
+    height: min(640px, calc(var(--vvh, 100dvh) - 32px));
+    max-height: none;
+  }
+  .picker-sheet { border-bottom: 1px solid var(--edge); border-radius: var(--radius); box-shadow: 0 18px 50px rgba(0, 0, 0, .5); padding-bottom: 0 }
+  .picker-grip { display: none }
+  .picker-head { padding-top: 12px; touch-action: auto }
+  @keyframes picker-pop { from { opacity: 0; transform: translateY(8px) scale(.98) } }
+  @keyframes picker-pop-out { to { opacity: 0; transform: translateY(8px) scale(.98) } }
+  .picker[open] .picker-sheet { animation: picker-pop .2s cubic-bezier(.2, .8, .25, 1) }
+  .picker.closing .picker-sheet { animation: picker-pop-out .15s ease-in forwards }
+}
+
 /* ------------------------------------------------------------- Rest */
 
 .rules { margin: 28px 0 0; color: var(--dim); font-size: .95rem }
@@ -315,4 +440,6 @@ input:focus, select:focus { border-color: var(--brass) }
 
 @media (prefers-reduced-motion: reduce) {
   .fill { transition: none; box-shadow: none }
+  .picker-sheet, .picker[open] .picker-sheet, .picker.closing .picker-sheet,
+  .picker[open]::backdrop { animation: none; transition: none }
 }

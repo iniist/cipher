@@ -8,6 +8,14 @@ async function eintragen(page, werte) {
   for (const [id, wert] of Object.entries(werte)) await page.fill("#" + id, wert);
 }
 
+/** Ein Bauwerk über die Auswahl wählen, wie ein Mensch: Knopf, suchen, tippen. */
+async function bauwerk(page, suche, name) {
+  await page.click("#buildingPick");
+  await page.fill("#pickerFilter", suche);
+  await page.locator("#pickerList [role=option]", { hasText: name }).first().click();
+  await expect(page.locator("#picker")).toBeHidden();
+}
+
 async function arche(page, stufe) {
   await page.fill("#snArc", stufe);
   await page.click("#arcSave");
@@ -88,7 +96,7 @@ test("Blaupausen sind für die Arche geschätzt, sonst leer", async ({ page }) =
   await page.click('#snChips button[data-slot="1"]');
   await expect(page.locator("#snBp")).toHaveValue("8");
   await expect(page.locator("#snBpLabel")).toContainText("geschätzt ca. 8");
-  await page.selectOption("#snBuilding", "Saturn_VI_Gate_HYDRA");
+  await bauwerk(page, "hydra", "HYDRA");
   await eintragen(page, { snLevel: "89" });
   await expect(page.locator("#snBp")).toHaveValue("");
   await expect(page.locator("#snSummary")).toHaveText("Noch offen: 28.556 FP · Kupfer-Stufe · dein Bonus: Kupfer 99 %");
@@ -127,7 +135,7 @@ test("Marken und Legende setzen den Einsatz", async ({ page }) => {
 test("andere Bauwerke: keine Schätzung, aber ein Hinweis", async ({ page }) => {
   await page.goto("/snipen.html");
   await arche(page, "188");
-  await page.selectOption("#snBuilding", "Observatory");
+  await bauwerk(page, "obsi", "Observatorium");
   await eintragen(page, { snLevel: "150", snProgress: "0" });
   await expect(page.locator("#snBp")).toHaveValue("");
   await expect(page.locator("#snBpNote")).toContainText("Für dieses Bauwerk schätzt cipher noch nicht");
@@ -182,4 +190,51 @@ test("eine volle Stufe zeigt keine alten Zahlen", async ({ page }) => {
   await eintragen(page, { snProgress: "127.430" });
   await expect(page.locator("#snSummary")).toHaveText("Die Stufe ist schon voll.");
   await expect(page.locator("#snAim")).toBeHidden();
+});
+
+test.describe("Bauwerksauswahl wie im Förderrechner", () => {
+  test("Knopf zeigt Name und Zeitalter, die Liste ist nach Zeitalter gruppiert", async ({ page }) => {
+    await page.goto("/snipen.html");
+    await expect(page.locator("#buildingPickName")).toHaveText("Die Arche");
+    await expect(page.locator("#buildingPickEra")).toHaveText("Zukunft");
+    await expect(page.locator("#snBuilding")).toBeHidden();
+    await page.click("#buildingPick");
+    await expect(page.locator("#picker")).toBeVisible();
+    await expect(page.locator("#buildingPick")).toHaveAttribute("aria-expanded", "true");
+    await expect(page.locator(".picker-era").first()).toBeVisible();
+    await expect(page.locator('#pickerList [aria-selected="true"]')).toContainText("Die Arche");
+  });
+
+  test("Suche nach Kürzel und Zeitalter, Enter wählt", async ({ page }) => {
+    await page.goto("/snipen.html");
+    await page.click("#buildingPick");
+    await page.fill("#pickerFilter", "AO");
+    await expect(page.locator("#pickerList [role=option]").first()).toContainText("Arktische Orangerie");
+    await page.fill("#pickerFilter", "titan");
+    await expect(page.locator("#pickerCount")).toHaveText("3 Bauwerke gefunden.");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#picker")).toBeHidden();
+    await expect(page.locator("#buildingPickEra")).toHaveText("Titan");
+    await expect(page.locator("#buildingPick")).toBeFocused();
+  });
+
+  test("Esc leert erst die Suche, dann schließt es", async ({ page }) => {
+    await page.goto("/snipen.html");
+    await page.click("#buildingPick");
+    await page.fill("#pickerFilter", "zeus");
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#pickerFilter")).toHaveValue("");
+    await expect(page.locator("#picker")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#picker")).toBeHidden();
+    await expect(page.locator("#buildingPickName")).toHaveText("Die Arche");
+  });
+
+  test("das gewählte Bauwerk wird gemerkt", async ({ page }) => {
+    await page.goto("/snipen.html");
+    await bauwerk(page, "kraken", "Kraken");
+    await page.reload();
+    await expect(page.locator("#buildingPickName")).toContainText("Kraken");
+  });
 });
