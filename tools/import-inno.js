@@ -17,6 +17,9 @@
  *     bei Gold-Bauwerken exakt, bei Kupfer-Bauwerken bis auf die Rundung auf
  *     volle Tausend, die der Artikel angibt
  *   - die Ablesungen aus dem Spiel (STICHPROBEN) stimmen exakt
+ * Aus der Tabelle der Arche kommt ausserdem ihr Kupfer- und Gold-Bonus je
+ * Stufe (fuer den Snipen-Rechner), geprueft gegen Ablesungen aus dem Spiel.
+ *
  * Ausnahme ist der Horizontriss-Siphon: Seine Wiki-Tabelle stimmt mit dem
  * Spiel (Stufe 64: 265.600 FP), ihre Summe aber nicht mit dem Artikel
  * (516.894.950 statt 756.777.300). Dem Spiel wird geglaubt.
@@ -76,6 +79,15 @@ const STICHPROBEN = [
   ["Shattered_Horizon_Siphon", 64, 265600], ["Shattered_Horizon_Siphon", 72, 298800]
 ];
 
+/**
+ * Arche-Bonus aus Screenshots (6.11.2026): Stufe, Kupfer-Bonus, Gold-Bonus
+ * in Prozent, wie das Spiel sie anzeigt.
+ */
+const BONUS_STICHPROBEN = [
+  [178, 98, 19], [179, 99, 19], [180, 99, 19], [181, 99, 20],
+  [188, 99, 21], [201, 100, 23]
+];
+
 /** Die Kupfer-Kategorie rundet der Artikel auf volle Tausend. */
 const COPPER_ROUNDING = 500;
 
@@ -110,6 +122,51 @@ function parseCosts(wikitext) {
   return costs;
 }
 
+/**
+ * Den Arche-Bonus je Stufe aus derselben Tabelle lesen: vierte Spalte
+ * Kupfer-Bonus, sechste Gold-Bonus, beide in ganzen Prozent. Unter Stufe
+ * 101 ist die Gold-Spalte leer; das wird 0.
+ * @returns {{copper: number[], gold: number[]}} Index 0 = Stufe 1
+ */
+function parseArcBonus(wikitext) {
+  const copper = [];
+  const gold = [];
+  for (const block of wikitext.split(/\n\|-[^\n]*\n/)) {
+    const cells = block.split("\n")
+      .filter((line) => line.startsWith("|") && !line.startsWith("|}") && !line.startsWith("|-"))
+      .map((line) => line.replace(/^\|\s*(style="[^"]*"\s*\|)?\s*/, "").trim());
+    if (cells.length < 6 || !/^\d+$/.test(cells[0])) continue;
+    const level = Number(cells[0]);
+    if (level !== copper.length + 1) {
+      throw new Error("Arche-Bonus: Stufe " + level + " folgt auf " + copper.length);
+    }
+    const percent = (cell) => (cell === "" ? 0 : Number(cell.replace("%", "")));
+    copper.push(percent(cells[3]));
+    gold.push(percent(cells[5]));
+  }
+  return { copper, gold };
+}
+
+function checkArcBonus(bonus) {
+  const problems = [];
+  if (bonus.copper.length !== 500) problems.push(bonus.copper.length + " Stufen Arche-Bonus statt 500");
+  ["copper", "gold"].forEach((kind) => {
+    const list = bonus[kind];
+    if (list.some((value) => !Number.isInteger(value) || value < 0 || value > 100)) {
+      problems.push("Arche-Bonus " + kind + " mit unmoeglichem Wert");
+    }
+    if (list.some((value, index) => index > 0 && value < list[index - 1])) {
+      problems.push("Arche-Bonus " + kind + " sinkt irgendwo");
+    }
+  });
+  BONUS_STICHPROBEN.forEach(([level, copper, gold]) => {
+    if (bonus.copper[level - 1] !== copper || bonus.gold[level - 1] !== gold) {
+      problems.push(`Arche-Bonus Stufe ${level}: ${bonus.copper[level - 1]}/${bonus.gold[level - 1]} statt ${copper}/${gold}`);
+    }
+  });
+  return problems;
+}
+
 function check(building, costs) {
   const problems = [];
   const expected = Calc.hasGold(building.id) ? 500 : Calc.COPPER_MAX_LEVEL;
@@ -132,10 +189,16 @@ function main() {
   const onlyCheck = process.argv.includes("--check");
   const result = {};
   const errors = [];
+  let arcBonus = null;
 
   DATA.buildings.forEach((building) => {
     try {
-      const costs = parseCosts(fetchWikitext(titleOf(building)));
+      const wikitext = fetchWikitext(titleOf(building));
+      const costs = parseCosts(wikitext);
+      if (building.id === "The_Arc") {
+        arcBonus = parseArcBonus(wikitext);
+        checkArcBonus(arcBonus).forEach((problem) => errors.push(problem));
+      }
       const { problems, sum } = check(building, costs);
       if (problems.length) errors.push(building.name + ": " + problems.join("; "));
       result[building.id] = costs;
@@ -150,6 +213,8 @@ function main() {
     if (value !== cost) errors.push(`Stichprobe ${id} Stufe ${level}: ${value} statt ${cost}`);
   });
 
+  if (!arcBonus) errors.push("Arche-Bonus fehlt");
+
   if (errors.length) {
     process.stderr.write("\nNicht uebernommen:\n" + errors.map((line) => "  " + line + "\n").join(""));
     process.exit(1);
@@ -157,12 +222,12 @@ function main() {
   process.stdout.write(`\n${Object.keys(result).length} Bauwerke geprueft, ${STICHPROBEN.length} Stichproben exakt.\n`);
   if (onlyCheck) return;
 
-  fs.writeFileSync(TARGET, render(result));
+  fs.writeFileSync(TARGET, render(result, arcBonus));
   process.stdout.write("kosten.js geschrieben.\n");
 }
 
 /** kosten.js: eine Zeile je Bauwerk, damit ein Diff zeigt, wo sich etwas tut. */
-function render(result) {
+function render(result, arcBonus) {
   const date = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
   const lines = Object.keys(result).map((id) =>
     "      " + JSON.stringify(id) + ": [" + result[id].join(",") + "]");
@@ -170,10 +235,13 @@ function render(result) {
  * cipher — Stufenkosten seit dem Prestige-Update (5.11.2026)
  *
  * Quelle: Forge of Empires Wiki, https://de.wiki.forgeofempires.com
- * © InnoGames GmbH. Uebernommen werden nur die Kosten je Stufe.
+ * © InnoGames GmbH. Uebernommen werden nur die Kosten je Stufe und der
+ * Bonus der Arche.
  *
  * Aufbau: costs[Bauwerk-Schluessel][stufe - 1] = Gesamt-FP der Stufe, die
  * gefoerdert wird. Gold-Bauwerke reichen bis 500, alle anderen bis 200.
+ * arcBonus.copper/gold[stufe - 1] = Kupfer- und Gold-Bonus der Arche auf
+ * dieser Stufe in Prozent.
  *
  * Erzeugt von tools/import-inno.js — von Hand nichts aendern.
  */
@@ -187,6 +255,10 @@ function render(result) {
     source: "https://de.wiki.forgeofempires.com",
     costs: {
 ${lines.join(",\n")}
+    },
+    arcBonus: {
+      copper: [${arcBonus.copper.join(",")}],
+      gold: [${arcBonus.gold.join(",")}]
     }
   };
 });

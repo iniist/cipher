@@ -37,3 +37,17 @@ test("Gold-Bauwerke kosten bis Stufe 500 so viel wie im Artikel 7009", () => {
   assert.equal(sum("Alcatraz"), 755832405);
   assert.equal(sum("The_Blue_Galaxy"), 755944845);
 });
+
+test("der Arche-Bonus stimmt mit den Ablesungen aus dem Spiel", () => {
+  const { copper, gold } = COSTS.arcBonus;
+  assert.equal(copper.length, 500);
+  assert.equal(gold.length, 500);
+  // Stufe, Kupfer, Gold — Screenshots vom 6.11.2026
+  for (const [level, c, g] of [[178, 98, 19], [179, 99, 19], [180, 99, 19], [181, 99, 20], [188, 99, 21], [201, 100, 23]]) {
+    assert.equal(copper[level - 1], c, `Kupfer ${level}`);
+    assert.equal(gold[level - 1], g, `Gold ${level}`);
+  }
+  assert.equal(gold[99], 0);
+  assert.equal(gold[100], 5);
+  assert.equal(copper[193], 100);
+});

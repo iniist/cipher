@@ -11,7 +11,7 @@ const { abwaehlen } = require("./plaetze");
 const path = require("node:path");
 const fs = require("node:fs");
 
-const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html", "/rundgang.html", "/arche.html", "/saatgut-tresor.html"];
+const PAGES = ["/index.html", "/impressum.html", "/datenschutz.html", "/rundgang.html", "/arche.html", "/saatgut-tresor.html", "/snipen.html"];
 
 /** Konsolenfehler und blockierte Anfragen einer Seite einsammeln. */
 function collectViolations(page) {
