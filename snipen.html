@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#183c30">
+<!-- Noch ausprobieren: nicht im Menue, nicht in der Sitemap, nicht im Index. -->
+<meta name="robots" content="noindex">
+<title>Snipen – cipher</title>
+<meta name="description" content="Lohnt es sich, in ein fremdes Legendäres Bauwerk einzuzahlen? Gewinngrenze mit Arche-Bonus und der Betrag, ab dem dir niemand den Platz mehr nimmt.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231f4a7a'/%3E%3Cpath d='M22 10.5a7.5 7.5 0 1 0 0 11' fill='none' stroke='%23f0c24f' stroke-width='3.2' stroke-linecap='square'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="./fonts.css">
+<link rel="stylesheet" href="./lg.css">
+<link rel="stylesheet" href="./snipen.css">
+<script src="./data.js" defer></script>
+<script src="./kosten.js" defer></script>
+<script src="./calc.js" defer></script>
+<script src="./snipen.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <nav aria-label="Brotkrumen"><a href="/">cipher</a> <span aria-hidden="true">›</span> Snipen</nav>
+</header>
+<main>
+  <h1>Snipen: lohnt sich der Platz?</h1>
+  <p class="lead">Trag ein, was du im Förderfenster des Nachbarn siehst. cipher rechnet aus, was dir ein Platz mit deinem Arche-Bonus bringt und ab wie vielen FP ihn dir niemand mehr nehmen kann.</p>
+
+  <form id="snipe" class="snipe-form" autocomplete="off" novalidate>
+    <label class="wide">Bauwerk
+      <select id="snBuilding"></select>
+    </label>
+    <label>Stufe <small>rechts am Balken</small>
+      <input id="snLevel" inputmode="numeric" placeholder="z. B. 183">
+    </label>
+    <label>Eingezahlt <small>linke Zahl am Balken</small>
+      <input id="snProgress" inputmode="numeric" placeholder="z. B. 34.456">
+    </label>
+    <label>Stufe kostet <small>rechte Zahl am Balken</small>
+      <input id="snTotal" inputmode="numeric">
+    </label>
+    <label>Deine Arche <small>Stufe, 0 = keine</small>
+      <input id="snArc" inputmode="numeric" placeholder="z. B. 188">
+    </label>
+    <fieldset class="wide">
+      <legend>Schon belegt <small>leer lassen, wo noch niemand steht</small></legend>
+      <div id="snTaken" class="taken"></div>
+    </fieldset>
+  </form>
+
+  <p id="snSummary" class="summary" aria-live="polite"></p>
+  <ol id="snRows" class="snipe-rows"></ol>
+
+  <section aria-labelledby="regeln">
+    <h2 id="regeln">So rechnet cipher</h2>
+    <ul class="sums">
+      <li><b>Gewinngrenze</b>: die Belohnung des Platzes plus dein Arche-Bonus. Auf Kupfer-Stufen zählt der Kupfer-Bonus, auf Gold-Stufen nur der Gold-Bonus.</li>
+      <li><b>Sicher ab</b>: Danach kann niemand mehr an dir vorbei — auch nicht, wer schon unter dir steht und nachlegt. Das ist die Hälfte von „noch offen plus Betrag auf dem Platz“, aufgerundet.</li>
+      <li>Bei gleichem Betrag bleibt vorn, wer ihn zuerst erreicht hat.</li>
+      <li>Medaillen und Blaupausen bekommst du zusätzlich. Trägst du die Blaupausen aus dem Tooltip ein, steht da, was dich eine Blaupause an FP kostet.</li>
+      <li>Gerechnet ist, als hättest du dort noch nichts eingezahlt.</li>
+    </ul>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Kosten und Arche-Bonus: <a href="https://de.wiki.forgeofempires.com/" rel="noopener noreferrer">Forge of Empires Wiki</a> (© InnoGames GmbH), Stand <span id="snDate"></span>. Alle Angaben ohne Gewähr — im Zweifel gilt das Spiel.</p>
+  <p>cipher ist ein inoffizielles Fan-Projekt und steht in keiner Verbindung zur InnoGames GmbH. „Forge of Empires“ ist eine Marke der InnoGames GmbH.</p>
+  <nav class="foot-links" aria-label="Weiteres">
+    <a href="/">Förderrechner</a>
+    <a href="./impressum.html">Impressum</a>
+    <a href="./datenschutz.html">Datenschutz</a>
+  </nav>
+</footer>
+</body>
+</html>

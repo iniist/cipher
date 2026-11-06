@@ -1,0 +1,53 @@
+/*!
+ * cipher — Snipen (snipen.html). Baut auf lg.css auf.
+ */
+
+.snipe-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 16px;
+  margin: 20px 0;
+  padding: 16px;
+  border: 2px solid var(--brass);
+  border-radius: 12px;
+  background: var(--wood-dark);
+}
+.snipe-form .wide { grid-column: 1 / -1 }
+.snipe-form label, .snipe-form legend { display: flex; flex-direction: column; gap: 4px; color: var(--dim); font-weight: 600 }
+.snipe-form small { font-weight: 400; font-size: .8em }
+.snipe-form fieldset { margin: 0; padding: 0; border: 0; min-width: 0 }
+.snipe-form legend { padding: 0; margin-bottom: 6px }
+
+.snipe-form input, .snipe-form select, .snipe-rows input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid var(--brass);
+  border-radius: 8px;
+  background: var(--wood-deep);
+  color: var(--ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.taken { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px }
+.taken label { flex-direction: row; align-items: center; gap: 6px; color: var(--gold) }
+
+.summary { color: var(--dim); min-height: 1.5em }
+.summary b { color: var(--ink) }
+
+.snipe-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px }
+.snipe-rows li {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border-left: 6px solid var(--dim);
+  background: var(--wood-dark);
+}
+.snipe-rows li.lohnt { border-left-color: var(--ok) }
+.snipe-rows li.riskant { border-left-color: var(--gold) }
+.snipe-rows li.teuer, .snipe-rows li.zu { border-left-color: #c8553d }
+.snipe-rows h3 { margin: 0 0 4px; font-size: 1.1rem; color: var(--gold) }
+.snipe-rows h3 span { color: var(--ink); font-weight: 600 }
+.snipe-rows p { margin: 2px 0; font-variant-numeric: tabular-nums }
+.snipe-rows .verdict { font-weight: 700 }
+.snipe-rows .bp { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 6px; color: var(--dim) }
+.snipe-rows .bp input { width: 6em }

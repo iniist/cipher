@@ -1239,6 +1239,86 @@
     return low === high ? text(low) : text(low) + "-" + text(high);
   }
 
+  /**
+   * Eine Belohnung mit dem Arche-Bonus des Foerderers: Das Spiel rundet den
+   * Bonus kaufmaennisch (11.124 FP mit 21 % → +2.336).
+   * @param {number} value Belohnung ohne Bonus (FP, Medaillen, Blaupausen)
+   * @param {number} bonus Bonus in Prozent
+   * @returns {number} der Bonus allein
+   */
+  function arcExtra(value, bonus) {
+    return Math.round(value * (bonus || 0) / 100);
+  }
+
+  /**
+   * Snipen: Lohnt es sich, in ein fremdes Bauwerk einzuzahlen, und ab wann
+   * ist der Platz sicher?
+   *
+   * Regeln aus dem Spiel: Bei gleichem Betrag bleibt vorn, wer ihn zuerst
+   * erreicht hat. Wer nach uns kommt, muss uns also uebertreffen; wer schon
+   * auf dem Platz steht, ebenso. Sicher ist ein Platz, wenn auch der
+   * hoechste Betrag unter uns mit allem, was danach noch offen ist, nicht an
+   * uns vorbeikommt:
+   *
+   *   unter + (offen − wir) ≤ wir   →   wir ≥ (offen + unter) / 2
+   *
+   * „unter“ ist der Betrag, der jetzt auf dem Platz steht (er rutscht eins
+   * nach unten); auf einem freien Platz 0, dann droht nur ein Neuer.
+   *
+   * @param {object} options
+   * @param {number[]} options.rewards Belohnung je Platz ohne Bonus
+   * @param {number} options.open was bis zur naechsten Stufe noch fehlt
+   * @param {number[]} options.taken Betraege der Plaetze, die schon belegt sind
+   * @param {number} options.bonus eigener Arche-Bonus in Prozent
+   * @returns {Array<object>} eine Zeile je Platz
+   */
+  function snipePlaces(options) {
+    var open = Math.max(0, Math.floor(options.open || 0));
+    var taken = (options.taken || []).filter(function (amount) { return amount > 0; })
+      .slice().sort(function (a, b) { return b - a; });
+    return options.rewards.map(function (reward, index) {
+      var extra = arcExtra(reward, options.bonus);
+      var value = reward + extra;
+      var holder = taken[index] || 0;
+      var take = holder + 1;
+      var safe = Math.max(take, Math.ceil((open + holder) / 2));
+      var row = {
+        slot: index + 1, reward: reward, extra: extra, value: value,
+        holder: holder, take: take, safe: safe, profit: value - safe, status: "", pay: 0, threat: 0
+      };
+      if (!reward) {
+        row.status = "leer";
+      } else if (take > open) {
+        row.status = "zu";
+      } else if (safe <= value) {
+        row.status = "lohnt";
+        row.pay = safe;
+      } else if (take <= value) {
+        // Ohne Verlust zu nehmen, aber nicht zu halten: mit der Gewinngrenze
+        // ist man drauf, und so wenig reicht einem anderen zum Ueberholen.
+        row.status = "riskant";
+        row.pay = Math.min(value, open);
+        row.threat = row.pay + 1 - holder;
+      } else {
+        row.status = "teuer";
+      }
+      return row;
+    });
+  }
+
+  /**
+   * Was eine Blaupause kostet, wenn man fuer sie FP draufzahlt.
+   * @param {number} loss FP, die man mehr einzahlt, als zurueckkommen
+   * @param {number} blueprints Blaupausen laut Tooltip, ohne Bonus
+   * @param {number} bonus eigener Arche-Bonus in Prozent
+   * @returns {number|null} FP je Blaupause, null ohne Blaupausen
+   */
+  function blueprintPrice(loss, blueprints, bonus) {
+    var count = blueprints + arcExtra(blueprints, bonus);
+    if (!(count > 0)) return null;
+    return Math.max(0, loss) / count;
+  }
+
   return {
     SLOTS: SLOTS,
     MAX_SLOTS: 7,
@@ -1266,6 +1346,9 @@
     buildPlan: buildPlan,
     fitPlan: fitPlan,
     placeForeign: placeForeign,
-    chatLine: chatLine
+    chatLine: chatLine,
+    arcExtra: arcExtra,
+    snipePlaces: snipePlaces,
+    blueprintPrice: blueprintPrice
   };
 });
