@@ -2,9 +2,14 @@
  * cipher — Arche-Sniper: lohnt sich ein Platz in einem fremden Bauwerk?
  *
  * Schritte: A eigene Arche (gemerkt, klappt zu), B Ziel, C fremde Plaetze,
- * D Zielen mit Balken und Schieber. Rechnen tut calc.js (snipePlaces,
- * snipeDeposit, estimateBlueprints); Kosten und Arche-Bonus kommen aus
- * kosten.js. Gemerkt werden nur Bauwerk und Arche-Stufe (cipher:snipe).
+ * D Platz waehlen mit Balken, Griff und Feinschritten. Rechnen tut calc.js
+ * (snipePlaces, snipeDeposit, estimateBlueprints); Kosten und Arche-Bonus
+ * kommen aus kosten.js.
+ *
+ * Gemerkt wird: Bauwerk und Arche-Stufe dauerhaft (localStorage,
+ * cipher:snipe), das aktuelle Ziel nur fuer diesen Tab (sessionStorage,
+ * cipher:snipe:ziel) — damit nichts verloren geht, wenn man kurz ins Spiel
+ * wechselt und der Browser den Tab neu laedt.
  */
 (function (window, document) {
   "use strict";
@@ -13,15 +18,18 @@
   var DATA = window.CIPHER_DATA;
   var COSTS = window.CIPHER_COSTS;
   var STORE = "cipher:snipe";
+  var SESSION = "cipher:snipe:ziel";
+  var NBSP = " ";
 
   var $ = function (id) { return document.getElementById(id); };
   var fmt = new Intl.NumberFormat("de-DE");
   var f = function (value) { return fmt.format(value); };
   var signed = function (value) { return (value > 0 ? "+" : value < 0 ? "−" : "±") + f(Math.abs(value)); };
+  var percent = function (value) { return value + NBSP + "%"; };
 
   /** Was gerade gerechnet ist; render() fuellt es, aim() liest es. */
-  var view = { options: null, rows: [], slot: 0, gold: false, level: 0 };
-  /** Vom Nutzer gewaehlter Platz und Einsatz; null = cipher waehlt. */
+  var view = { options: null, rows: [], slot: 0, gold: false, level: 0, ready: false };
+  /** Gewaehlter Platz, Einsatz, Blaupausen; null = cipher waehlt. */
   var choice = { slot: null, pay: null, bp: null };
 
   /** Ziffern aus einer Eingabe; "34.456" und "34456" sind dasselbe. */
@@ -30,13 +38,27 @@
     return digits ? Number(digits) : null;
   }
 
-  function load() {
-    try { return JSON.parse(window.localStorage.getItem(STORE)) || {}; } catch (error) { return {}; }
+  /* ------------------------------------------------------------ Speicher */
+
+  function read(storage, key) {
+    try { return JSON.parse(window[storage].getItem(key)) || {}; } catch (error) { return {}; }
   }
-  function save() {
+  function write(storage, key, value) {
     try {
-      window.localStorage.setItem(STORE, JSON.stringify({ building: $("snBuilding").value, arc: number($("snArc")) }));
+      if (value == null) window[storage].removeItem(key);
+      else window[storage].setItem(key, JSON.stringify(value));
     } catch (error) { /* privat surfen: dann eben nicht merken */ }
+  }
+  function saveLasting() {
+    write("localStorage", STORE, { building: $("snBuilding").value, arc: number($("snArc")) });
+  }
+  function saveSession() {
+    write("sessionStorage", SESSION, {
+      building: $("snBuilding").value,
+      level: $("snLevel").value, progress: $("snProgress").value, total: $("snTotal").value,
+      taken: Array.prototype.map.call($("snTaken").querySelectorAll("input"), function (input) { return input.value; }),
+      slot: choice.slot
+    });
   }
 
   /* ----------------------------------------------------------- A: Arche */
@@ -52,16 +74,15 @@
     var arc = number($("snArc"));
     $("arcForm").hidden = !open;
     $("arcSummary").hidden = open;
-    if (!open) {
-      $("arcSummary").textContent = "";
-      var text = document.createElement("strong");
-      text.textContent = arc ? "Arche " + arc + " · Kupfer " + arcBonus(false) + " % · Gold " + arcBonus(true) + " %"
-        : "Keine Arche";
-      var edit = document.createElement("span");
-      edit.textContent = "ändern";
-      $("arcSummary").appendChild(text);
-      $("arcSummary").appendChild(edit);
-    }
+    if (open) return;
+    $("arcSummary").textContent = "";
+    var text = document.createElement("strong");
+    text.textContent = arc ? "Arche" + NBSP + arc + " · Kupfer" + NBSP + percent(arcBonus(false)) + " · Gold" + NBSP + percent(arcBonus(true))
+      : "Keine Arche";
+    var edit = document.createElement("span");
+    edit.textContent = "ändern";
+    $("arcSummary").appendChild(text);
+    $("arcSummary").appendChild(edit);
   }
 
   /* ------------------------------------------------------- B und C: Ziel */
@@ -83,20 +104,22 @@
     return level && Calc.isGold(buildingId(), level) ? 7 : 5;
   }
 
-  function buildTaken() {
+  function buildTaken(values) {
     var box = $("snTaken");
     var count = slotCount();
-    var old = Array.prototype.map.call(box.querySelectorAll("input"), function (input) { return input.value; });
-    if (old.length === count) return;
+    var old = values || Array.prototype.map.call(box.querySelectorAll("input"), function (input) { return input.value; });
+    if (!values && old.length === count) return;
     box.textContent = "";
     for (var slot = 1; slot <= count; slot++) {
       var label = document.createElement("label");
       label.textContent = "P" + slot;
       var input = document.createElement("input");
       input.id = "snP" + slot;
+      input.className = "num";
       input.inputMode = "numeric";
       input.autocomplete = "off";
-      input.setAttribute("aria-label", "Betrag auf Platz " + slot);
+      input.setAttribute("enterkeyhint", slot < count ? "next" : "done");
+      input.setAttribute("aria-label", "P" + slot + ", Betrag in FP");
       input.value = old[slot - 1] || "";
       label.appendChild(input);
       box.appendChild(label);
@@ -108,18 +131,23 @@
       .filter(function (value) { return value; });
   }
 
-  /* ------------------------------------------------------------ D: Zielen */
+  /* ------------------------------------------------------ D: Platz waehlen */
 
-  var STATUS_TEXT = { lohnt: "lohnt", riskant: "riskant", teuer: "zu teuer", zu: "nicht drin" };
+  var STATUS = {
+    lohnt: { word: "lohnt", mark: "✓" },
+    riskant: { word: "riskant", mark: "!" },
+    teuer: { word: "zu teuer", mark: "×" },
+    zu: { word: "nicht drin", mark: "–" }
+  };
 
-  /** Der lohnendste Platz: hoechster Gewinn, wenn man ihn sichert. */
+  /** Der lohnendste Platz: hoechster Gewinn bzw. kleinster Verlust, wenn man ihn sichert. */
   function bestSlot(rows) {
     var usable = rows.filter(function (row) { return row.status !== "leer" && row.status !== "zu"; });
     if (!usable.length) return 0;
     return usable.reduce(function (best, row) { return row.profit > best.profit ? row : best; }).slot;
   }
 
-  /** Sinnvoller Einsatz fuer einen Platz: sicher, wenn es sich lohnt, sonst die Gewinngrenze. */
+  /** Sinnvoller Einsatz fuer einen Platz: sicher, wenn es sich lohnt, sonst ohne Verlust. */
   function defaultPay(row, open) {
     if (row.status === "lohnt") return row.safe;
     if (row.status === "riskant") return row.pay;
@@ -127,47 +155,56 @@
     return open;
   }
 
-  /** Eine Marke auf den Balken setzen und ihren Wert in die Legende. */
-  function place(mark, legend, value, open) {
-    var el = $(mark);
-    var reachable = value > 0 && value <= open;
-    $(legend).textContent = reachable ? f(value) : f(value) + " (mehr als offen)";
-    $(legend).parentNode.disabled = !reachable;
-    if (!reachable) { el.classList.add("out"); return; }
-    el.classList.remove("out");
-    el.style.left = (value / open * 100) + "%";
+  function advice(rows) {
+    var best = rows[bestSlot(rows) - 1];
+    if (!best) return "Hier ist gerade kein Platz zu holen — es ist zu wenig offen.";
+    if (best.status === "lohnt") {
+      return "Nimm P" + best.slot + ": " + f(best.safe) + " FP einzahlen, sicher, " + signed(best.profit) + " FP.";
+    }
+    var risky = rows.filter(function (row) { return row.status === "riskant"; });
+    return "Kein Platz lohnt sich sicher. Am wenigsten Verlust: P" + best.slot + " sicher für " + signed(best.profit) + " FP" +
+      (risky.length ? " — oder ohne Verlust auf Risiko." : ".");
   }
 
-  /** Marke oder Legende angetippt: Einsatz genau auf diesen Wert. */
-  function jump(event) {
-    var target = event.target.closest("[data-jump]");
-    var row = view.rows[view.slot - 1];
-    if (!target || target.disabled || !row) return;
-    choice.pay = Math.min(row[target.dataset.jump], view.options.open);
-    choice.bp = null;
-    aim();
+  /** Marke auf den Balken, Wert in die Legende; die Legende ordnet sich nach Wert. */
+  function place(key, value, open) {
+    var mark = $({ take: "mTake", value: "mValue", safe: "mSafe" }[key]);
+    var label = $({ take: "lTake", value: "lValue", safe: "lSafe" }[key]);
+    var reachable = value > 0 && value <= open;
+    label.textContent = reachable ? f(value) : f(value) + " (mehr als offen)";
+    label.parentNode.disabled = !reachable;
+    label.parentNode.style.order = String(value);
+    if (!reachable) { mark.classList.add("out"); return; }
+    mark.classList.remove("out");
+    mark.style.left = (value / open * 100) + "%";
   }
 
   function renderChips() {
     var box = $("snChips");
+    var focused = document.activeElement && document.activeElement.parentNode === box
+      ? document.activeElement.dataset.slot : null;
     box.textContent = "";
     view.rows.forEach(function (row) {
       if (row.status === "leer") return;
+      var status = STATUS[row.status];
       var button = document.createElement("button");
       button.type = "button";
       button.className = row.status;
       button.dataset.slot = row.slot;
-      button.textContent = "P" + row.slot;
-      button.title = STATUS_TEXT[row.status];
       button.setAttribute("aria-pressed", String(row.slot === view.slot));
-      button.addEventListener("click", function () {
-        choice.slot = row.slot;
-        choice.pay = null;
-        choice.bp = null;
-        render();
-      });
+      button.setAttribute("aria-label", "P" + row.slot + ", " + status.word);
+      var name = document.createElement("b");
+      name.textContent = "P" + row.slot;
+      var word = document.createElement("small");
+      word.textContent = status.mark + " " + status.word;
+      button.appendChild(name);
+      button.appendChild(word);
       box.appendChild(button);
     });
+    if (focused) {
+      var again = box.querySelector('[data-slot="' + focused + '"]');
+      if (again) again.focus();
+    }
   }
 
   function renderRows() {
@@ -185,12 +222,12 @@
       head.appendChild(span);
       var limits = document.createElement("p");
       limits.className = "limits";
-      limits.textContent = "Platz ab " + f(row.take) + " · sicher ab " + f(row.safe);
+      limits.textContent = "Platz ab " + f(row.take) + " · ohne Verlust bis " + f(row.value) + " · sicher ab " + f(row.safe);
       var verdict = document.createElement("p");
       verdict.className = "verdict";
-      verdict.textContent = row.status === "lohnt" ? "Lohnt sich: " + signed(row.profit) + " FP, wenn du sicherst."
-        : row.status === "riskant" ? "Riskant: ohne Verlust nur angreifbar, sicher " + signed(row.profit) + " FP."
-        : row.status === "teuer" ? "Zu teuer: sicher " + signed(row.profit) + " FP."
+      verdict.textContent = row.status === "lohnt" ? "Lohnt sich: Sicherst du ihn, machst du " + signed(row.profit) + " FP."
+        : row.status === "riskant" ? "Riskant: Ohne Verlust bekommst du ihn nur angreifbar. Sicherst du ihn, machst du " + signed(row.profit) + " FP."
+        : row.status === "teuer" ? "Zu teuer: Sicherst du ihn, machst du " + signed(row.profit) + " FP."
         : "Nicht drin: Es ist zu wenig offen.";
       item.appendChild(head);
       item.appendChild(limits);
@@ -199,51 +236,81 @@
     });
   }
 
-  /** Den Balken, die Anzeige und die Blaupausen fuer den Einsatz zeichnen. */
+  var announceTimer = null;
+  /** Fuer Screenreader: nur das Wichtigste, und erst, wenn der Griff ruht. */
+  function announce(text) {
+    window.clearTimeout(announceTimer);
+    announceTimer = window.setTimeout(function () { $("snAnnounce").textContent = text; }, 600);
+  }
+
+  /** Balken, Anzeige, Leiste und Blaupausen fuer den Einsatz zeichnen. */
   function aim() {
     var options = view.options;
     var open = options.open;
-    var pay = choice.pay;
-    var result = Calc.snipeDeposit(options, pay);
+    var result = Calc.snipeDeposit(options, choice.pay);
+    var rankRow = result.rank ? view.rows[result.rank - 1] : null;
 
     var state = !result.rank ? "kein" : result.safe ? "sicher" : "angreifbar";
-    var fill = $("snFill");
-    fill.style.width = (open ? result.pay / open * 100 : 0) + "%";
-    fill.className = "fill " + state;
+    $("snFill").style.width = (open ? result.pay / open * 100 : 0) + "%";
+    $("snFill").className = "fill " + state;
+    $("snReadout").className = "readout " + state;
 
-    $("snPay").value = result.pay;
+    var range = $("snPay");
+    range.value = result.pay;
     if (document.activeElement !== $("snPayNum")) $("snPayNum").value = f(result.pay);
 
-    var status = $("snStatus");
-    status.className = "status " + state;
-    status.textContent = !result.rank ? "Kein Platz"
-      : "P" + result.rank + (result.safe ? " · sicher" : " · angreifbar");
+    var statusText = !result.rank ? "Kein Platz"
+      : "P" + result.rank + (result.safe ? (result.profit < 0 ? " · sicher, aber mit Verlust" : " · sicher") : " · angreifbar");
+    $("snStatus").className = "status " + state;
+    $("snStatus").textContent = statusText;
 
     $("snProfit").textContent = result.rank ? signed(result.profit) + " FP" : "";
+    $("snProfit").className = "profit" + (result.rank && result.profit < 0 ? " minus" : "");
     $("snDetail").textContent = !result.rank
-      ? (result.pay ? "Mit " + f(result.pay) + " FP reicht es für keinen Platz." : "Schieb den Regler oder tipp einen Betrag ein.")
+      ? (result.pay ? "Mit " + f(result.pay) + " FP reicht es für keinen Platz." : "Zieh am Balken oder tipp einen Betrag ein.")
       : result.safe
-        ? "Zurück kommen " + f(result.value) + " FP (" + f(result.reward) + " + Bonus). Danach bleiben " + f(result.rest) + " FP offen — zu wenig, um dich zu überholen."
-        : "Zurück kommen " + f(result.value) + " FP. Aber " + f(result.threat) + " FP reichen jemandem zum Überholen, " + f(result.rest) + " sind noch offen.";
+        ? "Du bekommst " + f(result.value) + " FP zurück (" + f(result.reward) + " + Bonus). Danach sind nur noch " + f(result.rest) + " FP offen — zu wenig, um dich zu überholen."
+        : "Noch nicht sicher: Wer " + f(result.threat) + " FP einzahlt, überholt dich. Sicher bist du ab " + f(rankRow.safe) + " FP.";
+
+    var valueText = f(result.pay) + " FP, " + statusText + (result.rank ? ", " + signed(result.profit) + " FP" : "");
+    range.setAttribute("aria-valuetext", valueText);
+    announce(valueText);
+
+    // Leiste unten
+    var dock = $("snDock");
+    dock.className = "dock " + state;
+    dock.textContent = "";
+    var big = document.createElement("b");
+    big.textContent = result.rank ? "P" + result.rank + " · " + signed(result.profit) + " FP" : "Kein Platz";
+    var small = document.createElement("span");
+    small.textContent = f(result.pay) + " einzahlen · " + (state === "kein" ? "zu wenig" : state);
+    dock.appendChild(big);
+    dock.appendChild(small);
 
     // Mischkalkulation: Was kostet eine Blaupause, wenn man draufzahlt?
     var slot = result.rank || view.slot;
     var estimate = slot ? Calc.estimateBlueprints(buildingId(), view.level, slot) : null;
     var kind = view.gold ? "gold" : "copper";
-    var bpInput = $("snBp");
     $("snBpLabel").textContent = (view.gold ? "Gold-Blaupausen" : "Blaupausen") + " auf P" + (slot || "–") +
-      (estimate ? " (geschätzt ca. " + estimate[kind] + ", Tooltip genauer)" : " laut Tooltip");
+      (estimate ? " · geschätzt ca. " + estimate[kind] + ", genau im Spiel" : " · Zahl aus dem Spiel");
     $("snBpNote").textContent = estimate ? ""
-      : !view.gold ? "Auf Kupfer-Stufen schätzt cipher keine Blaupausen — die Zahl steht im Tooltip."
+      : !view.gold ? "Auf Kupfer-Stufen schätzt cipher keine Blaupausen — tipp im Spiel auf den Platz und übernimm die Zahl."
       : buildingId() === "The_Arc" ? ""
-      : "Für dieses Bauwerk schätzt cipher noch nicht — die Zahl steht im Tooltip.";
-    if (choice.bp == null) bpInput.value = estimate ? estimate[kind] : "";
-    var count = number(bpInput) || 0;
+      : "Für dieses Bauwerk schätzt cipher noch nicht — tipp im Spiel auf den Platz und übernimm die Zahl.";
+    if (choice.bp == null) $("snBp").value = estimate ? estimate[kind] : "";
+    var count = number($("snBp")) || 0;
     var loss = result.pay - result.value;
     var out = $("snBpOut");
     if (!result.rank || !count) out.textContent = "";
     else if (loss <= 0) out.textContent = "→ gibt es obendrauf, ohne Verlust";
     else out.textContent = "→ eine Blaupause kostet dich " + f(Math.round(Calc.blueprintPrice(loss, count, options.bonus))) + " FP";
+    updateDock();
+  }
+
+  /** Die Leiste unten zeigt sich, wenn das Ergebnis nicht im Bild ist. */
+  var resultVisible = false;
+  function updateDock() {
+    $("snDock").hidden = !view.ready || resultVisible;
   }
 
   function render() {
@@ -254,12 +321,13 @@
     var progress = number($("snProgress")) || 0;
     var taken = takenAmounts();
     var placed = taken.reduce(function (a, b) { return a + b; }, 0);
+    saveSession();
 
     // B: was im Balken steckt, aufgeteilt
     var split = $("snSplit");
     split.textContent = "";
     if (level && !total) {
-      split.textContent = "Für diese Stufe kenne ich die Kosten nicht — trag die rechte Zahl am Balken ein.";
+      split.textContent = "Die Kosten dieser Stufe kennt cipher nicht — trag die rechte Zahl am Balken ein.";
     } else if (progress) {
       split.appendChild(document.createTextNode("Im Balken: " + f(progress) + " FP · davon Besitzer " +
         f(Math.max(0, progress - placed)) + " · Fremde " + f(placed)));
@@ -274,49 +342,79 @@
     var ready = Boolean(level && total);
     $("stepPlaces").hidden = !ready;
     $("stepResult").hidden = !ready;
-    if (!ready) return;
+    view.ready = false;
+    if (!ready) { updateDock(); return; }
 
     var gold = Calc.isGold(id, level);
     var bonus = arcBonus(gold);
     var open = Math.max(0, total - progress);
-    var summary = $("snSummary");
-    if (!open) {
-      summary.textContent = "Die Stufe ist schon voll.";
-      $("snMeter").hidden = true;
-      return;
-    }
-    $("snMeter").hidden = false;
-    summary.textContent = "Noch offen: " + f(open) + " FP · " + (gold ? "Gold-Stufe" : "Kupfer-Stufe") +
-      " · dein Bonus: " + (gold ? "Gold " : "Kupfer ") + bonus + " %";
+    $("snSummary").textContent = "Noch offen: " + f(open) + " FP · " + (gold ? "Gold-Stufe" : "Kupfer-Stufe") +
+      " · dein Bonus: " + (gold ? "Gold " : "Kupfer ") + percent(bonus);
 
     view.options = { rewards: Calc.rewardsFromCost(total, level, gold), open: open, taken: taken, bonus: bonus };
     view.rows = Calc.snipePlaces(view.options);
     view.gold = gold;
     view.level = level;
+
+    if (!open) {
+      $("snSummary").textContent = "Die Stufe ist schon voll.";
+      $("snAdvice").textContent = "";
+      $("snAim").hidden = true;
+      updateDock();
+      return;
+    }
+    $("snAdvice").textContent = advice(view.rows);
     var chosen = view.rows[(choice.slot || 0) - 1];
     view.slot = chosen && chosen.status !== "leer" ? choice.slot : bestSlot(view.rows);
     var row = view.rows[view.slot - 1];
+    $("snAim").hidden = !row;
+    if (!row) { updateDock(); return; }
+    view.ready = true;
 
     $("snOpen").textContent = f(open);
     $("snPay").max = open;
-    if (row) {
-      place("mTake", "lTake", row.take, open);
-      place("mValue", "lValue", row.value, open);
-      place("mSafe", "lSafe", row.safe, open);
-    }
-    if (choice.pay == null || choice.pay > open) choice.pay = row ? defaultPay(row, open) : 0;
+    place("take", row.take, open);
+    place("value", row.value, open);
+    place("safe", row.safe, open);
+    if (choice.pay == null || choice.pay > open) choice.pay = defaultPay(row, open);
 
     renderChips();
     renderRows();
     aim();
   }
 
-  /** Neue Eingaben in B oder C: Platz und Einsatz waehlt cipher wieder selbst. */
-  function reset() {
+  /** Neues Ziel (Bauwerk, Stufe): Platz und Einsatz waehlt cipher wieder selbst. */
+  function resetAll() {
     choice.slot = null;
     choice.pay = null;
     choice.bp = null;
     render();
+  }
+  /** Neue Zahlen zum selben Ziel: den gewaehlten Platz behalten, Einsatz neu. */
+  function resetPay() {
+    choice.pay = null;
+    choice.bp = null;
+    render();
+  }
+
+  /** Der Griff rastet an den Marken ein, wenn er nah genug dran ist. */
+  function snap(value) {
+    var row = view.rows[view.slot - 1];
+    var open = view.options.open;
+    if (!row) return value;
+    var near = open * 0.015;
+    var hit = [row.take, row.value, row.safe].filter(function (mark) {
+      return mark <= open && Math.abs(mark - value) <= near;
+    }).sort(function (a, b) { return Math.abs(a - value) - Math.abs(b - value); })[0];
+    return hit != null ? hit : value;
+  }
+
+  function nextField(input) {
+    var fields = Array.prototype.slice.call(document.querySelectorAll("#stepTarget input.num, #snTaken input.num"))
+      .filter(function (field) { return field.offsetParent !== null; });
+    var next = fields[fields.indexOf(input) + 1];
+    if (next) next.focus();
+    else input.blur();
   }
 
   function init() {
@@ -328,19 +426,28 @@
         option.textContent = building.name;
         select.appendChild(option);
       });
-    var stored = load();
+    var stored = read("localStorage", STORE);
+    var session = read("sessionStorage", SESSION);
     select.value = stored.building && COSTS.costs[stored.building] ? stored.building : "The_Arc";
+    if (session.building && COSTS.costs[session.building]) {
+      select.value = session.building;
+      $("snLevel").value = session.level || "";
+      $("snProgress").value = session.progress || "";
+      $("snTotal").value = session.total || "";
+      choice.slot = session.slot || null;
+    }
     if (stored.arc != null) $("snArc").value = stored.arc;
     showArc(stored.arc == null);
+    buildTaken(session.taken);
     if (COSTS && COSTS.generated) $("snDate").textContent = COSTS.generated.split("-").reverse().join(".");
 
     $("arcForm").addEventListener("submit", function (event) {
       event.preventDefault();
       if ($("snArc").value === "") $("snArc").value = "0";
-      save();
+      saveLasting();
       showArc(false);
-      reset();
-      $("snLevel").focus();
+      resetPay();
+      if (!$("snLevel").value) $("snLevel").focus();
     });
     $("arcSummary").addEventListener("click", function () {
       showArc(true);
@@ -348,14 +455,44 @@
       $("snArc").select();
     });
 
-    select.addEventListener("change", function () { fillTotal(); save(); reset(); });
-    $("snLevel").addEventListener("input", function () { fillTotal(); reset(); });
-    $("snProgress").addEventListener("input", reset);
-    $("snTotal").addEventListener("input", reset);
-    $("snTaken").addEventListener("input", reset);
+    select.addEventListener("change", function () { fillTotal(); saveLasting(); resetAll(); });
+    $("snLevel").addEventListener("input", function () { fillTotal(); resetAll(); });
+    $("snProgress").addEventListener("input", resetPay);
+    $("snTotal").addEventListener("input", resetPay);
+    $("snTaken").addEventListener("input", resetPay);
+    $("snClear").addEventListener("click", function () {
+      ["snLevel", "snProgress", "snTotal"].forEach(function (id) { $(id).value = ""; });
+      buildTaken([]);
+      resetAll();
+      $("snLevel").focus();
+    });
 
+    // Tausenderpunkte beim Verlassen, Enter springt ins naechste Feld
+    document.addEventListener("focusout", function (event) {
+      var input = event.target;
+      if (!input.classList || !input.classList.contains("num") || input.id === "snLevel") return;
+      var value = number(input);
+      if (value != null) input.value = f(value);
+    });
+    document.addEventListener("keydown", function (event) {
+      var input = event.target;
+      if (event.key !== "Enter" || !input.classList || !input.classList.contains("num")) return;
+      if (input.closest("#stepTarget") || input.closest("#snTaken")) {
+        event.preventDefault();
+        nextField(input);
+      }
+    });
+
+    $("snChips").addEventListener("click", function (event) {
+      var button = event.target.closest("button[data-slot]");
+      if (!button) return;
+      choice.slot = Number(button.dataset.slot);
+      choice.pay = null;
+      choice.bp = null;
+      render();
+    });
     $("snPay").addEventListener("input", function () {
-      choice.pay = Number($("snPay").value);
+      choice.pay = snap(Number($("snPay").value));
       choice.bp = null;
       aim();
     });
@@ -365,11 +502,36 @@
       aim();
     });
     $("snPayNum").addEventListener("blur", aim);
-    $("snMeter").addEventListener("click", jump);
+    document.querySelector(".stepper").addEventListener("click", function (event) {
+      var button = event.target.closest("button[data-step]");
+      if (!button) return;
+      choice.pay = Math.max(0, Math.min(view.options.open, (choice.pay || 0) + Number(button.dataset.step)));
+      choice.bp = null;
+      aim();
+    });
+    $("snLegend").addEventListener("click", function (event) {
+      var button = event.target.closest("button[data-jump]");
+      var row = view.rows[view.slot - 1];
+      if (!button || button.disabled || !row) return;
+      choice.pay = Math.min(row[button.dataset.jump], view.options.open);
+      choice.bp = null;
+      aim();
+    });
     $("snBp").addEventListener("input", function () {
       choice.bp = number($("snBp"));
       aim();
     });
+    $("snDock").addEventListener("click", function () {
+      $("stepResult").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    if ("IntersectionObserver" in window) {
+      new window.IntersectionObserver(function (entries) {
+        resultVisible = entries[0].isIntersecting;
+        updateDock();
+      }, { threshold: 0.15 }).observe($("stepResult"));
+    } else {
+      resultVisible = true;
+    }
     render();
   }
 

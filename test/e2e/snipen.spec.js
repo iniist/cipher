@@ -18,7 +18,7 @@ test("die Arche wird gemerkt und klappt zu", async ({ page }) => {
   await expect(page.locator("#arcForm")).toBeVisible();
   await arche(page, "188");
   await expect(page.locator("#arcForm")).toBeHidden();
-  await expect(page.locator("#arcSummary")).toContainText("Arche 188 · Kupfer 99 % · Gold 21 %");
+  await expect(page.locator("#arcSummary")).toContainText("Arche\u00a0188 · Kupfer\u00a099\u00a0% · Gold\u00a021\u00a0%");
   await page.reload();
   await expect(page.locator("#arcSummary")).toContainText("Arche 188");
   await page.click("#arcSummary");
@@ -45,7 +45,7 @@ test("Arche 183 beim Nachbarn: P1 ist zu teuer zum Sichern", async ({ page }) =>
 
   // Sichern kostet 33.027 FP mehr; 8 Gold-BP + 2 Bonus → 3.303 FP je Stück.
   await page.fill("#snPayNum", "46.487");
-  await expect(page.locator("#snStatus")).toHaveText("P1 · sicher");
+  await expect(page.locator("#snStatus")).toHaveText("P1 · sicher, aber mit Verlust");
   await expect(page.locator("#snFill")).toHaveClass(/sicher/);
   await expect(page.locator("#snProfit")).toHaveText("−33.027 FP");
   await page.fill("#snBp", "8");
@@ -58,7 +58,7 @@ test("kurz vor voll: cipher wählt den lohnendsten Platz und den sicheren Betrag
   await eintragen(page, { snLevel: "183", snProgress: "124.430", snP1: "13.000", snP2: "6.000", snP3: "1.200" });
   // Offen 3.000. P3: (3000 + 1200) / 2 = 2.100 ≤ 2.243 → +143.
   await expect(page.locator("#snSplit")).toHaveText("Im Balken: 124.430 FP · davon Besitzer 104.230 · Fremde 20.200");
-  await expect(page.locator('#snChips button[aria-pressed="true"]')).toHaveText("P3");
+  await expect(page.locator('#snChips button[aria-pressed="true"]')).toHaveAttribute("data-slot", "3");
   await expect(page.locator("#snPayNum")).toHaveValue("2.100");
   await expect(page.locator("#snStatus")).toHaveText("P3 · sicher");
   await expect(page.locator("#snProfit")).toHaveText("+143 FP");
@@ -118,7 +118,7 @@ test("Marken und Legende setzen den Einsatz", async ({ page }) => {
   await page.click('.legend button.take');
   await expect(page.locator("#snPayNum")).toHaveValue("1");
   await expect(page.locator("#snStatus")).toHaveText("P3 · angreifbar");
-  await page.click("#mSafe");
+  await page.click(".legend button.safe");
   await expect(page.locator("#snPayNum")).toHaveValue("1.500");
   await expect(page.locator("#snStatus")).toHaveText("P3 · sicher");
   await expect(page.locator("label", { hasText: "Nächste Stufe" })).toHaveCount(1);
@@ -131,4 +131,55 @@ test("andere Bauwerke: keine Schätzung, aber ein Hinweis", async ({ page }) => 
   await eintragen(page, { snLevel: "150", snProgress: "0" });
   await expect(page.locator("#snBp")).toHaveValue("");
   await expect(page.locator("#snBpNote")).toContainText("Für dieses Bauwerk schätzt cipher noch nicht");
+});
+
+test("der Griff rastet an den Marken ein, die Feinschritte zählen genau", async ({ page }) => {
+  await page.goto("/snipen.html");
+  await arche(page, "188");
+  await eintragen(page, { snLevel: "183", snProgress: "124.430", snP1: "13.000", snP2: "6.000", snP3: "1.200" });
+  // Offen 3.000, P3 sicher ab 2.100: 2.080 liegt nah genug dran.
+  await page.locator("#snPay").fill("2080");
+  await expect(page.locator("#snPayNum")).toHaveValue("2.100");
+  await page.click('.stepper button[data-step="-1"]');
+  await expect(page.locator("#snPayNum")).toHaveValue("2.099");
+  await expect(page.locator("#snStatus")).toHaveText("P3 · angreifbar");
+  await expect(page.locator("#snDetail")).toHaveText("Noch nicht sicher: Wer 900 FP einzahlt, überholt dich. Sicher bist du ab 2.100 FP.");
+});
+
+test("Empfehlung, Status an den Plätzen und Verlust trotz sicher", async ({ page }) => {
+  await page.goto("/snipen.html");
+  await arche(page, "188");
+  await eintragen(page, { snLevel: "183", snProgress: "124.430", snP1: "13.000", snP2: "6.000", snP3: "1.200" });
+  await expect(page.locator("#snAdvice")).toHaveText("Nimm P3: 2.100 FP einzahlen, sicher, +143 FP.");
+  await expect(page.locator('#snChips button[data-slot="3"]')).toHaveAttribute("aria-label", "P3, lohnt");
+  await expect(page.locator('#snChips button[data-slot="1"] small')).toHaveText("– nicht drin");
+
+  await eintragen(page, { snProgress: "34.456", snP1: "", snP2: "", snP3: "" });
+  await page.click('#snChips button[data-slot="1"]');
+  await page.click(".legend button.safe");
+  await expect(page.locator("#snStatus")).toHaveText("P1 · sicher, aber mit Verlust");
+});
+
+test("das Ziel übersteht ein Neuladen, „Neues Ziel“ leert es", async ({ page }) => {
+  await page.goto("/snipen.html");
+  await arche(page, "188");
+  await eintragen(page, { snLevel: "183", snProgress: "124.430", snP1: "13.000" });
+  await page.click('#snChips button[data-slot="4"]');
+  await page.reload();
+  await expect(page.locator("#snLevel")).toHaveValue("183");
+  await expect(page.locator("#snP1")).toHaveValue("13.000");
+  await expect(page.locator('#snChips button[aria-pressed="true"]')).toHaveAttribute("data-slot", "4");
+  await page.click("#snClear");
+  await expect(page.locator("#snLevel")).toHaveValue("");
+  await expect(page.locator("#stepResult")).toBeHidden();
+});
+
+test("eine volle Stufe zeigt keine alten Zahlen", async ({ page }) => {
+  await page.goto("/snipen.html");
+  await arche(page, "188");
+  await eintragen(page, { snLevel: "183", snProgress: "124.430" });
+  await expect(page.locator("#snAim")).toBeVisible();
+  await eintragen(page, { snProgress: "127.430" });
+  await expect(page.locator("#snSummary")).toHaveText("Die Stufe ist schon voll.");
+  await expect(page.locator("#snAim")).toBeHidden();
 });
