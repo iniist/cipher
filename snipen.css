@@ -162,27 +162,35 @@ input:focus, select:focus { border-color: var(--brass) }
 .fill.angreifbar { background: var(--amber); color: var(--amber) }
 .fill.sicher { background: var(--green); color: var(--green) }
 
+/* Marken: schmal sichtbar, aber breit antippbar (setzen den Einsatz) */
 .mark {
-  position: absolute; top: -7px; bottom: -7px;
-  width: 3px; margin-left: -1.5px; border-radius: 2px;
-  background: var(--ink);
+  position: absolute; top: -10px; bottom: -10px;
+  width: 28px; margin-left: -14px; padding: 0;
+  border: 0; background: transparent; cursor: pointer;
 }
-.mark.value { background: var(--brass) }
-.mark.safe { background: var(--green) }
+.mark::before {
+  content: ""; position: absolute; left: 50%; top: 3px; bottom: 3px;
+  width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--ink);
+}
+.mark.value::before { background: var(--brass) }
+.mark.safe::before { background: var(--green) }
+.mark:hover::before, .mark:focus-visible::before { width: 5px; margin-left: -2.5px }
 .mark.out { display: none }
 
-.legend {
-  display: flex; flex-wrap: wrap; gap: 6px 16px;
-  margin: 10px 0 0; padding: 0; list-style: none;
-  color: var(--dim); font-size: .9rem; font-variant-numeric: tabular-nums;
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0 }
+.legend button {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
+  background: #0a1017; color: var(--dim);
+  font: inherit; font-size: .9rem; font-variant-numeric: tabular-nums; cursor: pointer;
 }
-.legend li::before {
-  content: ""; display: inline-block; width: 3px; height: .9em; margin-right: 6px;
-  vertical-align: -1px; border-radius: 2px; background: var(--ink);
-}
+.legend button::before { content: ""; width: 3px; height: 1em; border-radius: 2px; background: var(--ink) }
 .legend .value::before { background: var(--brass) }
 .legend .safe::before { background: var(--green) }
+.legend .safe { border-color: rgba(53, 214, 138, .55); color: var(--ink) }
+.legend button:hover { border-color: var(--brass) }
 .legend b { color: var(--ink) }
+.legend button[disabled] { opacity: .45; cursor: default }
 
 input[type="range"] {
   width: 100%; margin: 12px 0 0; padding: 0;
@@ -207,6 +215,7 @@ input[type="range"] {
 }
 .bp input { width: 6em }
 .bp output { color: var(--ink); font-weight: 600 }
+.bp-note { flex-basis: 100%; color: var(--dim); font-weight: 400; font-size: .85rem }
 
 .all { margin-top: 16px }
 .all summary { cursor: pointer; color: var(--brass); font-weight: 600 }

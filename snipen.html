@@ -48,7 +48,7 @@
       <label class="wide">Bauwerk
         <select id="snBuilding"></select>
       </label>
-      <label>Stufe <small>rechts am Balken</small>
+      <label>Nächste Stufe <small>rechts am Balken</small>
         <input id="snLevel" inputmode="numeric" placeholder="z. B. 183" autocomplete="off">
       </label>
       <label>Eingezahlt <small>linke Zahl am Balken</small>
@@ -76,17 +76,17 @@
     <div class="meter" id="snMeter">
       <div class="track" id="snTrack">
         <div class="fill" id="snFill"></div>
-        <span class="mark take" id="mTake"></span>
-        <span class="mark value" id="mValue"></span>
-        <span class="mark safe" id="mSafe"></span>
+        <button type="button" class="mark take" id="mTake" data-jump="take" aria-label="Einsatz auf „Platz ab“ setzen"></button>
+        <button type="button" class="mark value" id="mValue" data-jump="value" aria-label="Einsatz auf die Gewinngrenze setzen"></button>
+        <button type="button" class="mark safe" id="mSafe" data-jump="safe" aria-label="Einsatz auf „Sicher ab“ setzen"></button>
       </div>
       <input type="range" id="snPay" min="0" step="1" aria-label="Dein Einsatz">
       <div class="scale"><span>0</span><span id="snOpen"></span></div>
-      <ul class="legend">
-        <li class="take">Platz ab <b id="lTake"></b></li>
-        <li class="value">Gewinngrenze <b id="lValue"></b></li>
-        <li class="safe">Sicher ab <b id="lSafe"></b></li>
-      </ul>
+      <div class="legend" role="group" aria-label="Einsatz auf eine Marke setzen">
+        <button type="button" class="take" data-jump="take">Platz ab <b id="lTake"></b></button>
+        <button type="button" class="value" data-jump="value">Gewinngrenze <b id="lValue"></b></button>
+        <button type="button" class="safe" data-jump="safe">Sicher ab <b id="lSafe"></b></button>
+      </div>
     </div>
 
     <div class="aim">
@@ -104,6 +104,7 @@
       <span id="snBpLabel">Gold-Blaupausen</span>
       <input id="snBp" inputmode="numeric" autocomplete="off">
       <output id="snBpOut"></output>
+      <small id="snBpNote" class="bp-note"></small>
     </label>
 
     <details class="all">

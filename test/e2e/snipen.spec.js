@@ -109,3 +109,26 @@ test("die Seite steht nicht im Index", async ({ page }) => {
   await page.goto("/snipen.html");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex");
 });
+
+test("Marken und Legende setzen den Einsatz", async ({ page }) => {
+  await page.goto("/snipen.html");
+  await arche(page, "188");
+  await eintragen(page, { snLevel: "183", snProgress: "124.430", snP1: "13.000", snP2: "6.000" });
+  await page.click('#snChips button[data-slot="3"]');
+  await page.click('.legend button.take');
+  await expect(page.locator("#snPayNum")).toHaveValue("1");
+  await expect(page.locator("#snStatus")).toHaveText("P3 · angreifbar");
+  await page.click("#mSafe");
+  await expect(page.locator("#snPayNum")).toHaveValue("1.500");
+  await expect(page.locator("#snStatus")).toHaveText("P3 · sicher");
+  await expect(page.locator("label", { hasText: "Nächste Stufe" })).toHaveCount(1);
+});
+
+test("andere Bauwerke: keine Schätzung, aber ein Hinweis", async ({ page }) => {
+  await page.goto("/snipen.html");
+  await arche(page, "188");
+  await page.selectOption("#snBuilding", "Observatory");
+  await eintragen(page, { snLevel: "150", snProgress: "0" });
+  await expect(page.locator("#snBp")).toHaveValue("");
+  await expect(page.locator("#snBpNote")).toContainText("Für dieses Bauwerk schätzt cipher noch nicht");
+});

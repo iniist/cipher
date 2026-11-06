@@ -130,10 +130,22 @@
   /** Eine Marke auf den Balken setzen und ihren Wert in die Legende. */
   function place(mark, legend, value, open) {
     var el = $(mark);
-    $(legend).textContent = value > open ? f(value) + " (mehr als offen)" : f(value);
-    if (!(value > 0) || value > open) { el.classList.add("out"); return; }
+    var reachable = value > 0 && value <= open;
+    $(legend).textContent = reachable ? f(value) : f(value) + " (mehr als offen)";
+    $(legend).parentNode.disabled = !reachable;
+    if (!reachable) { el.classList.add("out"); return; }
     el.classList.remove("out");
     el.style.left = (value / open * 100) + "%";
+  }
+
+  /** Marke oder Legende angetippt: Einsatz genau auf diesen Wert. */
+  function jump(event) {
+    var target = event.target.closest("[data-jump]");
+    var row = view.rows[view.slot - 1];
+    if (!target || target.disabled || !row) return;
+    choice.pay = Math.min(row[target.dataset.jump], view.options.open);
+    choice.bp = null;
+    aim();
   }
 
   function renderChips() {
@@ -221,6 +233,10 @@
     var bpInput = $("snBp");
     $("snBpLabel").textContent = (view.gold ? "Gold-Blaupausen" : "Blaupausen") + " auf P" + (slot || "–") +
       (estimate ? " (geschätzt ca. " + estimate[kind] + ", Tooltip genauer)" : " laut Tooltip");
+    $("snBpNote").textContent = estimate ? ""
+      : !view.gold ? "Auf Kupfer-Stufen schätzt cipher keine Blaupausen — die Zahl steht im Tooltip."
+      : buildingId() === "The_Arc" ? ""
+      : "Für dieses Bauwerk schätzt cipher noch nicht — die Zahl steht im Tooltip.";
     if (choice.bp == null) bpInput.value = estimate ? estimate[kind] : "";
     var count = number(bpInput) || 0;
     var loss = result.pay - result.value;
@@ -349,6 +365,7 @@
       aim();
     });
     $("snPayNum").addEventListener("blur", aim);
+    $("snMeter").addEventListener("click", jump);
     $("snBp").addEventListener("input", function () {
       choice.bp = number($("snBp"));
       aim();
