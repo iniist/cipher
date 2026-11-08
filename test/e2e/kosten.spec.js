@@ -104,7 +104,7 @@ test("Kupfer- und Gold-Faktor sind getrennt einstellbar", async ({ page }) => {
 test("die Schnellwahl bietet auf Gold-Stufen eigene Werte an", async ({ page }) => {
   const chips = page.locator("#factorChips button");
   await page.goto("/index.html" + CASTEL_112.hash);
-  await expect(chips).toHaveText(["1,00", "1,05", "1,10", "1,15", "1,20", "1,25"]);
+  await expect(chips).toHaveText(["1,00", "1,20", "1,30", "1,50", "1,75", "2,00"]);
   await expect(page.locator('#factorChips button[data-factor="100"]')).toHaveClass(/on/);
 
   await page.locator('#factorChips button[data-factor="120"]').click();

@@ -39,12 +39,13 @@
   var FACTOR_PRESETS = [180, 185, 190, 192, 195, 200];
 
   /**
-   * Schnellwahl auf Gold-Stufen. Dort zaehlt nur der Gold-Maezen-Bonus:
-   * die Arche bringt ihn ab Stufe 101 mit 5 %, bei 188 mit 21 %, bis 500
-   * hoechstens 40 %; Siphon und Technologien kommen dazu. Die ueblichen
-   * Werte liegen darum weit unter denen fuer Kupfer.
+   * Schnellwahl auf Gold-Stufen. Dort zaehlt nur der Gold-Maezen-Bonus,
+   * und der setzt sich zusammen: Arche (ab 101: 5 %, bei 201: 23 %, bis 500:
+   * 40 %), Horizontriss-Siphon (ab 101: 5 %, bei 201: 28 %, bis 500: 50 %)
+   * und Technologien (je einige Prozent). Wer nur die Arche hat, foerdert
+   * um 1,2; wer Arche und Siphon hoch hat, kommt bis 2,0.
    */
-  var GOLD_FACTOR_PRESETS = [100, 105, 110, 115, 120, 125];
+  var GOLD_FACTOR_PRESETS = [100, 120, 130, 150, 175, 200];
 
   /**
    * Voreinstellung fuer Gold-Stufen: 1,00. Den Gold-Maezen-Bonus haben
