@@ -9,9 +9,10 @@
  * Mit Stand 0 rechnet es vom jetzigen Bauwerk aus.
  */
 const { test, expect } = require("./mit-kosten");
+const { schritte, summen } = require("./plaetze");
 
 const summe = (page, id) => page.locator(`#${id}`).getAttribute("data-value");
-const sichern = (page) => page.locator("#rows .pre").allTextContents();
+const sichern = (page) => schritte(page);
 
 async function open(page, extra) {
   await page.goto("/index.html");
@@ -58,10 +59,10 @@ test("leer rechnet wie bisher, mit Stand 0 passen P3 bis P5", async ({ page }) =
 });
 
 test("die Summe beginnt bei dem, was schon drin ist", async ({ page }) => {
-  await open(page, { secureMode: "total" });
+  await open(page);
   await page.locator("#ownPaid").fill("30.000");
-  await expect.poll(() => sichern(page)).toEqual(
-    ["vergeben", "vergeben", "36.521", "37.393", "37.655"]);
+  await expect.poll(() => summen(page)).toEqual(
+    [null, null, "36.521", "37.393", "37.655"]);
 });
 
 test("der Stand gilt nur fuer seine Stufe", async ({ page }) => {

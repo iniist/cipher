@@ -109,54 +109,6 @@
     });
   }
 
-  /**
-   * Foerderplan: zwischen „Sichern“ und „Eigen“ wechseln. Von selbst im
-   * Takt, solange der Plan zu sehen ist; ein Klick uebernimmt die Wahl
-   * und haelt den Takt an.
-   */
-  function planSwap() {
-    var box = document.getElementById("planSwap");
-    if (!box) return;
-    var buttons = box.querySelectorAll("[data-plan]");
-    var images = box.querySelectorAll("[data-plan-img]");
-    var current = "sichern";
-    var timer = null;
-
-    function show(which) {
-      current = which;
-      buttons.forEach(function (button) {
-        button.setAttribute("aria-pressed", String(button.dataset.plan === which));
-      });
-      images.forEach(function (image) {
-        image.classList.toggle("is-on", image.dataset.planImg === which);
-      });
-    }
-    function stop() { if (timer) { window.clearInterval(timer); timer = null; } }
-    function start() {
-      if (reduce || timer) return;
-      timer = window.setInterval(function () {
-        show(current === "sichern" ? "summe" : "sichern");
-      }, 3200);
-    }
-
-    buttons.forEach(function (button) {
-      button.addEventListener("click", function () {
-        stop();
-        box.dataset.manual = "1";
-        show(button.dataset.plan);
-      });
-    });
-
-    if ("IntersectionObserver" in window) {
-      new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (box.dataset.manual) return;
-          if (entry.isIntersecting) start(); else stop();
-        });
-      }, { threshold: 0.4 }).observe(box);
-    }
-  }
-
   /** Themes-Faecher: der Reihe nach je eines hervorheben, solange sichtbar. */
   function fan() {
     var box = document.getElementById("fan");
@@ -197,7 +149,6 @@
     embers();
     progress();
     tilt();
-    planSwap();
     fan();
   }
 

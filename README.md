@@ -19,8 +19,8 @@ Eine bebilderte Vorstellung aller Funktionen steht unter
 ## Funktionen
 
 - **Förderplan** für P1–P5, auf Gold-Stufen P1–P7: Belohnung, Kosten für den Förderer und was du
-  vorher sichern musst — wahlweise als Schritt je Platz oder als laufender
-  Stand deiner FP im Bauwerk.
+  vorher sichern musst — als Schritt je Platz und darunter (Σ) als laufender
+  Stand deiner FP im Bauwerk, also wie viel insgesamt von dir drin sein muss.
 - **Plätze angeboten, vergeben oder selbst gezahlt** — ein Tipp aufs Häkchen
   schaltet weiter; ein anderes Bauwerk oder eine andere Stufe beginnt wieder
   mit allen Plätzen angeboten. Für Förderung in Runden lässt sich eintragen,

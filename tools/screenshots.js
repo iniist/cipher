@@ -150,13 +150,10 @@ async function main() {
     await shoot(page, ".factor-block", "faktor");
     await context.close();
 
-    // ---- Foerderplan in beiden Lesarten
+    // ---- Foerderplan: Schritt je Platz, darunter die laufende Summe
     context = await browser.newContext(phone);
     page = await open(context);
     await shoot(page, "section.panel:nth-of-type(2)", "plan-sichern");
-    await page.click("#secureMode");
-    await page.waitForTimeout(100);
-    await shoot(page, "section.panel:nth-of-type(2)", "plan-summe");
     await context.close();
 
     // ---- Foerderchat mit Sammlung

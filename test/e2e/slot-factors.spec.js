@@ -8,7 +8,7 @@
  */
 const { test, expect } = require("./mit-kosten");
 const { nameEintragen, themaWaehlen } = require("./menue");
-const { haekchen, abwaehlen } = require("./plaetze");
+const { haekchen, abwaehlen, schritte } = require("./plaetze");
 
 const row = (page, slot) => page.locator(`.slot-list li[data-slot="${slot}"]`);
 const value = (page, slot) => row(page, slot).locator("input");
@@ -20,7 +20,7 @@ const unit = (page, name) => page.locator(`[data-slot-unit="${name}"]`);
 
 /** Was der Plan gerade ausrechnet — die Endwerte, nicht der laufende Zaehler. */
 const summe = (page, id) => page.locator(`#${id}`).getAttribute("data-value");
-const sichern = (page) => page.locator("#rows .pre").allTextContents();
+const sichern = (page) => schritte(page);
 
 /** Alle fuenf Werte, so wie sie in den Feldern stehen. */
 const shown = (page) => page.locator(".slot-list input").evaluateAll(

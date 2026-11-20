@@ -21,4 +21,25 @@ async function abwaehlen(page, slot) {
   await haekchen(page, slot).click();
 }
 
-module.exports = { haekchen, vergeben, abwaehlen };
+/**
+ * Die Spalte "Sichern", Zeile fuer Zeile, ohne die Summe darunter: "+2.660",
+ * "Sicher", "vergeben", "–" ...
+ */
+const schritte = (page) => page.locator("#rows td.pre").evaluateAll((zellen) =>
+  zellen.map((zelle) => {
+    const kopie = zelle.cloneNode(true);
+    kopie.querySelectorAll(".pre-sum").forEach((summe) => summe.remove());
+    return kopie.textContent.trim();
+  }));
+
+/**
+ * Die laufende Summe unter jedem Schritt, als Text wie im Spiel ("62.061");
+ * null, wo keine steht.
+ */
+const summen = (page) => page.locator("#rows td.pre").evaluateAll((zellen) =>
+  zellen.map((zelle) => {
+    const summe = zelle.querySelector(".pre-sum");
+    return summe ? summe.textContent.replace(/^Σ\s*insgesamt\s*/, "").trim() : null;
+  }));
+
+module.exports = { haekchen, vergeben, abwaehlen, schritte, summen };

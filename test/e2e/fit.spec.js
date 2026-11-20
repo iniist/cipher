@@ -7,8 +7,9 @@
  * zum Leveln.
  */
 const { test, expect } = require("./mit-kosten");
+const { schritte } = require("./plaetze");
 
-const sichern = (page) => page.locator("#rows .pre").allTextContents();
+const sichern = (page) => schritte(page);
 const kosten = (page) => page.locator("#rows td.pay .pay-btn").allTextContents();
 
 async function open(page, extra) {

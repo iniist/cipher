@@ -60,15 +60,6 @@ test("ohne Skript ist nichts versteckt", async ({ browser }) => {
   await context.close();
 });
 
-test("Sichern und Summe lassen sich umschalten", async ({ page }) => {
-  await page.goto("/rundgang.html");
-  await page.locator("#planSwap").scrollIntoViewIfNeeded();
-  await page.click('[data-plan="summe"]');
-  await expect(page.locator('[data-plan="summe"]')).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator('[data-plan-img="summe"]')).toHaveClass(/is-on/);
-  await expect(page.locator('[data-plan-img="sichern"]')).not.toHaveClass(/is-on/);
-});
-
 test("keine waagrechte Scrollleiste", async ({ page }) => {
   await page.goto("/rundgang.html", { waitUntil: "networkidle" });
   const [scroll, inner] = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);

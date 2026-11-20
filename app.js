@@ -300,7 +300,7 @@
   /**
    * Die Felder von `cipher:state`, die zur Welt gehoeren — auch, ob die
    * Chat-Zeile mit FP kopiert wird: das haelt jede Gilde anders. Alles andere —
-   * Theme, Spielername, Kuerzel-Schalter, die Lesarten von Stufe, Sichern
+   * Theme, Spielername, Kuerzel-Schalter, die Lesarten von Stufe
    * und Plaetzen — gilt ueberall gleich.
    */
   var WORLD_FIELDS = ["building", "level", "factor", "goldFactor", "enabled", "taken", "slotsFor",
@@ -407,9 +407,6 @@
     // Wie die Zahl im Stufenfeld zu lesen ist. "next" ist die Vorgabe und
     // das, was cipher vorher ohne Wahl getan hat.
     levelMode: stored.levelMode === "current" ? "current" : "next",
-    // Wie die Spalte "Sichern" zu lesen ist: als Schritt je Platz
-    // oder als laufende Summe. "step" ist die Vorgabe.
-    secureMode: stored.secureMode === "total" ? "total" : "step",
     // Eigener Faktor je Platz; null heisst "folgt dem Wert oben".
     slotFactors: normaliseSlotFactors(stored.slotFactors),
     // Getippter Betrag je Platz; null heisst "aus dem Faktor gerechnet".
@@ -2072,7 +2069,6 @@
     var previous = previousContributions;
     previousContributions = plan.rows.map(function (row) { return row.contribution; });
 
-    renderSecureHead();
     // Mit eingetragenem Stand beginnt die Summe bei dem, was schon drin ist.
     var running = plan.ownPaid || 0;
 
@@ -2274,15 +2270,13 @@
   /**
    * Was in der Spalte "Sichern" steht.
    *
-   * Zwei Lesarten derselben Zahl: der Schritt, den dieser Platz kostet, oder
-   * der Stand, den du erreicht hast, wenn er sicher ist. Manche rechnen so,
-   * manche so — dieselbe Lage wie bei der Stufenzahl.
+   * Beide verbreiteten Lesarten auf einmal: oben der Schritt, den dieser
+   * Platz kostet, klein darunter der Stand deiner eigenen FP im Bauwerk,
+   * wenn er sicher ist. Frueher schaltete ein Tipp auf den Kopf zwischen
+   * beiden um — das fand kaum jemand, und gefragt war gerade die Summe.
    *
-   * "Sicher" gilt in beiden: wo nichts nachzulegen ist, bewegt sich auch die
-   * Summe nicht, und das Wort sagt es deutlicher als eine wiederholte Zahl.
-   * Eine Sonderregel fuer P2 braucht es dafuer nicht — der Platz ist nach P1
-   * fast immer von selbst sicher, und wo eigene Faktoren oder Betraege doch
-   * etwas noetig machen, soll die Zahl ja gerade erscheinen.
+   * "Sicher" steht, wo nichts nachzulegen ist; die Summe darunter bleibt,
+   * damit man auch dort ablesen kann, was bis hierhin drin sein muss.
    *
    * @param {object} row Zeile aus dem Plan
    * @param {number} running Summe der Absicherungen bis hier einschliesslich
@@ -2292,24 +2286,11 @@
     if (row.foreign) return '<span class="given">fremd</span>';
     // Leise, damit das Gruen der Spalte nur an Betraegen steht, die du zahlst.
     if (!row.offered) return '<span class="none">' + (row.tooTight ? "passt nicht" : "–") + "</span>";
-    if (row.secure === 0) return '<span class="safe">Sicher</span>';
-    return state.secureMode === "total"
-      ? formatNumber(running)
-      : "+" + formatNumber(row.secure);
-  }
-
-  /**
-   * Den Spaltenkopf auf die aktive Lesart stellen.
-   *
-   * Er traegt sie als Wort, nicht als stillen Zustand: an einer nackten Zahl
-   * stuende sonst nicht, welche der beiden man gerade liest.
-   */
-  function renderSecureHead() {
-    var total = state.secureMode === "total";
-    $("secureModeLabel").textContent = total ? "Eigen" : "Sichern";
-    $("secureMode").setAttribute("aria-label", total
-      ? "Eigen — umschalten auf das, was dieser Platz zum Sichern kostet"
-      : "Sichern — umschalten auf deine laufenden Eigen-FP");
+    var step = row.secure === 0
+      ? '<span class="safe">Sicher</span>'
+      : '<span class="pre-step">+' + formatNumber(row.secure) + "</span>";
+    return step + '<span class="pre-sum"><span aria-hidden="true">Σ </span>' +
+      '<span class="sr-only">insgesamt </span>' + formatNumber(running) + "</span>";
   }
 
   function renderBar(plan) {
@@ -2996,19 +2977,7 @@
       event.target.value = ownShorts[state.building] || "";
     });
 
-    // Der Kopf traegt die Handhabe, die Zellen nehmen den Klick trotzdem an:
-    // wer die Zahl antippt, meint sie auch. Die Haekchen bleiben davon
-    // unberuehrt, die liegen in der ersten Spalte.
-    function toggleSecureMode() {
-      state.secureMode = state.secureMode === "total" ? "step" : "total";
-      render();
-    }
-
-    $("secureMode").addEventListener("click", toggleSecureMode);
-
     $("rows").addEventListener("click", function (event) {
-      if (event.target.closest("td.pre")) { toggleSecureMode(); return; }
-
       // Die Zahl unter "Kosten" oeffnet sich in der Zeile selbst. Der
       // Block oben kann dasselbe, liegt aber eine Bildschirmhoehe entfernt —
       // hier sieht man beim Tippen, was es mit Summe und "Sicher" macht.
