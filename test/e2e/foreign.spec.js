@@ -10,9 +10,9 @@
  * Prestige-Update 1.294, 646, 215, 53 und 11.
  */
 const { test, expect } = require("./mit-kosten");
-const { haekchen, vergeben } = require("./plaetze");
+const { haekchen, vergeben, schritte } = require("./plaetze");
 
-const sichern = (page) => page.locator("#rows .pre").allTextContents();
+const sichern = (page) => schritte(page);
 const kosten = (page) => page.locator("#rows .pay").allTextContents();
 const fremd = (page) => page.locator("#foreignList input");
 const platz = (page) => page.locator("#foreignList .foreign-place").allTextContents();

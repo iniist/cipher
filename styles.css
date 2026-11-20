@@ -567,23 +567,6 @@ select, .pick {
 }
 :root[data-theme="contrast"] .slots-badge { color: #000; border-color: #000; border-width: 2px }
 
-/* Der Kopf der Absicherungsspalte ist ein Schalter zwischen zwei Lesarten.
-   Er sieht aus wie die anderen Koepfe — ein Knopf, der sich als Knopf
-   auffuehrt, waere lauter als die Zahlen, um die es geht. Das Zeichen
-   daneben ist die ganze Handhabe. */
-/* Die Zelle behaelt das Polster der uebrigen Koepfe; der Knopf bringt keins
-   mit. Andersherum (Polster an den Knopf, Zelle auf 0) sass die Beschriftung
-   drei Pixel tiefer als "Platz", "Belohnung" und "Einzahlen" daneben. */
-.th-pre button {
-  display: block; width: 100%;
-  background: none; border: 0; padding: 0; cursor: pointer;
-  font: inherit; color: inherit; text-align: inherit;
-}
-/* Im Textfluss, nicht daneben: als Flex-Glied landete das Zeichen beim
-   Umbruch hinter "Vorher" statt hinter "sichern". */
-.th-caret { margin-left: 4px; font-size: .7em; opacity: .7 }
-:root[data-theme="contrast"] .th-caret { opacity: 1 }
-
 .slots-note { color: var(--dim); font-size: .82rem; margin: 8px 0 0 }
 .slots-unit { margin-top: 8px; width: max-content }
 .slots-unit button { padding: 4px 12px; font-size: .82rem }
@@ -1057,8 +1040,16 @@ td { padding: 9px 4px; border-top: 1px solid var(--grid); text-align: right }
 :root[data-theme="contrast"] td { border-top: 1px solid #000 }
 td:first-child { text-align: left; white-space: nowrap }
 td.pay { font-weight: 700; font-size: 1.15rem }
-/* Die Zahl schaltet die Lesart mit um — wer sie antippt, meint sie. */
-td.pre { font-weight: 600; color: var(--own); cursor: pointer }
+/* Oben der Schritt je Platz, klein darunter die laufende Summe: zwei
+   Lesarten derselben Rechnung, beide ohne Umschalten zu sehen. */
+td.pre { font-weight: 600; color: var(--own) }
+.pre .pre-step, .pre .safe { display: inline-block }
+.pre .pre-sum {
+  display: block; margin-top: 1px;
+  font-size: .78rem; font-weight: 500; line-height: 1.2;
+  color: var(--own); opacity: .8; white-space: nowrap;
+}
+:root[data-theme="contrast"] .pre .pre-sum { opacity: 1 }
 .pre .none { color: var(--dim); font-weight: 500 }
 /* Die Zahl unter "Einzahlen" laesst sich antippen und oeffnet sich in der
    Zeile. Sie sieht aus wie die Zahl, die sie ist; nur die gestrichelte
@@ -1540,6 +1531,10 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
   /* Quer ist die Hoehe das Knappe, nicht die Breite: der Streifen bekommt
      zwei Reihen statt drei und gibt gut 36px an den Rest zurueck. */
   .fav-list { max-height: calc(2 * var(--fav-row) + 6px) }
+
+  /* Unter jedem Schritt steht die laufende Summe; die Zeilen geben dafuer
+     etwas Polster ab, damit der Plan quer nicht hoeher wird als vorher. */
+  td { padding-top: 5px; padding-bottom: 5px }
 
   .foot { margin-top: 8px }
   .site-foot { max-width: 1000px }

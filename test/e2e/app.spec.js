@@ -4,7 +4,7 @@
  */
 const { test, expect } = require("./mit-kosten");
 const { nameEintragen, themaWaehlen } = require("./menue");
-const { haekchen, vergeben, abwaehlen } = require("./plaetze");
+const { haekchen, vergeben, abwaehlen, schritte, summen } = require("./plaetze");
 const DATA = require("../../data.js");
 
 test.beforeEach(async ({ page }) => {
@@ -118,7 +118,7 @@ test.describe("Vergebene Plaetze", () => {
     await page.locator("#level").blur();
     const vorab = async () => Number(await page.locator("#lumpValue").getAttribute("data-value"));
     const vorher = await vorab();
-    const p1Sichern = Number((await page.locator("#rows tr").nth(0).locator("td.pre").textContent()).replace(/\D/g, ""));
+    const p1Sichern = Number((await schritte(page))[0].replace(/\D/g, ""));
     expect(p1Sichern).toBeGreaterThan(0);
 
     await vergeben(page, 0);
@@ -193,20 +193,14 @@ test.describe("Vergebene Plaetze", () => {
     // die Summe 52.704 stehen, nicht die Differenz 1.230.
     await page.fill("#level", "80");
     await page.locator("#level").blur();
-    const sichern = (n) => page.locator("#rows tr").nth(n).locator("td.pre");
-    const zahl = async (n) => Number((await sichern(n).textContent()).replace(/\D/g, ""));
-
-    await page.click("#secureMode");
-    const summeP3 = await zahl(2);
-    await page.click("#secureMode");
-    const schrittP3 = await zahl(2);
+    const zahl = (text) => Number(text.replace(/\D/g, ""));
+    const summeP3 = zahl((await summen(page))[2]);
+    const schrittP3 = zahl((await schritte(page))[2]);
 
     await vergeben(page, 0);
     await vergeben(page, 1);
-    await expect(sichern(2)).toHaveText("+" + schrittP3.toLocaleString("de-DE"));
-
-    await page.click("#secureMode");
-    await expect(sichern(2)).toHaveText(summeP3.toLocaleString("de-DE"));
+    await expect.poll(async () => (await schritte(page))[2]).toBe("+" + schrittP3.toLocaleString("de-DE"));
+    await expect.poll(async () => (await summen(page))[2]).toBe(summeP3.toLocaleString("de-DE"));
     await expect(page.locator("#lumpText")).toContainText("schon");
   });
 
