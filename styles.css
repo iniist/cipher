@@ -1544,6 +1544,11 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
   .foot { margin-top: 8px }
   .site-foot { max-width: 1000px }
 
+  /* Der Spendenhinweis bricht im schmalen Chat-Kasten auf zwei Zeilen um
+     und kostet quer fast 40px. Hier entfaellt er; der Link im Footer
+     bleibt. */
+  .support { display: none }
+
   /* Erklaerung und Fragen fallen quer weg: Hoehe ist hier das knappe Gut,
      und landscape.spec.js haelt die Seite unter festen Bildschirmzahlen.
      Hochkant und am Rechner stehen sie wie gewohnt da. */
