@@ -45,7 +45,10 @@ jobs:
 
   browser:
     name: Browsertests
-    runs-on: ubuntu-latest
+    # Fest auf 24.04: ubuntu-latest ist inzwischen 26.04, und dafuer bringt
+    # Playwright 1.56 kein Chromium mit ("does not support chromium on
+    # ubuntu26.04-x64"). Wieder auf latest, sobald Playwright es kann.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
