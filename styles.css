@@ -1279,11 +1279,26 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 
 /* ----------------------------------------------------------------- Fuss */
 
-/* Spendenhinweis unter der Chat-Zeile: gedaempft wie die Fussnoten, kein
-   Knopf, keine eigene Farbe. Sichtbar, aber nie lauter als "Zeile kopieren". */
-.support { margin: 10px 0 0; color: var(--dim); font-size: .85rem }
-.support a { color: inherit }
-.support a:hover { color: var(--gold) }
+/* Spendenkasten zwischen Rechner und Lesestoff: ein Kasten wie die anderen.
+   Der Knopf ist nur umrandet wie "Erst Namen eintragen", damit "Zeile
+   kopieren" der einzige volle Knopf der Seite bleibt. */
+.support { margin-top: 20px; margin-bottom: 0 }
+.support-row p { margin: 0 0 12px }
+.support-go {
+  display: block; text-align: center; text-decoration: none;
+  font-weight: 600; padding: 11px; border-radius: var(--r-sm);
+  color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--gold);
+  transition: background-color .15s, transform .1s;
+}
+.support-go:hover { background: var(--field) }
+.support-go:active { transform: translateY(1px) }
+:root[data-theme="contrast"] .support-go { box-shadow: inset 0 0 0 2px #000 }
+@media (min-width: 641px) {
+  .support-row { display: flex; align-items: center; gap: 18px }
+  .support-row p { margin: 0; flex: 1 }
+  .support-go { flex: none; padding: 9px 20px }
+}
+@media (prefers-reduced-motion: reduce) { .support-go { transition: none } }
 .foot { color: var(--dim); font-size: .85rem; margin-top: 20px }
 .foot p { margin: 0 0 10px }
 .foot a { color: inherit }
@@ -1459,6 +1474,7 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
   main > header,
   main > noscript,
   main > .foot,
+  main > .support-wrap,
   main > .info { grid-column: 1 / -1 }
 
   /* Das Bauwerk spannt ueber beide Zeilen der rechten Spalte, damit der
@@ -1544,10 +1560,10 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
   .foot { margin-top: 8px }
   .site-foot { max-width: 1000px }
 
-  /* Der Spendenhinweis bricht im schmalen Chat-Kasten auf zwei Zeilen um
-     und kostet quer fast 40px. Hier entfaellt er; der Link im Footer
-     bleibt. */
-  .support { display: none }
+  /* Quer ist kein Platz fuer einen weiteren Kasten: die Seite muss auf dem
+     iPhone SE unter 4,5 Bildschirmen bleiben (landscape.spec.js). Der Link
+     im Footer bleibt. */
+  .support-wrap { display: none }
 
   /* Erklaerung und Fragen fallen quer weg: Hoehe ist hier das knappe Gut,
      und landscape.spec.js haelt die Seite unter festen Bildschirmzahlen.

@@ -416,10 +416,6 @@
            ins Namensfeld im Menü — ein eigener Hinweis kostete eine Zeile. -->
       <button type="button" id="chatCopy">Zeile kopieren</button>
     </div>
-    <!-- Spendenhinweis: eine leise Zeile genau dort, wo cipher gerade
-         geholfen hat. Nur ein Link, kein eingebettetes Widget — so bleibt
-         es bei „keine Dienste von Dritten“. Die Spende kauft nichts frei. -->
-    <p class="support">Hat dir cipher FP gespart? <a href="https://ko-fi.com/iniist" target="_blank" rel="noopener noreferrer">Spendier mir einen Kaffee</a> auf Ko-fi.</p>
 
     <!-- Wer mehrere Bauwerke gleichzeitig in die Fördergruppe stellt, hat
          bisher jede kopierte Zeile in einer Notiz zwischengeparkt. Der
@@ -447,6 +443,22 @@
      Kasten ueber der Tabelle ohnehin genauer. -->
   <p>„Sichern“ ist, was du vorab einzahlen musst, damit der Platz nicht überboten werden kann; Σ darunter, wie viele eigene FP bis dahin drin sein müssen. Grün = deine FP. Häkchen weg = Eigen, Strich = vergeben.</p>
     <p>Kosten: <a href="https://de.wiki.forgeofempires.com/" target="_blank" rel="noopener noreferrer">Forge of Empires Wiki</a> (© InnoGames GmbH), Stand <span id="costDate">5.11.2026</span>. Bauwerke: <a href="https://forgeofempires.fandom.com/de/wiki/" target="_blank" rel="noopener noreferrer">Fandom-Wiki</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/deed.de" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a>), Stand <span id="dataDate">28.9.2026</span>.</p>
+  </div>
+
+  <!-- Spendenkasten: ein Kasten wie die anderen, zwischen Rechner und
+       Lesestoff. Hier ist das Ergebnis schon da, und wer weiterliest, sieht
+       ihn. Nur ein Link, kein eingebettetes Widget — es bleibt bei „keine
+       Dienste von Dritten“. Die Spende schaltet nichts frei.
+       Die Huelle haelt den Kasten aus "main > .panel" heraus: die Regeln
+       dort zaehlen die drei Rechnerteile per nth-of-type. -->
+  <div class="support-wrap">
+    <section class="panel support" aria-labelledby="supportTitle">
+      <h2 id="supportTitle">cipher unterstützen</h2>
+      <div class="support-row">
+        <p>cipher ist kostenlos, ohne Werbung und ohne Tracker. Hat es dir FP gespart? Dann freue ich mich über einen Kaffee.</p>
+        <a class="support-go" href="https://ko-fi.com/iniist" target="_blank" rel="noopener noreferrer">☕ Kaffee spendieren<span class="sr-only"> (Ko-fi, öffnet in neuem Tab)</span></a>
+      </div>
+    </section>
   </div>
 
   <!-- Erklärung und Fragen zum Nachlesen. Für die Bedienung braucht es sie
