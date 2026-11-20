@@ -1279,6 +1279,11 @@ tr.taken td:not(:first-child):not(.pre) { opacity: .6 }
 
 /* ----------------------------------------------------------------- Fuss */
 
+/* Spendenhinweis unter der Chat-Zeile: gedaempft wie die Fussnoten, kein
+   Knopf, keine eigene Farbe. Sichtbar, aber nie lauter als "Zeile kopieren". */
+.support { margin: 10px 0 0; color: var(--dim); font-size: .85rem }
+.support a { color: inherit }
+.support a:hover { color: var(--gold) }
 .foot { color: var(--dim); font-size: .85rem; margin-top: 20px }
 .foot p { margin: 0 0 10px }
 .foot a { color: inherit }
