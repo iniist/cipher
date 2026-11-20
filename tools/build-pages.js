@@ -296,6 +296,7 @@ ${tableRows}
     <a href="/rundgang">Rundgang</a>
     <a href="./impressum.html">Impressum</a>
     <a href="./datenschutz.html">Datenschutz</a>
+    <a href="https://ko-fi.com/iniist" target="_blank" rel="noopener noreferrer">☕ cipher unterstützen</a>
   </nav>
 </footer>
 
